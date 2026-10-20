@@ -1,0 +1,62 @@
+{
+  "punch_l": {
+    "damage_mult": 1.0,
+    "duration": 0.25,
+    "lunge": 18,
+    "lunge_time": 0.08,
+    "energy_gain": 15,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.10, "until": 0.16, "type": "hitbox", "box": [30, -165, 66, 48], "knockback": 0}
+    ]
+  },
+  "punch_r": {
+    "damage_mult": 1.0,
+    "duration": 0.25,
+    "lunge": 18,
+    "lunge_time": 0.08,
+    "energy_gain": 15,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.10, "until": 0.16, "type": "hitbox", "box": [30, -165, 66, 48], "knockback": 0}
+    ]
+  },
+  "kick_l": {
+    "damage_mult": 1.5,
+    "duration": 0.4,
+    "lunge": 14,
+    "lunge_time": 0.12,
+    "energy_gain": 20,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.14, "until": 0.22, "type": "hitbox", "box": [30, -125, 80, 62], "knockback": 300}
+    ]
+  },
+  "kick_r": {
+    "damage_mult": 1.5,
+    "duration": 0.4,
+    "lunge": 14,
+    "lunge_time": 0.12,
+    "energy_gain": 20,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.14, "until": 0.22, "type": "hitbox", "box": [30, -125, 80, 62], "knockback": 300}
+    ]
+  },
+  "q": {
+    "damage_mult": 1.25,
+    "duration": 0.35,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 20,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.26, "type": "projectile", "id": "q_wave", "lane": "fist", "speed": 700, "range": 520, "knockback": 150}
+    ]
+  }
+}

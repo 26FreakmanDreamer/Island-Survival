@@ -1,0 +1,33 @@
+{
+  "stage": {
+    "ground_y": 620,
+    "walls": [90, 1190],
+    "lane_heights": {
+      "high": 180,
+      "fist": 142,
+      "mid": 120,
+      "low": 60
+    },
+    "land_margin": 8,
+    "blocks": [
+      [400, 560, 90, 60],
+      [760, 560, 90, 60]
+    ],
+    "player_spawn": [280, 620],
+    "dummy_spawn": [1000, 620]
+  },
+  "overlay": {
+    "hit": [255, 70, 70],
+    "hurt": [70, 220, 130],
+    "pivot": true
+  },
+  "debug": {
+    "time_scales": [0.25, 0.5, 1.0, 2.0],
+    "start_time_scale": 1.0
+  },
+  "scenarios": {
+    "flame_demo": {"energy": 100, "force_flame": true},
+    "low_hp_dummy": {"dummy_hp": 1},
+    "status_demo": {"apply_status": "burn"}
+  }
+}

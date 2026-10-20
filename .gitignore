@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+~$*.docx
+.superpowers/
+assets/generated/raw/
+assets/generated/rejected/

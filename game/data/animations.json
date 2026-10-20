@@ -1,0 +1,113 @@
+{
+  "frame_size": [256, 256],
+  "pivot": [128, 244],
+  "clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png", "walk/walk_04.png", "walk/walk_05.png"],
+      "durations": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.2, 0.2]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["crouch/crouch_00.png"],
+      "durations": [0.5]
+    },
+    "punch_l": {
+      "loop": false,
+      "frames": ["punch_l/punch_l_00.png", "punch_l/punch_l_01.png", "punch_l/punch_l_02.png", "punch_l/punch_l_03.png"],
+      "durations": [0.05, 0.07, 0.07, 0.06]
+    },
+    "punch_r": {
+      "loop": false,
+      "frames": ["punch_r/punch_r_00.png", "punch_r/punch_r_01.png", "punch_r/punch_r_02.png", "punch_r/punch_r_03.png"],
+      "durations": [0.05, 0.07, 0.07, 0.06]
+    },
+    "kick_l": {
+      "loop": false,
+      "frames": ["kick_l/kick_l_00.png", "kick_l/kick_l_01.png", "kick_l/kick_l_02.png", "kick_l/kick_l_03.png"],
+      "durations": [0.08, 0.12, 0.12, 0.08]
+    },
+    "kick_r": {
+      "loop": false,
+      "frames": ["kick_r/kick_r_00.png", "kick_r/kick_r_01.png", "kick_r/kick_r_02.png", "kick_r/kick_r_03.png"],
+      "durations": [0.08, 0.12, 0.12, 0.08]
+    },
+    "q": {
+      "loop": false,
+      "frames": ["q/q_00.png", "q/q_01.png", "q/q_02.png", "q/q_03.png"],
+      "durations": [0.06, 0.10, 0.10, 0.09]
+    },
+    "transform": {
+      "loop": false,
+      "frames": ["transform/transform_00.png", "transform/transform_01.png", "transform/transform_02.png", "transform/transform_03.png", "transform/transform_04.png", "transform/transform_05.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
+      "durations": [0.15, 0.15, 0.15, 0.15]
+    }
+  },
+  "flame_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["flame/idle/idle_00.png", "flame/idle/idle_01.png", "flame/idle/idle_02.png", "flame/idle/idle_03.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["flame/walk/walk_00.png", "flame/walk/walk_01.png", "flame/walk/walk_02.png", "flame/walk/walk_03.png", "flame/walk/walk_04.png", "flame/walk/walk_05.png"],
+      "durations": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["flame/jump/jump_00.png", "flame/jump/jump_01.png"],
+      "durations": [0.2, 0.2]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["flame/crouch/crouch_00.png"],
+      "durations": [0.5]
+    },
+    "punch_l": {
+      "loop": false,
+      "frames": ["flame/punch_l/punch_l_00.png", "flame/punch_l/punch_l_01.png", "flame/punch_l/punch_l_02.png", "flame/punch_l/punch_l_03.png"],
+      "durations": [0.05, 0.07, 0.07, 0.06]
+    },
+    "punch_r": {
+      "loop": false,
+      "frames": ["flame/punch_r/punch_r_00.png", "flame/punch_r/punch_r_01.png", "flame/punch_r/punch_r_02.png", "flame/punch_r/punch_r_03.png"],
+      "durations": [0.05, 0.07, 0.07, 0.06]
+    },
+    "kick_l": {
+      "loop": false,
+      "frames": ["flame/kick_l/kick_l_00.png", "flame/kick_l/kick_l_01.png", "flame/kick_l/kick_l_02.png", "flame/kick_l/kick_l_03.png"],
+      "durations": [0.08, 0.12, 0.12, 0.08]
+    },
+    "kick_r": {
+      "loop": false,
+      "frames": ["flame/kick_r/kick_r_00.png", "flame/kick_r/kick_r_01.png", "flame/kick_r/kick_r_02.png", "flame/kick_r/kick_r_03.png"],
+      "durations": [0.08, 0.12, 0.12, 0.08]
+    },
+    "q": {
+      "loop": false,
+      "frames": ["flame/q/q_00.png", "flame/q/q_01.png", "flame/q/q_02.png", "flame/q/q_03.png"],
+      "durations": [0.06, 0.10, 0.10, 0.09]
+    }
+  }
+}
