@@ -1,0 +1,43 @@
+{
+  "characters": {
+    "lina": {
+      "name": "Lina Seabright",
+      "class": "lina",
+      "stats": "lina",
+      "spawn": "player_spawn",
+      "clips": "clips",
+      "flame_clips": "flame_clips",
+      "flame_offsets": "flame_offsets",
+      "frame_size": "frame_size",
+      "pivot": "pivot",
+      "frames_dir": "lina",
+      "fallback": "Image/Character/lina-seabright-v1-256.png"
+    }
+  },
+  "enemies": {
+    "warrior": {
+      "name": "Warrior",
+      "class": "warrior",
+      "stats": "warrior",
+      "spawn": "warrior_spawn",
+      "clips": "warrior_clips",
+      "frame_size": "warrior_frame_size",
+      "pivot": "warrior_pivot",
+      "frames_dir": "warrior",
+      "fallback": "Image/Enemy/warrior-336.png",
+      "skill_slots": ["axe_slash", "dash", "axe_throw", null],
+      "separates": true,
+      "decides_match": true
+    },
+    "dummy": {
+      "name": "Dummy",
+      "class": "dummy",
+      "stats": "dummy",
+      "spawn": "dummy_spawn",
+      "frames_dir": null,
+      "skill_slots": [null, null, null, null],
+      "separates": false,
+      "decides_match": false
+    }
+  }
+}

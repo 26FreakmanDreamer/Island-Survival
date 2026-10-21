@@ -19,6 +19,7 @@ class Effect:
     value: float = 0.0
     dps: float = 0.0
     tick_accum: float = 0.0
+    total: float = 0.0
 
 
 @dataclass
@@ -46,7 +47,7 @@ class StatusSet:
             self.add_poison(source or "unknown", duration, dps)
             return
         # Burn and other timed effects refresh; damage reduction keeps its value.
-        self.effects[kind] = Effect(duration, source, value, dps)
+        self.effects[kind] = Effect(duration, source, value, dps, total=duration)
 
     def add_poison(self, source: str, duration: float, dps: float) -> None:
         for poison in self.poisons:

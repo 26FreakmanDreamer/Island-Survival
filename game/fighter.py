@@ -37,9 +37,16 @@ class Fighter:
         gravity: float,
         knockback_decay: float,
         stage_body_width: float | None = None,
+        entry: dict | None = None,
     ) -> None:
         self.stage = stage
         self.anim = anim
+        self.entry = entry or {}
+        self.name = self.entry.get("name", type(self).__name__)
+        self.skill_slots = list(self.entry.get("skill_slots", []))
+        self.basic_atk = 0.0
+        self.extra_atk = 0.0
+        self.atk = 0.0
         self.hurtbox_config = hurtbox_config
         self.stage_half_width = (
             float(stage_body_width) * 0.5
@@ -56,6 +63,7 @@ class Fighter:
         self.kb_time = 0.0
         self.kb_decay = max(0.01, knockback_decay)
         self.gravity = gravity
+        self.knock_up_gravity = gravity
         self.on_ground = True
         self.max_hp = float(max_hp)
         self.hp = float(max_hp)
@@ -67,6 +75,12 @@ class Fighter:
         self.statuses = StatusSet()
         self.attack_runtime = None
         self.attack_id = None
+
+    def set_attack_stats(self, cfg: dict) -> None:
+        """Copy the data-driven attack values used by the damage formula."""
+        self.basic_atk = float(cfg.get("basic_atk", 0.0))
+        self.extra_atk = float(cfg.get("extra_atk", 0.0))
+        self.atk = self.basic_atk + self.extra_atk
 
     # --- geometry -----------------------------------------------------------
     @property
@@ -123,6 +137,7 @@ class Fighter:
             self.hitstun = 0.0
             self.kb_vx = 0.0
             self.kb_time = 0.0
+            self.vy = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
             return True
@@ -148,6 +163,7 @@ class Fighter:
             self.state = FighterState.KO
             self.kb_vx = 0.0
             self.kb_time = 0.0
+            self.vy = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
 
@@ -160,6 +176,38 @@ class Fighter:
 
     def on_projectile_hit(self, projectile) -> None:
         return
+
+    def force_skill(self, scene, target, slot: int) -> bool:
+        """Trigger one of the enemy's four data-defined skill slots.
+
+        ``slot`` is zero-based (V/C/X/Z -> 0/1/2/3). ``None`` slots and
+        classes without ``force_attack`` are safe no-ops.
+        """
+        if slot < 0 or slot >= len(self.skill_slots):
+            return False
+        attack_id = self.skill_slots[slot]
+        if not attack_id:
+            return False
+        force = getattr(self, "force_attack", None)
+        if force is None:
+            return False
+        return bool(force(scene, target, attack_id))
+
+    def skill_remaining(self, attack_id: str) -> float:
+        """Cooldown remaining for the debug panel; overridden by enemies."""
+        return 0.0
+
+    def set_air_or_idle_anim(self) -> None:
+        """Show jump frames while airborne and idle frames on the ground."""
+        if self.anim is None:
+            return
+        if not self.on_ground:
+            self.state = FighterState.AIR
+            self.anim.set_clip("jump")
+            self.anim.set_frame(0 if self.vy < 0.0 else 1)
+        else:
+            self.state = FighterState.IDLE
+            self.anim.set_clip("idle")
 
     # --- reset --------------------------------------------------------------
     def reset_common(self, x: float, y: float, facing: int) -> None:

@@ -4,18 +4,16 @@ from __future__ import annotations
 
 import pygame
 
+from .combat import attack_damage
+from .config import FIXED_DT
 from .debug import DebugOverlay, DebugPanel
-from .dummy import Dummy
 from .fighter import Fighter, FighterState
 from .hud import HUD
 from .input import InputState
-from .lina import Lina
-from .particles import ParticleSystem
+from .particles import ParticleSystem, draw_knock_up_vortex
 from .projectile import AxeThrow, QWave
+from .roster import create_fighter
 from .stage import Stage
-from .warrior import Warrior
-
-ENEMY_MODES = ("warrior", "dummy")
 
 DEBUG_KEYS = {
     pygame.K_F1,
@@ -31,11 +29,21 @@ DEBUG_KEYS = {
     pygame.K_v,
     pygame.K_c,
     pygame.K_x,
+    pygame.K_z,
     pygame.K_b,
+    pygame.K_LEFTBRACKET,
+    pygame.K_RIGHTBRACKET,
     pygame.K_LEFT,
     pygame.K_RIGHT,
     pygame.K_PAGEUP,
     pygame.K_PAGEDOWN,
+}
+
+SKILL_KEYS = {
+    pygame.K_v: 0,
+    pygame.K_c: 1,
+    pygame.K_x: 2,
+    pygame.K_z: 3,
 }
 
 
@@ -59,21 +67,44 @@ class ArenaScene:
         self.time_scales = [0.25, 0.5, 1.0, 2.0]
         self.time_scale_index = 2
         self.time_scale = 1.0
-        self.enemy_mode = str(store.debug.get("enemy", {}).get("default_mode", "warrior"))
-        if self.enemy_mode not in ENEMY_MODES:
-            self.enemy_mode = "warrior"
+        self.lock_on = False
+        defaults = store.debug.get("roster", {})
+        characters = store.roster.get("characters", {})
+        enemies = store.roster.get("enemies", {})
+        self.character_id = str(
+            defaults.get("default_character", next(iter(characters), ""))
+        )
+        self.enemy_id = str(defaults.get("default_enemy", next(iter(enemies), "")))
+        self.character_spec: dict = {}
+        self.enemy_spec: dict = {}
         self.match_over: str | None = None
         self.stage: Stage
-        self.lina: Lina
+        self.player: Fighter
         self.enemy: Fighter
         self.particles = ParticleSystem()
         self.rebuild()
 
     # --- lifecycle ----------------------------------------------------------
-    def rebuild(self) -> None:
-        self.stage = Stage(self.store.debug["stage"])
-        self.lina = Lina(self.store, self.stage)
-        self.enemy = self._create_enemy()
+    def _resolve_ids(self) -> None:
+        characters = self.store.roster.get("characters", {})
+        enemies = self.store.roster.get("enemies", {})
+        defaults = self.store.debug.get("roster", {})
+        if self.character_id not in characters:
+            self.character_id = str(
+                defaults.get("default_character", next(iter(characters), ""))
+            )
+        if self.enemy_id not in enemies:
+            self.enemy_id = str(
+                defaults.get("default_enemy", next(iter(enemies), ""))
+            )
+        self.character_spec = characters[self.character_id]
+        self.enemy_spec = enemies[self.enemy_id]
+
+    def _rebuild_fighters(self) -> None:
+        blocks_enabled = self.stage.blocks_enabled
+        self.player = create_fighter(self.character_spec, self.store, self.stage)
+        self.enemy = create_fighter(self.enemy_spec, self.store, self.stage)
+        self.stage.blocks_enabled = blocks_enabled
         self.projectiles = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
@@ -83,8 +114,18 @@ class ArenaScene:
         self.last_hit = None
         self.match_over = None
         self.status_demo_index = 0
-        self.input.buffer.max_age = float(self.store.stats["combat"]["input_buffer"])
+        self.lock_on = False
         self.input.clear()
+
+    def _force_ai_off(self) -> None:
+        if hasattr(self.enemy, "ai_enabled"):
+            self.enemy.ai_enabled = False
+
+    def rebuild(self) -> None:
+        self.stage = Stage(self.store.debug["stage"])
+        self._resolve_ids()
+        self._rebuild_fighters()
+        self.input.buffer.max_age = float(self.store.stats["combat"]["input_buffer"])
 
         debug_cfg = self.store.debug.get("debug", {})
         self.time_scales = list(debug_cfg.get("time_scales", [0.25, 0.5, 1.0, 2.0]))
@@ -100,39 +141,73 @@ class ArenaScene:
             self.time_scale_index = 0
             self.time_scale = 1.0
 
-    def _create_enemy(self) -> Fighter:
-        if self.enemy_mode == "dummy":
-            return Dummy(self.store, self.stage)
-        return Warrior(self.store, self.stage)
-
-    def set_enemy_mode(self, mode: str) -> bool:
-        if mode not in ENEMY_MODES or mode == self.enemy_mode:
+    def set_character(self, character_id: str) -> bool:
+        characters = self.store.roster.get("characters", {})
+        if character_id not in characters or character_id == self.character_id:
             return False
-        self.enemy_mode = mode
-        self.lina.cancel_attack()
-        self.enemy = self._create_enemy()
-        self.projectiles = []
-        self.hitstop = 0.0
-        self.last_hit = None
-        self.debug_hitboxes = []
-        self.match_over = None
+        self.character_id = character_id
+        self.character_spec = characters[character_id]
+        self._rebuild_fighters()
+        self._force_ai_off()
         return True
 
+    def set_enemy(self, enemy_id: str) -> bool:
+        enemies = self.store.roster.get("enemies", {})
+        if enemy_id not in enemies or enemy_id == self.enemy_id:
+            return False
+        self.enemy_id = enemy_id
+        self.enemy_spec = enemies[enemy_id]
+        self._rebuild_fighters()
+        self._force_ai_off()
+        return True
+
+    def cycle_character(self, step: int = 1) -> bool:
+        ids = list(self.store.roster.get("characters", {}))
+        if len(ids) <= 1 or self.character_id not in ids:
+            return False
+        index = ids.index(self.character_id)
+        return self.set_character(ids[(index + step) % len(ids)])
+
+    def cycle_enemy(self) -> bool:
+        ids = list(self.store.roster.get("enemies", {}))
+        if len(ids) <= 1 or self.enemy_id not in ids:
+            return False
+        index = ids.index(self.enemy_id)
+        return self.set_enemy(ids[(index + 1) % len(ids)])
+
+    def toggle_lock_on(self) -> bool:
+        """Toggle attack lock-on; returns the new state."""
+        self.lock_on = not self.lock_on
+        return self.lock_on
+
+    def face_target_if_locked(self, fighter, target) -> None:
+        """At attack start, face the living enemy while lock-on is active."""
+        if not self.lock_on or target is None or target.hp <= 0.0:
+            return
+        dx = target.x - fighter.x
+        if abs(dx) > 8.0:
+            fighter.facing = 1 if dx > 0.0 else -1
+
     def opponent_of(self, fighter):
-        if fighter is self.lina:
+        if fighter is self.player:
             return self.enemy
         if fighter is self.enemy:
-            return self.lina
+            return self.player
         return None
 
     def reload_data(self) -> bool:
         if not self.store.reload():
             return False
-        self.rebuild()
+        try:
+            self.rebuild()
+        except Exception as exc:  # noqa: BLE001 - reported in the debug panel
+            self.store.last_error = f"{type(exc).__name__}: {exc}"
+            self.store.last_ok = False
+            return False
         return True
 
     def reset(self) -> None:
-        self.lina.reset()
+        self.player.reset()
         self.enemy.reset()
         self.projectiles = []
         self.particles = ParticleSystem()
@@ -155,9 +230,9 @@ class ArenaScene:
 
         self.debug_hitboxes.clear()
         self.input.update(dt)
-        self.lina.update(dt, self.input, self.enemy, self)
+        self.player.update(dt, self.input, self.enemy, self)
         self.enemy.update(dt, self)
-        self._separate_fighters()
+        self._separate_fighters(dt)
         self._check_match_end()
 
         if self.hitstop > 0.0:
@@ -166,10 +241,11 @@ class ArenaScene:
         for projectile in self.projectiles:
             projectile.update(dt, self)
         self.projectiles = [projectile for projectile in self.projectiles if projectile.alive]
+        self._check_match_end()
         self.particles.update(dt)
 
-        if self.lina.flame_time > 0.0:
-            self.particles.emit_flame(self.lina.x, self.lina.y)
+        if getattr(self.player, "flame_time", 0.0) > 0.0:
+            self.particles.emit_flame(self.player.x, self.player.y)
         if self.enemy.statuses.has("burn"):
             self.particles.emit_flame(self.enemy.x, self.enemy.y - 90.0)
 
@@ -191,49 +267,59 @@ class ArenaScene:
                 return False
         return True
 
-    def _separate_fighters(self) -> None:
-        """Keep the Warrior's center from crossing Lina's center.
-
-        There is no fighter-vs-fighter physics elsewhere; without this the AI
-        can walk through Lina, flip facing every few pixels and stack sprites.
-        """
-        if self.enemy_mode != "warrior":
+    def _separate_fighters(self, dt: float = FIXED_DT) -> None:
+        """Keep the enemy's center from crossing the player's center."""
+        if not self.enemy_spec.get("separates", False):
             return
-        if self.lina.hp <= 0.0 or self.enemy.hp <= 0.0:
+        if self.player.hp <= 0.0 or self.enemy.hp <= 0.0:
             return
-        lina_body = self.stage.body_rect(self.lina)
+        player_body = self.stage.body_rect(self.player)
         enemy_body = self.stage.body_rect(self.enemy)
-        if not lina_body.colliderect(enemy_body):
+        if not player_body.colliderect(enemy_body):
             return
 
-        min_dist = self.lina.stage_half_width + self.enemy.stage_half_width
-        dx = self.enemy.x - self.lina.x
+        min_dist = self.player.stage_half_width + self.enemy.stage_half_width
+        dx = self.enemy.x - self.player.x
         if abs(dx) >= min_dist:
             return
         if abs(dx) < 0.01:
             side = self.enemy.facing
         else:
             side = 1 if dx > 0.0 else -1
-        # Prefer a side where the Warrior can actually stand; otherwise the
-        # block resolver would fling him to the far edge of a block.
-        if not self._can_stand(self.enemy, self.lina.x + side * min_dist):
-            other = -side
-            if self._can_stand(self.enemy, self.lina.x + other * min_dist):
-                side = other
-        target_x = self.lina.x + side * min_dist
-        self.stage.move_x(self.enemy, target_x - self.enemy.x)
-        # If a wall or block stopped the Warrior, push Lina to the free side
-        # instead of leaving the bodies stacked.
-        if abs(self.enemy.x - self.lina.x) < min_dist:
-            lina_target = self.enemy.x - side * min_dist
-            self.stage.move_x(self.lina, lina_target - self.lina.x)
+        # The enemy yields first, but only on his current side. Flipping to
+        # the other side of the player would teleport him across the block
+        # that blocked the first target. If his side is blocked, push the
+        # player away instead. Both pushes are capped so a deep overlap
+        # slides apart over a few ticks instead of teleporting.
+        max_step = float(
+            self.store.stats["combat"].get("separation_speed", 600.0)
+        ) * dt
+        target_x = self.player.x + side * min_dist
+        if self._can_stand(self.enemy, self.enemy.x) and self._can_stand(
+            self.enemy, target_x
+        ):
+            self._step_x(self.enemy, target_x, max_step)
+        if abs(self.enemy.x - self.player.x) < min_dist:
+            player_target = self.enemy.x - side * min_dist
+            if self._can_stand(self.player, self.player.x) and self._can_stand(
+                self.player, player_target
+            ):
+                self._step_x(self.player, player_target, max_step)
+
+    def _step_x(self, fighter, target_x: float, max_step: float) -> None:
+        """Move toward a target without crossing into a block in one tick."""
+        delta = target_x - fighter.x
+        if abs(delta) > max_step:
+            delta = max_step if delta > 0.0 else -max_step
+        if delta and self._can_stand(fighter, fighter.x + delta):
+            self.stage.move_x(fighter, delta)
 
     def _check_match_end(self) -> None:
-        if self.enemy_mode != "warrior" or self.match_over is not None:
+        if not self.enemy_spec.get("decides_match", False) or self.match_over is not None:
             return
         if self.enemy.hp <= 0.0:
             self.match_over = "WIN"
-        elif self.lina.hp <= 0.0:
+        elif self.player.hp <= 0.0:
             self.match_over = "LOSE"
 
     def spawn_projectile_from_event(self, attacker, attack: dict, event: dict) -> None:
@@ -241,15 +327,12 @@ class ArenaScene:
         lane_y = self.stage.lane_y(lane_name, attacker.y)
         direction = attacker.facing
         bonus = attacker.current_flame_bonus()
-        if "damage" in event:
-            damage = float(event["damage"]) * (1.0 + bonus)
-        else:
-            base = attacker.atk * float(event.get("damage_mult", attack.get("damage_mult", 1.0)))
-            damage = base * (1.0 + bonus)
+        damage = attack_damage(attacker, attack, event) * (1.0 + bonus)
         flame = getattr(attacker, "flame_time", 0.0) > 0.0
         target = self.opponent_of(attacker)
 
-        if event.get("id") == "axe_throw":
+        projectile_kind = event.get("projectile", "q_wave")
+        if projectile_kind == "axe":
             projectile = AxeThrow(
                 owner=attacker,
                 target=target,
@@ -300,7 +383,9 @@ class ArenaScene:
         value = {"slow": 0.5, "damage_reduction": 0.2}.get(kind, 0.0)
         dps = 0.0
         if kind == "burn":
-            dps = self.lina.burn_dps
+            dps = float(
+                getattr(self.player, "burn_dps", self.store.stats["combat"]["burn_dps"])
+            )
         elif kind == "poison":
             dps = self.enemy.max_hp * float(self.store.stats["combat"]["poison_dps_pct"])
         self.enemy.statuses.add(kind, 3.0, source="debug", value=value, dps=dps)
@@ -315,37 +400,35 @@ class ArenaScene:
         elif key == pygame.K_F6:
             self.cycle_time_scale()
         elif key == pygame.K_F7:
-            self.set_enemy_mode("dummy" if self.enemy_mode == "warrior" else "warrior")
+            self.cycle_enemy()
+        elif key == pygame.K_LEFTBRACKET:
+            self.cycle_character(-1)
+        elif key == pygame.K_RIGHTBRACKET:
+            self.cycle_character(1)
         elif key == pygame.K_F8:
-            if self.enemy_mode == "warrior":
+            if hasattr(self.enemy, "ai_enabled"):
                 self.enemy.ai_enabled = not self.enemy.ai_enabled
-            else:
+            elif hasattr(self.enemy, "invincible"):
                 self.enemy.invincible = not self.enemy.invincible
         elif key == pygame.K_F9:
             self.reset()
         elif key == pygame.K_b:
             self.stage.toggle_blocks()
         elif key == pygame.K_F10:
-            self.lina.energy = self.lina.max_energy
-            self.lina.e_cd = 0.0
-            self.lina.start_transform()
+            if hasattr(self.player, "start_transform") and hasattr(self.player, "energy"):
+                self.player.energy = self.player.max_energy
+                self.player.e_cd = 0.0
+                self.player.start_transform()
         elif key == pygame.K_F11:
             self._cycle_status_demo()
         elif key == pygame.K_F12:
-            if self.lina.hp > 10.0:
-                self.lina.take_hit(10.0, 0.0, 0.2, -1)
+            if self.player.hp > 10.0:
+                self.player.take_hit(10.0, 0.0, 0.2, -1)
             else:
-                self.lina.take_hit(999.0, 0.0, 0.2, -1)
+                self.player.take_hit(999.0, 0.0, 0.2, -1)
             self._check_match_end()
-        elif key == pygame.K_v:
-            if self.enemy_mode == "warrior":
-                self.enemy.force_attack(self, self.lina, "axe_slash")
-        elif key == pygame.K_c:
-            if self.enemy_mode == "warrior":
-                self.enemy.force_attack(self, self.lina, "dash")
-        elif key == pygame.K_x:
-            if self.enemy_mode == "warrior":
-                self.enemy.force_attack(self, self.lina, "axe_throw")
+        elif key in SKILL_KEYS:
+            self.enemy.force_skill(self, self.player, SKILL_KEYS[key])
         elif key == pygame.K_LEFT:
             self.stage.move_x(self.enemy, -20.0)
         elif key == pygame.K_RIGHT:
@@ -356,7 +439,7 @@ class ArenaScene:
                 self.enemy.state = FighterState.IDLE
                 if self.enemy.anim is not None:
                     self.enemy.anim.set_clip("idle", reset=True)
-            if self.lina.hp > 0.0:
+            if self.player.hp > 0.0:
                 self.match_over = None
         elif key == pygame.K_PAGEDOWN:
             self.enemy.hp = max(0.0, self.enemy.hp - 100.0)
@@ -367,13 +450,34 @@ class ArenaScene:
             self._check_match_end()
 
     # --- rendering ----------------------------------------------------------
+    def knock_up_effect_progress(self, fighter) -> float | None:
+        """Remaining knock_up ratio, or None when the effect is inactive."""
+        effect = fighter.statuses.get("knock_up")
+        if effect is None or effect.total <= 0.0:
+            return None
+        return max(0.0, min(1.0, effect.remaining / effect.total))
+
+    def _draw_knock_up_effects(self, surface: pygame.Surface) -> None:
+        cfg = self.store.stats["combat"].get("knock_up_fx", {})
+        spin = float(cfg.get("spin", 6.0))
+        for fighter in (self.enemy, self.player):
+            effect = fighter.statuses.get("knock_up")
+            progress = self.knock_up_effect_progress(fighter)
+            if effect is None or progress is None:
+                continue
+            elapsed = max(0.0, effect.total - effect.remaining)
+            draw_knock_up_vortex(
+                surface, fighter.x, fighter.y, progress, elapsed * spin, cfg
+            )
+
     def draw(self, surface: pygame.Surface) -> None:
         self.stage.draw(surface)
+        self._draw_knock_up_effects(surface)
         self.enemy.draw(surface)
         for projectile in self.projectiles:
             projectile.draw(surface)
         self.particles.draw(surface)
-        self.lina.draw(surface)
+        self.player.draw(surface)
         self.hud.draw(surface, self)
         if self.show_overlay:
             self.overlay.draw(surface, self)

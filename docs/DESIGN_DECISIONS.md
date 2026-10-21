@@ -11,16 +11,25 @@ This document records the provisional rules used by the sandbox. Values live in
 - Arcade feel: attacks lock ground movement with a small forward lunge. Attack direction follows Lina's
   current facing, which is set by A/D; attacks do not auto-face the target. Facing persists while idle,
   so tapping A/D before an attack aims the punch, kick or Q to that side.
+- Attack lock-on is off by default. Middle mouse toggles it; while on, Lina's punch/kick/Q start by
+  facing the living enemy (8px deadzone), and the attack, lunge and projectile follow that facing.
+  Idle facing, movement and Warrior AI are unchanged. Switching character/enemy resets lock-on to
+  off; F9 keeps the current setting; startup/F5 are off.
 - Presses during an attack go into a one-slot action queue instead of expiring with the 120ms buffer.
   The newest press wins; punch/kick start the opposite limb when the attack ends, and Q or jump also
   wait for the attack to end. E is the exception: it waits only for recovery to begin, then cancels it.
+- Presses made during hitstun or a control lock (knock_up/freeze/stun) use the same one-slot queue.
+  The newest press survives the lock and executes as soon as control returns, instead of expiring
+  with the short input buffer.
 - Held movement and crouch are rebuilt from the physical keyboard after pause resume, scene
   reset/rebuild and focus regain, so a key held across those moments keeps working without a re-press.
   Text input is disabled at startup so a Chinese IME does not consume gameplay keys.
 - Ground-only LMB/RMB/Q; E can be used in the air. No air normal attacks.
 - Knockback is 300px/s for the kick and 150px/s for Q, decaying over 0.35s.
-- Lina's attacks use ATK x multiplier: punch 1.0, kick 1.5, Q 1.25.
-  With the initial ATK of 20 this is 20 / 30 / 25 damage.
+- Lina's attacks follow the docx basic/extra split: punch `atk` (basic + extra), kick
+  `1.2 * basic + 0.8 * extra`, Q `basic + 1.5 * extra`. With the initial basic 20 / extra 0 this is
+  20 / 24 / 20 damage. `attacks.json` stores `basic_mult` and `extra_mult`; flame bonus and damage
+  reduction apply to the result.
 - Energy: max 100, starts at 0, no regeneration. Hits grant +15 punch / +20 kick / +20 Q.
 - Q cooldown: 8s. E cooldown: 20s. Both start ready at battle start.
 - E also costs 100 energy and refreshes Q. While in flame form, hits grant no energy.
@@ -63,8 +72,8 @@ This document records the provisional rules used by the sandbox. Values live in
   independent instances that each deal damage. Poison is data-only in the first milestone and can be
   forced from the debug controls.
 - Super armor ignores control effects. Damage reduction is a percentage multiplier.
-- First milestone naturally triggers burn (flame hits), knockback (kick/Q), and knock-up/stun through
-  debug scenarios; freeze/slow/poison/super armor/damage reduction are available through F11.
+- The sandbox naturally triggers burn (flame hits), knockback (kick/Q), and knock-up (Warrior dash);
+  stun, freeze, slow, poison, super armor and damage reduction are available through F11.
 
 ## Stage and projectile heights
 
@@ -72,9 +81,11 @@ This document records the provisional rules used by the sandbox. Values live in
 - Ground y=620; walls at x=90 and x=1190; two solid blocks at x=400..490 and x=760..850.
 - Lina spawns at x=280; the dummy and Warrior spawn at x=1000.
 - Fighters keep a minimum center distance equal to the sum of their stage body half-widths
-  (Lina 50 + Warrior 60 = 110px). The Warrior yields first; if a wall/block stops him, Lina is
-  pushed to the free side. Warrior facing ignores targets within an 8px deadzone, so overlapping
-  bodies cannot flip the sprite every tick.
+  (Lina 50 + Warrior 60 = 110px). The enemy yields first on his current side; if a wall/block
+  blocks that side, he is not flipped across the player — Lina is pushed to the free side instead.
+  Separation moves at most `combat.separation_speed × dt` (600px/s), so a deep overlap slides apart
+  over a few ticks instead of teleporting. Warrior facing ignores targets within an 8px deadzone,
+  so overlapping bodies cannot flip the sprite every tick.
 - Stage collision uses a wider grounded body than the 56px combat hurtbox: Lina's
   `stage_body_width` is 100px, so her front boot stops at the block edge instead of entering it.
   While airborne, collision falls back to the hurtbox width so stepping off a ledge does not snap
@@ -95,13 +106,37 @@ This document records the provisional rules used by the sandbox. Values live in
 - Warrior is the default enemy; the training Dummy remains available through F7. Dummy mode is
   training-only and does not show a win/loss banner.
 - Canvas: 384x384, feet-center pivot (192,372), body about 230px. Lina stays 256x256 / (128,244).
-- Frames (24): idle 4, walk 6, jump 2, axe_slash 6, hurt 2, KO 4. Axe slash frame 01 is a mid-lift
-  between the low rear guard and the high wind-up; frames 03/04 use a one-handed rear grip based on
-  the follow-through pose.
-- Stats: HP 300, ATK 24, `stage_body_width` 120, hurtbox 84x230, walk 160, jump_v 700, gravity 2200.
+- Frames (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4. Axe slash
+  frame 01 is a mid-lift between the low rear guard and the high wind-up; frames 03/04 use a
+  one-handed rear grip based on the follow-through pose.
+- Stats: HP 300, basic ATK 20, extra ATK 0, `stage_body_width` 120, hurtbox 84x230, walk 160,
+  jump_v 700, gravity 2200. Damage is `basic_mult * basic + extra_mult * extra`; Warrior skills use
+  equal multipliers, i.e. `1.2 / 1.5 / 1.2 * atk`.
 - Axe slash: 0.75s total, startup 0.25s (frames 0-2), active 0.30s (frames 3-4), recovery 0.20s
-  (frame 5); hitbox `[36,-205,150,110]` active t=0.25..0.55; knockback 380; hitstun 0.3; hitstop
-  0.08; cooldown 0.9s after the attack ends.
+  (frame 5); hitbox `[36,-205,150,110]` active t=0.25..0.55; 24 damage; knockback 380; hitstun 0.3;
+  hitstop 0.08; cooldown 0.9s after the attack ends.
+- Dash: 0.5s; dash event moves at 900px/s during 0.06..0.34s; hitbox `[20,-190,120,140]` deals
+  30 damage (`1.5 * atk`), `launch` 760, `knock_up` 1.5s, knockback 0, hitstun 0.3, hitstop 0.08;
+  armor until 0.34s; cooldown 2.5s from the start. `combat.knock_up_gravity` (1013.333) replaces the
+  normal gravity while `knock_up` is active, so the target stays airborne for about 1.5s.
+- Axe throw: 1.2s; projectile at 0.35s on the high lane, speed 1250, range 420, 24 damage per pass
+  (`1.2 * atk`; one hit out and one back, 48 total), knockback 150, hitstun 0.3, hitstop 0.08; armor
+  until 0.34s; cooldown 2.8s from the start.
+- Knock-up: `launch` sets `vy = -760` and `on_ground = false`; the target takes 0.3s hitstun and
+  receives the `knock_up` status for 1.5s at hit time. While the status is active,
+  `combat.knock_up_gravity` (1013.333) replaces normal gravity, so the target lands as the 1.5s
+  window ends instead of standing locked on the ground for the remainder. The animation uses the
+  jump frames while airborne; landing returns to idle and control. A lethal dash KOs in place without
+  applying launch or `knock_up`. Super armor (the status effect or Warrior startup armor) suppresses
+  both launch and the `knock_up` status. The hitstop is 0.08s. The wall-clock air time is slightly
+  longer than 1.5s because hitstop pauses both the status timer and the physics.
+- While a fighter has `knock_up`, a procedural cyan-white three-arm vortex with an elliptical outer
+  ring is drawn behind its feet. It follows the airborne fighter for the full status duration and
+  shrinks/fades linearly with `remaining / total` down to a minimum visible size and alpha
+  (`min_scale` 0.75 / `min_alpha` 0.55), so it stays readable until the 1.5s window ends and then
+  disappears immediately with the status. It resets to full on a refresh. Tuning lives in
+  `combat.knock_up_fx`. The effect is draw-only: it does not change animation frames, state,
+  collision, movement or hitstop.
 - AI: always faces Lina; approaches when outside 160px; jumps when a block is in front; attacks when
   within 160px and the cooldown is ready; no crouch, no second attack, no pathfinding beyond jumps.
 - Super armor: during axe startup+active (runtime time < 0.55s), a hit deals damage and flash but
@@ -109,13 +144,33 @@ This document records the provisional rules used by the sandbox. Values live in
   lethal armored hit still KOs.
 - Tick order: Lina updates first, then the enemy, then the hitstop gate. This gives the player the
   same-tick trade and lets startup armor complete visibly.
-- Match flow: Warrior mode sets WIN when the enemy HP reaches 0 and LOSE when Lina HP reaches 0;
-  R restarts after a result and F9 resets at any time.
-- Debug: F7 enemy mode; F8 AI (Warrior) / invincibility (Dummy); V force axe; arrows move the current
-  enemy; PgUp/PgDn change current enemy HP.
+- Match flow: for enemies with `decides_match`, WIN is set when their HP reaches 0 and LOSE when
+  Lina HP reaches 0; R restarts after a result and F9 resets at any time.
 
-## Out of scope in the first milestone
+## Roster and skill slots
 
-Daily phases, food/fullness, shop/gold, saves, character selection, audio, the full HUD, other
-characters, other enemies and their AI, packaging and automated tests/logs. The training dummy is a
-debug tool, not a spec enemy.
+- `game/data/roster.json` is the registry. Each character/enemy entry names its `class`, `stats`
+  key, spawn key, animation table keys, frame folder, canonical fallback image, and (for enemies)
+  `skill_slots`, `separates` and `decides_match`.
+- `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
+  longer constructs Lina/Warrior/Dummy directly. A future playable class must keep Lina's
+  `update(dt, input_state, target, scene)` signature; only Lina is installed this round.
+- F7 cycles the enemy roster; `[` / `]` cycle the playable roster (only Lina is installed, so they
+  are safe no-ops). Switching performs a full match reset: both fighters respawn at full HP, and
+  projectiles, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
+  cleared. The B block toggle is preserved; the enemy AI is forced off after a switch (startup and
+  F9 still leave it on, and F8 toggles it).
+- `skill_slots` is a fixed 4-entry list of attack ids or `null`, in slot order. `V/C/X/Z` call
+  `Fighter.force_skill(scene, target, 0..3)`, which resolves the id and calls the class's
+  `force_attack`. Undefined slots and enemies without `force_attack` (Dummy) are safe no-ops. F2
+  prints the four slots and their cooldowns (`-` for empty slots).
+- Cooldown values stay in `stats.json` (`ai.attack_cooldown`, `ai.dash_cooldown`,
+  `ai.throw_cooldown`); the roster only maps slot order to attack ids.
+- Debug: F7 enemy roster, `[` / `]` character roster, F8 AI/invincibility, V/C/X/Z skill slots,
+  arrows move the enemy, PgUp/PgDn change enemy HP.
+
+## Out of scope in the current sandbox
+
+Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, additional playable characters,
+enemies beyond Warrior/Dummy and their AI, packaging and automated tests/logs. The training dummy is
+a debug tool, not a spec enemy.

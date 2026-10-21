@@ -17,8 +17,9 @@
     "dummy_spawn": [1000, 620],
     "warrior_spawn": [1000, 620]
   },
-  "enemy": {
-    "default_mode": "warrior"
+  "roster": {
+    "default_character": "lina",
+    "default_enemy": "warrior"
   },
   "overlay": {
     "hit": [255, 70, 70],

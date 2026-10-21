@@ -35,7 +35,7 @@
   },
   "warrior": {
     "hp": 300,
-    "basic_atk": 24,
+    "basic_atk": 20,
     "extra_atk": 0,
     "stage_body_width": 120,
     "move": {
@@ -61,7 +61,10 @@
   "dummy": {
     "hp": 1000,
     "invincible": false,
-    "hurtbox": [70, 190]
+    "hurtbox": [70, 190],
+    "move": {
+      "gravity": 2200
+    }
   },
   "combat": {
     "hitstun": 0.2,
@@ -70,6 +73,20 @@
     "burn_dps": 5.0,
     "burn_duration": 3.0,
     "poison_dps_pct": 0.02,
-    "input_buffer": 0.12
+    "input_buffer": 0.12,
+    "separation_speed": 600.0,
+    "knock_up_gravity": 1013.333,
+    "knock_up_fx": {
+      "radius_x": 28.0,
+      "radius_y": 10.0,
+      "arms": 3,
+      "thickness": 3,
+      "spin": 6.0,
+      "color": [190, 240, 255],
+      "core_color": [245, 255, 255],
+      "alpha": 0.95,
+      "min_alpha": 0.55,
+      "min_scale": 0.75
+    }
   }
 }

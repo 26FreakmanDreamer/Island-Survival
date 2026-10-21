@@ -4,28 +4,17 @@ from __future__ import annotations
 
 import pygame
 
-from .animation import AnimationPlayer
 from .combat import AttackRuntime
-from .config import CANONICAL_WARRIOR, WARRIOR_FRAMES_DIR
 from .fighter import Fighter, FighterState
 
 
 class Warrior(Fighter):
-    name = "Warrior"
     show_health_bar = True
 
-    def __init__(self, store, stage) -> None:
-        cfg = store.stats["warrior"]
+    def __init__(self, store, stage, entry: dict, anim) -> None:
+        cfg = store.stats[entry["stats"]]
         combat_cfg = store.stats["combat"]
-        anim = AnimationPlayer(
-            store.animations["warrior_clips"],
-            {},
-            WARRIOR_FRAMES_DIR,
-            CANONICAL_WARRIOR,
-            store.animations["warrior_pivot"],
-            frame_size=store.animations["warrior_frame_size"],
-        )
-        x, y = stage.warrior_spawn
+        x, y = stage.spawn(entry["spawn"])
         super().__init__(
             x=x,
             y=y,
@@ -37,11 +26,16 @@ class Warrior(Fighter):
             gravity=cfg["move"]["gravity"],
             knockback_decay=combat_cfg["knockback_decay"],
             stage_body_width=cfg.get("stage_body_width"),
+            entry=entry,
         )
 
         self.store = store
         self.cfg = cfg
-        self.atk = float(cfg["basic_atk"] + cfg["extra_atk"])
+        self.spawn = (float(x), float(y))
+        self.set_attack_stats(cfg)
+        self.knock_up_gravity = float(
+            combat_cfg.get("knock_up_gravity", self.gravity)
+        )
         self.walk_speed = float(cfg["move"]["walk"])
         self.jump_v = float(cfg["move"]["jump_v"])
         self.attack_range = float(cfg["ai"]["attack_range"])
@@ -89,13 +83,12 @@ class Warrior(Fighter):
 
         if self.statuses.control_locked():
             self.vx = 0.0
-            self.state = FighterState.IDLE
-            self.anim.set_clip("idle")
+            self.set_air_or_idle_anim()
             self.anim.update(dt)
             self.stage.move_fighter(self, dt)
             return
 
-        target = scene.lina
+        target = scene.player
         if (
             self.ai_enabled
             and scene.match_over is None
@@ -226,11 +219,11 @@ class Warrior(Fighter):
         elif attack_id == "axe_throw":
             self.throw_cd = self.throw_cd_max
 
-    def force_attack(self, scene, target, attack_id: str = "axe_slash") -> None:
+    def force_attack(self, scene, target, attack_id: str = "axe_slash") -> bool:
         if self.hp <= 0.0 or self.state in (FighterState.KO, FighterState.HURT):
-            return
+            return False
         if not self.on_ground or attack_id not in self.store.attacks:
-            return
+            return False
         if target.x != self.x:
             self.facing = 1 if target.x > self.x else -1
         self.attack_cd = 0.0
@@ -238,6 +231,14 @@ class Warrior(Fighter):
         self.dash_cd = 0.0
         self.throw_cd = 0.0
         self.start_attack(attack_id, scene, target)
+        return True
+
+    def skill_remaining(self, attack_id: str) -> float:
+        return {
+            "axe_slash": self.attack_cd,
+            "dash": self.dash_cd,
+            "axe_throw": self.throw_cd,
+        }.get(attack_id, 0.0)
 
     # --- reactions ----------------------------------------------------------
     def take_hit(
@@ -268,16 +269,18 @@ class Warrior(Fighter):
             self.kb_time = 0.0
             self.attack_runtime = None
             self.attack_id = None
-            self.anim.set_clip("ko", reset=True)
+            if self.anim is not None:
+                self.anim.set_clip("ko", reset=True)
         return True
 
     # --- reset --------------------------------------------------------------
     def reset(self) -> None:
-        x, y = self.stage.warrior_spawn
+        x, y = self.spawn
         self.reset_common(x, y, -1)
         self.attack_cd = 0.0
         self.skill_cd = 0.0
         self.dash_cd = 0.0
         self.throw_cd = 0.0
         self.ai_enabled = True
-        self.anim.set_clip("idle", reset=True)
+        if self.anim is not None:
+            self.anim.set_clip("idle", reset=True)

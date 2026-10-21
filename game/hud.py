@@ -56,45 +56,53 @@ class HUD:
         surface.blit(text, (x + (w - text.get_width()) // 2, y + (h - text.get_height()) // 2))
 
     def draw(self, surface: pygame.Surface, scene) -> None:
-        lina = scene.lina
+        player = scene.player
         enemy = scene.enemy
 
         panel = pygame.Surface((300, 142), pygame.SRCALPHA)
         panel.fill((8, 12, 18, 178))
         surface.blit(panel, (14, 14))
 
-        surface.blit(self.big.render("LINA SEABRIGHT", True, (238, 238, 248)), (24, 20))
+        surface.blit(self.big.render(player.name.upper(), True, (238, 238, 248)), (24, 20))
         self._bar(
             surface, 24, 52, 264, 18,
-            lina.hp / lina.max_hp if lina.max_hp else 0.0,
+            player.hp / player.max_hp if player.max_hp else 0.0,
             (218, 66, 58),
-            f"HP {lina.hp:.0f}/{lina.max_hp:.0f}",
+            f"HP {player.hp:.0f}/{player.max_hp:.0f}",
         )
-        self._bar(
-            surface, 24, 80, 264, 14,
-            lina.energy / lina.max_energy if lina.max_energy else 0.0,
-            (70, 210, 235),
-            f"ENERGY {lina.energy:.0f}/{lina.max_energy:.0f}",
-        )
+        has_energy = hasattr(player, "energy") and hasattr(player, "max_energy")
+        if has_energy:
+            self._bar(
+                surface, 24, 80, 264, 14,
+                player.energy / player.max_energy if player.max_energy else 0.0,
+                (70, 210, 235),
+                f"ENERGY {player.energy:.0f}/{player.max_energy:.0f}",
+            )
 
-        q_label = "Q READY" if lina.q_cd <= 0.0 else f"Q {lina.q_cd:.1f}s"
-        if lina.e_cd > 0.0:
-            e_label = f"E {lina.e_cd:.1f}s"
-        elif lina.energy < lina.max_energy:
-            e_label = "E NEED 100"
-        else:
-            e_label = "E READY"
-        self._badge(surface, 24, 106, 126, 28, q_label, lina.q_cd <= 0.0)
-        self._badge(
-            surface, 158, 106, 130, 28, e_label,
-            lina.e_cd <= 0.0 and lina.energy >= lina.max_energy,
-        )
+        if has_energy and hasattr(player, "q_cd") and hasattr(player, "e_cd"):
+            q_label = "Q READY" if player.q_cd <= 0.0 else f"Q {player.q_cd:.1f}s"
+            if player.e_cd > 0.0:
+                e_label = f"E {player.e_cd:.1f}s"
+            elif player.energy < player.max_energy:
+                e_label = "E NEED 100"
+            else:
+                e_label = "E READY"
+            self._badge(surface, 24, 106, 126, 28, q_label, player.q_cd <= 0.0)
+            self._badge(
+                surface, 158, 106, 130, 28, e_label,
+                player.e_cd <= 0.0 and player.energy >= player.max_energy,
+            )
 
-        if lina.flame_time > 0.0:
-            flame = f"FLAME {lina.flame_time:.1f}s  +{lina.current_flame_bonus():.0%}"
-            surface.blit(self.text.render(flame, True, (255, 168, 78)), (24, 138))
-        else:
-            surface.blit(self.text.render("FLAME -", True, (150, 150, 160)), (24, 138))
+        if hasattr(player, "flame_time") and hasattr(player, "current_flame_bonus"):
+            if player.flame_time > 0.0:
+                flame = f"FLAME {player.flame_time:.1f}s  +{player.current_flame_bonus():.0%}"
+                surface.blit(self.text.render(flame, True, (255, 168, 78)), (24, 138))
+            else:
+                surface.blit(self.text.render("FLAME -", True, (150, 150, 160)), (24, 138))
+
+        if getattr(scene, "lock_on", False):
+            hint = self.text.render("LOCK-ON  (MMB)", True, (255, 210, 80))
+            surface.blit(hint, (24, 160))
 
         label = self.small.render(
             f"{enemy.name.upper()} {enemy.hp:.0f}/{enemy.max_hp:.0f}",

@@ -8,12 +8,11 @@ from .fighter import Fighter, FighterState
 
 
 class Dummy(Fighter):
-    name = "Dummy"
     show_health_bar = True
 
-    def __init__(self, store, stage) -> None:
-        cfg = store.stats["dummy"]
-        x, y = stage.dummy_spawn
+    def __init__(self, store, stage, entry: dict, anim) -> None:
+        cfg = store.stats[entry["stats"]]
+        x, y = stage.spawn(entry["spawn"])
         super().__init__(
             x=x,
             y=y,
@@ -22,11 +21,16 @@ class Dummy(Fighter):
             hurtbox_config={"standing": cfg["hurtbox"], "crouching": cfg["hurtbox"]},
             max_hp=cfg["hp"],
             stage=stage,
-            gravity=store.stats["lina"]["move"]["gravity"],
+            gravity=cfg["move"]["gravity"],
             knockback_decay=store.stats["combat"]["knockback_decay"],
+            entry=entry,
         )
         self.store = store
         self.spawn = (float(x), float(y))
+        self.set_attack_stats(cfg)
+        self.knock_up_gravity = float(
+            store.stats["combat"].get("knock_up_gravity", cfg["move"]["gravity"])
+        )
         self.default_invincible = bool(cfg.get("invincible", False))
         self.reset()
 

@@ -1,5 +1,9 @@
 # Animation asset pipeline
 
+> **Before generating any image, read `docs/IMAGE_GENERATION_RULES.md`.** It is the mandatory
+> pre-flight and contact-sheet gate for near/far limb layering, weapon-hand grip, no
+> interpenetration, and size/proportion lock.
+
 ## Source rules
 
 - `Image/Character/lina-seabright-v1-256.png` is Lina's appearance reference; `v2` is the red/black
@@ -18,7 +22,7 @@
 - Normal (45): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4,
   transform 6, hurt 2, KO 4.
 - Flame form (41): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2.
-- Warrior (24): idle 4, walk 6, jump 2, axe_slash 6, hurt 2, KO 4.
+- Warrior (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4.
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px.
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.

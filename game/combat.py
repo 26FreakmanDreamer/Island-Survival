@@ -5,6 +5,25 @@ from __future__ import annotations
 import pygame
 
 from .config import FIXED_DT
+from .fighter import FighterState
+
+
+def attack_damage(attacker, attack: dict, event: dict | None = None) -> float:
+    """Damage before flame/damage-reduction modifiers.
+
+    The spec separates basic and extra ATK for Lina's kick/Q; Warrior skills
+    use the combined ``atk`` via equal multipliers. An explicit event
+    ``damage`` value still overrides everything for special attacks.
+    """
+    if event is not None and "damage" in event:
+        return float(event["damage"])
+    if "basic_mult" in attack or "extra_mult" in attack:
+        return (
+            getattr(attacker, "basic_atk", 0.0) * float(attack.get("basic_mult", 0.0))
+            + getattr(attacker, "extra_atk", 0.0) * float(attack.get("extra_mult", 0.0))
+        )
+    multiplier = float((event or {}).get("damage_mult", attack.get("damage_mult", 1.0)))
+    return getattr(attacker, "atk", 0.0) * multiplier
 
 
 def local_box_to_rect(fighter, box: list[float]) -> pygame.Rect:
@@ -79,11 +98,7 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         return
 
     bonus = attacker.current_flame_bonus()
-    if "damage" in event:
-        damage = float(event["damage"]) * (1.0 + bonus)
-    else:
-        base = attacker.atk * float(event.get("damage_mult", attack.get("damage_mult", 1.0)))
-        damage = base * (1.0 + bonus)
+    damage = attack_damage(attacker, attack, event) * (1.0 + bonus)
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
 
     knockback = float(event.get("knockback", 0.0))
@@ -96,7 +111,12 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
 
     if damage > 0.0:
         target.take_hit(damage, knockback, hitstun, attacker.facing, launch=launch)
-        if knock_up_time > 0.0 and launch > 0.0 and target.hp > 0.0:
+        if (
+            knock_up_time > 0.0
+            and launch > 0.0
+            and target.hp > 0.0
+            and target.state == FighterState.HURT
+        ):
             target.statuses.add(
                 "knock_up",
                 knock_up_time,

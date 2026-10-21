@@ -2,28 +2,15 @@
 
 from __future__ import annotations
 
-from .animation import AnimationPlayer
 from .combat import AttackRuntime
-from .config import CANONICAL_LINA_V1, FRAMES_DIR
 from .fighter import Fighter, FighterState
 
 
 class Lina(Fighter):
-    name = "Lina"
-
-    def __init__(self, store, stage) -> None:
-        cfg = store.stats["lina"]
+    def __init__(self, store, stage, entry: dict, anim) -> None:
+        cfg = store.stats[entry["stats"]]
         combat_cfg = store.stats["combat"]
-        anim = AnimationPlayer(
-            store.animations["clips"],
-            store.animations.get("flame_clips", {}),
-            FRAMES_DIR,
-            CANONICAL_LINA_V1,
-            store.animations["pivot"],
-            frame_size=store.animations.get("frame_size", (256, 256)),
-            frame_offsets=store.animations.get("flame_offsets", {}),
-        )
-        x, y = stage.player_spawn
+        x, y = stage.spawn(entry["spawn"])
         super().__init__(
             x=x,
             y=y,
@@ -35,12 +22,17 @@ class Lina(Fighter):
             gravity=cfg["move"]["gravity"],
             knockback_decay=combat_cfg["knockback_decay"],
             stage_body_width=cfg.get("stage_body_width"),
+            entry=entry,
         )
 
         self.store = store
         self.cfg = cfg
         self.combat_cfg = combat_cfg
-        self.atk = float(cfg["basic_atk"] + cfg["extra_atk"])
+        self.spawn = (float(x), float(y))
+        self.set_attack_stats(cfg)
+        self.knock_up_gravity = float(
+            combat_cfg.get("knock_up_gravity", self.gravity)
+        )
         self.max_energy = float(cfg["energy"]["max"])
         self.energy_start = float(cfg["energy"]["start"])
         self.energy_regen = float(cfg["energy"]["regen"])
@@ -142,13 +134,13 @@ class Lina(Fighter):
 
         if self.state == FighterState.HURT:
             self.vx = 0.0
+            self._capture_locked_input(input_state)
             self.anim.update(dt)
             if self.hitstun <= 0.0 and self.hp > 0.0:
                 if self.pending_revert:
                     self._start_revert()
                 else:
-                    self.state = FighterState.IDLE
-                    self.anim.set_clip("idle")
+                    self.set_air_or_idle_anim()
             self.stage.move_fighter(self, dt)
             return
 
@@ -173,8 +165,8 @@ class Lina(Fighter):
 
         if self.statuses.control_locked():
             self.vx = 0.0
-            self.state = FighterState.IDLE
-            self.anim.set_clip("idle")
+            self._capture_locked_input(input_state)
+            self.set_air_or_idle_anim()
             self.anim.update(dt)
             self.stage.move_fighter(self, dt)
             return
@@ -219,6 +211,12 @@ class Lina(Fighter):
             self.attack_runtime = None
             self.attack_id = None
             self.anim.set_clip("idle")
+
+    def _capture_locked_input(self, input_state) -> None:
+        """Keep the newest action pressed while unable to act."""
+        action = input_state.buffer.consume_newest(("punch", "kick", "q", "e", "jump"))
+        if action is not None:
+            self.queued_action = action
 
     def _execute_queued(self, input_state, scene, target) -> bool:
         action = self.queued_action
@@ -279,6 +277,14 @@ class Lina(Fighter):
         return True
 
     def _handle_control(self, dt: float, input_state, target, scene) -> None:
+        # An action pressed while hitstunned/control-locked waits for control
+        # to return instead of expiring with the short input buffer.
+        if self.queued_action is not None:
+            ground_action = self.queued_action in ("punch", "kick", "q", "jump")
+            if not (ground_action and not self.on_ground):
+                if self._execute_queued(input_state, scene, target):
+                    return
+
         left = input_state.is_held("left")
         right = input_state.is_held("right")
         if left and not right:
@@ -343,6 +349,7 @@ class Lina(Fighter):
 
     # --- actions ------------------------------------------------------------
     def start_attack(self, attack_id: str, scene, target) -> None:
+        scene.face_target_if_locked(self, target)
         self.attack_id = attack_id
         self.state = FighterState.ATTACK
         self.vx = 0.0
@@ -413,7 +420,7 @@ class Lina(Fighter):
 
     # --- reset --------------------------------------------------------------
     def reset(self) -> None:
-        x, y = self.stage.player_spawn
+        x, y = self.spawn
         self.reset_common(x, y, 1)
         self.energy = self.energy_start
         self.q_cd = 0.0
@@ -427,5 +434,6 @@ class Lina(Fighter):
         self.queued_action = None
         self.pending_revert = False
         self.reverting = False
-        self.anim.set_variant("normal")
-        self.anim.set_clip("idle", reset=True)
+        if self.anim is not None:
+            self.anim.set_variant("normal")
+            self.anim.set_clip("idle", reset=True)

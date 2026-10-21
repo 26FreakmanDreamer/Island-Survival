@@ -12,7 +12,21 @@
 >
 > **E 数值调整（2026-10-20）**：E 冷却由 15s 改为 20s，火焰形态持续时间由 5s 改为 10s；Q 刷新、能量消耗和火焰加成规则不变。
 >
-> **Phase 2 Warrior 更新（2026-10-20）**：Warrior 已完成并接入。默认敌人为 Warrior，F7 可切回训练木桩；完整 1v1（AI 追击/跳跃过 block/斧击、Lina 受伤/KO、胜负与重开）。Warrior 使用 384×384 画布、pivot (192,372)、体高约 230px，共 24 帧（idle 4、walk 6、jump 2、axe_slash 6、hurt 2、KO 4）。斧击 0.75s，前摇 0.25s / 判定 0.30s / 后摇 0.20s；HP 300、伤害 24、击退 380、冷却 0.9s；前摇+判定霸体至 0.55s。详细规则见 `docs/DESIGN_DECISIONS.md`，素材见 `docs/ASSET_PIPELINE.md`，调试键见 `docs/DEBUG.md`。
+> **Phase 2 Warrior 更新（2026-10-20）**：Warrior 已完成并接入。默认敌人为 Warrior，F7 可切回训练木桩；完整 1v1（AI 追击/跳跃过 block/斧击、Lina 受伤/KO、胜负与重开）。Warrior 使用 384×384 画布、pivot (192,372)、体高约 230px，共 36 帧（idle 4、walk 6、jump 2、axe_slash 6、axe_throw 7、dash 5、hurt 2、KO 4）。斧击 0.75s，前摇 0.25s / 判定 0.30s / 后摇 0.20s；HP 300、伤害随 atk 计算、击退 380、冷却 0.9s；前摇+判定霸体至 0.55s。详细规则见 `docs/DESIGN_DECISIONS.md`，素材见 `docs/ASSET_PIPELINE.md`，调试键见 `docs/DEBUG.md`。
+>
+> **Roster / 技能槽更新（2026-10-21）**：新增 `game/data/roster.json` 与 `game/roster.py`，Lina/Warrior/Dummy 由数据构造；F7 切换敌人、`[` / `]` 切换可玩角色（当前仅 Lina），切换时整场重置且 AI 关闭，B 的 block 开关保留。`V/C/X/Z` 改为读取敌人的 4 个 `skill_slots`，未定义槽位安全 no-op，F2 显示槽位与冷却。Warrior 改为 `basic_atk 20` + `1.2/1.5/1.2` 倍率（斧击 24、冲刺 30、投掷 24/段）；Lina 对齐 docx 公式（拳 20、腿 24、Q 20）。dash 击飞补齐空中 jump 帧、原地 KO、霸体不施加 launch/knock_up，hitstop 0.08s。
+>
+> **攻击锁定更新（2026-10-21）**：鼠标中键切换攻击锁定，默认关闭；开启后 Lina 的拳/腿/Q 在起手时面向存活敌人（8px 死区），攻击/前踏/弹道随面向；待机面向、移动和 Warrior AI 不变。切换 character/enemy 时锁定重置为关闭，F9 保留当前设置，F5/启动为关闭；HUD 与 F2 显示 `LOCK-ON`。
+>
+> **身位修复（2026-10-21）**：Warrior/Lina/block 距离过近时，分离逻辑不再把 Warrior 翻到 Lina 另一侧（会造成 100–200px 瞬移）；当前侧被 block/墙挡住时改为反推 Lina。分离移动加入 `combat.separation_speed`（600px/s）上限，深度重叠会在数帧内滑开而不是瞬移。新增 smoke `separation_block_ok`。
+>
+> **击飞漩涡（2026-10-21）**：`knock_up` 期间在被击飞角色脚底绘制程序化青白三臂漩涡 + 椭圆外环；跟随角色整个 1.5s（含空中/落地），大小与透明度随 `remaining / total` 线性收缩淡出，重复击飞重置为满强度。纯绘制，不改角色动画/状态/碰撞/hitstop；参数在 `combat.knock_up_fx`。新增 smoke `knockup_fx_ok`。
+>
+> **击飞输入修复（2026-10-21）**：击飞/受击硬直/控制锁定期间按下的拳/腿/Q/E/跳现在进入单槽缓冲，控制恢复时立即执行；不再因 120ms 输入缓冲过期而“击飞结束后按了没反应”。新增 smoke `lock_buffer_ok`。
+>
+> **滞空延长（2026-10-21）**：knock_up 期间用 `combat.knock_up_gravity`（1013.333）代替普通重力，滞空约 1.5s；落地时漩涡结束、控制恢复，排队动作在落地后 1–3 帧内执行（hitstop 会让墙钟时间略长于 1.5s）。`lock_buffer_ok` 现同时断言落地到出拳不超过 3 帧。
+>
+> **漩涡可见度（2026-10-21）**：漩涡不再线性淡到不可见；大小/透明度只降到 `min_scale 0.75` / `min_alpha 0.55`，全程保持可读，`knock_up` 结束时立即消失。smoke 新增 `fx_end_visible_ok`。
 
 ## Context
 
@@ -131,7 +145,7 @@ d:/Program Game/Island Survival/
 ### 资源 / 冷却 / 火焰形态
 - 初始 HP 100、ATK 20（basic 20 + extra 0）、能量 0/100、无回复。
 - 命中回能：拳 +15、腿 +20、Q +20。
-- 攻击伤害 = ATK × 倍率：拳 1.0、腿 1.5、Q 1.25；当前 ATK=20 时即 20/30/25。倍率写在 `stats.json`，方便后续 extra atk 生效。
+- 攻击伤害按 docx 的 basic/extra 拆分：拳 `atk`、腿 `1.2×basic + 0.8×extra`、Q `basic + 1.5×extra`；当前 basic 20 / extra 0 时即 20/24/20。倍率写在 `attacks.json` 的 `basic_mult`/`extra_mult`，后续 extra atk 会自动生效。
 - Q 冷却 8s，开局就绪；E 冷却 15s，开局就绪；E 额外消耗 100 能量（释放后能量归 0）。
 - E 激活：刷新 Q（Q 冷却归 0）、进入火焰形态 5s、火焰加成计数归 0；形态内命中不回能。
 - 火焰形态命中计数从 0 开始；在结算每一次**造成伤害**的命中前先取该次档位：第 1 次 +20%、第 2 次 +40%、第 3 次及以后 +60%；不刷新持续时间；E 结束后加成清除。
@@ -144,7 +158,7 @@ d:/Program Game/Island Survival/
 - `burn`：5 HP/s × 3s，重复施加刷新持续时间。
 - `poison`：2% 最大 HP/s，数据模型支持文档的叠加规则——**同源再次施毒延长持续时间，不同源各自保留独立实例**；首版不自然触发，只由 F11 调试强制。
 - `slow`/`freeze` 首版不自然触发，只由 F11 调试强制。
-- `knockback` 由腿和 Q 触发（拳不击退）；`knock_up` 与 `stun` 由调试场景强制触发（Warrior/Bat 在 Phase 2 才会自然使用）。
+- `knockback` 由腿和 Q 触发（拳不击退）；`knock_up` 由 Warrior dash 自然触发；`stun` 仍由调试场景强制触发。
 - 控制效果的“不可移动/不可攻击/不可用技能道具”统一由 `can_act()` 判定；`super_armor` 绕过控制。
 
 ### 木桩
@@ -177,7 +191,7 @@ d:/Program Game/Island Survival/
 ```json
 {
   "punch_r": {
-    "damage_mult": 1.0, "duration": 0.25, "lunge": 18,
+    "basic_mult": 1.0, "extra_mult": 1.0, "duration": 0.25, "lunge": 18,
     "energy_gain": 15, "hitstun": 0.2, "hitstop": 0.06,
     "next": "punch_l", "chain_window": 0.15,
     "events": [
@@ -186,7 +200,7 @@ d:/Program Game/Island Survival/
     ]
   },
   "kick_r": {
-    "damage_mult": 1.5, "duration": 0.4, "lunge": 14,
+    "basic_mult": 1.2, "extra_mult": 0.8, "duration": 0.4, "lunge": 14,
     "energy_gain": 20, "hitstun": 0.2, "hitstop": 0.06,
     "next": "kick_l", "chain_window": 0.15,
     "events": [
@@ -195,7 +209,7 @@ d:/Program Game/Island Survival/
     ]
   },
   "q": {
-    "damage_mult": 1.25, "duration": 0.35, "lunge": 0,
+    "basic_mult": 1.0, "extra_mult": 1.5, "duration": 0.35, "lunge": 0,
     "energy_gain": 20, "hitstun": 0.2, "hitstop": 0.06,
     "events": [
       {"t": 0.20, "type": "projectile", "id": "q_wave",
@@ -403,7 +417,7 @@ camera, scale, position and lighting in every frame. Only change the pose:
 - 同源毒伤再次施加延长时间；不同源各自独立实例、分别扣血。
 - 右键击退 300 px/s，Q 150 px/s，0.35s 线性衰减；受击硬直 200ms。
 - 高/中/低弹道固定为地面上方 180/120/60px；Q 为中弹道；数值可在 `debug.json` 调整。
-- 攻击伤害 = ATK × 倍率（拳 1.0 / 腿 1.5 / Q 1.25）；当前 ATK=20 → 20/30/25。
+- 攻击伤害按 docx 的 basic/extra 拆分（拳 `atk` / 腿 `1.2×basic + 0.8×extra` / Q `basic + 1.5×extra`）；当前 basic 20 / extra 0 → 20/24/20。
 - LMB/RMB/Q 仅地面可用；E 空中可用；没有空中普攻。
 - 攻击自动面向最近敌人；攻击期间锁水平移动，事件时刻小幅前踏。
 - 木桩 1000 HP、无 AI、不攻击；Lina 的 HP/受击/KO 只由调试场景触发。

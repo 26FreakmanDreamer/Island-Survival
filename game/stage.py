@@ -20,10 +20,18 @@ class Stage:
         self.blocks = [pygame.Rect(int(x), int(y), int(w), int(h)) for x, y, w, h in stage_cfg["blocks"]]
         self.blocks_enabled = True
         self.land_margin = float(stage_cfg.get("land_margin", 8.0))
-        self.player_spawn = tuple(stage_cfg["player_spawn"])
-        self.dummy_spawn = tuple(stage_cfg["dummy_spawn"])
-        self.warrior_spawn = tuple(stage_cfg["warrior_spawn"])
+        self.spawns = {
+            key: tuple(value)
+            for key, value in stage_cfg.items()
+            if key.endswith("_spawn")
+        }
+        self.player_spawn = self.spawns["player_spawn"]
+        self.dummy_spawn = self.spawns["dummy_spawn"]
+        self.warrior_spawn = self.spawns["warrior_spawn"]
         self.background = self._load_background()
+
+    def spawn(self, key: str) -> tuple[float, float]:
+        return self.spawns[key]
 
     @staticmethod
     def _load_background() -> pygame.Surface:
@@ -140,7 +148,10 @@ class Stage:
 
         previous_y = fighter.y
         if not fighter.on_ground:
-            fighter.vy += fighter.gravity * dt
+            gravity = fighter.gravity
+            if fighter.statuses.has("knock_up"):
+                gravity = getattr(fighter, "knock_up_gravity", gravity)
+            fighter.vy += gravity * dt
         fighter.y += fighter.vy * dt
 
         landed = False

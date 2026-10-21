@@ -3,7 +3,9 @@
 > 写于 2026-10-20。Lina 战斗沙盒已完成，下一阶段是 Warrior。
 > 新 session 没有旧对话上下文，**以本文件和仓库文件为准**。
 >
-> **实施状态（2026-10-20）**：Phase 2 Warrior 已完成。默认 Warrior，F7 切 Dummy；384×384 / pivot (192,372)；24 帧（idle 4、walk 6、jump 2、axe_slash 6、hurt 2、KO 4）；完整 1v1、AI 跳跃过 block、前摇+判定霸体、胜负/重开、F1/F2 与 `--smoke-test` 均已验证。以下开放问题已定稿于 `docs/DESIGN_DECISIONS.md`。
+> **实施状态（2026-10-20）**：Phase 2 Warrior 已完成。默认 Warrior，F7 切 Dummy；384×384 / pivot (192,372)；36 帧（idle 4、walk 6、jump 2、axe_slash 6、axe_throw 7、dash 5、hurt 2、KO 4）；完整 1v1、AI 跳跃过 block、前摇+判定霸体、胜负/重开、F1/F2 与 `--smoke-test` 均已验证。以下开放问题已定稿于 `docs/DESIGN_DECISIONS.md`。
+>
+> **2026-10-21 更新**：roster（Lina/Warrior/Dummy 数据驱动）、F7 与 `[` / `]` 切换、V/C/X/Z 技能槽、dash 击飞表现与 Lina/Warrior 的 atk 公式已完成；Warrior `basic_atk 20`，dash 30 + 1.5s 击飞，axe_throw 24/段。击飞期间脚底新增青白三臂漩涡（跟随角色、随剩余时间收缩但保留最低可见度，结束时瞬间消失，纯绘制不改角色动作）；`combat.knock_up_gravity` 让滞空约 1.5s，落地与控制恢复对齐。详细规则以 `docs/DESIGN_DECISIONS.md` 为准。
 
 ## 1. 当前状态
 
