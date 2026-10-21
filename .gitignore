@@ -6,3 +6,5 @@ __pycache__/
 .superpowers/
 assets/generated/raw/
 assets/generated/rejected/
+
+.seedream/

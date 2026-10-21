@@ -42,17 +42,18 @@ class DebugOverlay:
             surface.blit(self.font.render(label, True, color), (1100, round(y) - 15))
 
         pygame.draw.rect(surface, (70, 220, 130), scene.lina.hurtbox(), 1)
-        pygame.draw.rect(surface, (70, 220, 130), scene.dummy.hurtbox(), 1)
+        pygame.draw.rect(surface, (70, 220, 130), scene.enemy.hurtbox(), 1)
         for rect in scene.debug_hitboxes:
             pygame.draw.rect(surface, (255, 70, 70), rect, 2)
 
-        for fighter, color in ((scene.lina, (255, 220, 60)), (scene.dummy, (255, 120, 255))):
+        for fighter, color in ((scene.lina, (255, 220, 60)), (scene.enemy, (255, 120, 255))):
             x, y = round(fighter.x), round(fighter.y)
             pygame.draw.line(surface, color, (x - 8, y), (x + 8, y), 1)
             pygame.draw.line(surface, color, (x, y - 8), (x, y + 8), 1)
             pygame.draw.line(surface, color, (x, y), (x + 22 * fighter.facing, y), 2)
             label = f"{getattr(fighter, 'name', '?')} {fighter.state.name}"
-            surface.blit(self.font.render(label, True, color), (x - 24, y - 238))
+            label_y = y - round(fighter.hurtbox_dims[1]) - 20
+            surface.blit(self.font.render(label, True, color), (x - 24, label_y))
 
 
 class DebugPanel:
@@ -77,10 +78,12 @@ class DebugPanel:
 
     def _lines(self, scene) -> list[str]:
         lina = scene.lina
-        dummy = scene.dummy
+        enemy = scene.enemy
         lines = [
             f"FPS {scene.fps:5.1f}  tick {scene.tick_count}  t {scene.sim_time:7.2f}",
             f"SCALE {scene.time_scale:.2f}x  HITSTOP {scene.hitstop * 1000:4.0f}ms",
+            f"MODE {scene.enemy_mode.upper()}  RESULT {scene.match_over or '-'}",
+            f"BLOCKS {'ON' if scene.stage.blocks_enabled else 'OFF'}  B toggle",
             f"LINA {lina.state.name}  HP {lina.hp:5.1f}/{lina.max_hp:.0f}",
             f"ENERGY {lina.energy:5.1f}/{lina.max_energy:.0f}  Q {lina.q_cd:4.1f}s  E {lina.e_cd:4.1f}s",
             f"FLAME {lina.flame_time:4.2f}s  HITS {lina.flame_hits}  NEXT +{lina.current_flame_bonus():.0%}",
@@ -103,12 +106,45 @@ class DebugPanel:
         if not lina_status:
             lines.append("  -")
 
-        lines.append(f"DUMMY HP {dummy.hp:.1f}/{dummy.max_hp:.0f}  INV {dummy.invincible}")
-        lines.append(f"DUMMY POS {dummy.x:.1f},{dummy.y:.1f}  STATE {dummy.state.name}")
-        lines.append("DUMMY STATUS:")
-        dummy_status = dummy.statuses.describe()
-        lines.extend(f"  {item}" for item in dummy_status)
-        if not dummy_status:
+        lines.append(
+            f"{enemy.name.upper()} {enemy.state.name}  HP {enemy.hp:.1f}/{enemy.max_hp:.0f}"
+        )
+        lines.append(
+            f"{enemy.name.upper()} POS {enemy.x:.1f},{enemy.y:.1f}  FACE {enemy.facing:+d}"
+        )
+        if enemy.anim is not None:
+            frame_count = len(enemy.anim.clip["frames"])
+            lines.append(
+                f"ENEMY ANIM {enemy.anim.clip_name} frame {enemy.anim.frame_index + 1}/{frame_count}"
+            )
+            enemy_runtime = enemy.attack_runtime
+            if enemy_runtime is not None:
+                lines.append(
+                    f"ENEMY ATK {enemy.attack_id} {enemy_runtime.time:.2f}/{enemy_runtime.duration:.2f}"
+                )
+                armor = float(enemy_runtime.data.get("armor_until", 0.0))
+                lines.append(f"ENEMY ARMOR until {armor:.2f}s")
+            else:
+                lines.append("ENEMY ATK -")
+            if hasattr(enemy, "ai_enabled"):
+                lines.append(
+                    f"ENEMY AI {'ON' if enemy.ai_enabled else 'OFF'} "
+                    f"AXE {enemy.attack_cd:.1f} DASH {enemy.dash_cd:.1f} THROW {enemy.throw_cd:.1f}"
+                )
+                lines.append(f"SKILL GAP {enemy.skill_cd:.2f}s")
+            for projectile in scene.projectiles:
+                if getattr(projectile, "kind", "") == "axe_throw":
+                    lines.append(
+                        f"AXE {projectile.phase} out={projectile.hit_out} "
+                        f"back={projectile.hit_return}"
+                    )
+        else:
+            lines.append(f"ENEMY INV {enemy.invincible}")
+
+        lines.append(f"{enemy.name.upper()} STATUS:")
+        enemy_status = enemy.statuses.describe()
+        lines.extend(f"  {item}" for item in enemy_status)
+        if not enemy_status:
             lines.append("  -")
 
         if scene.last_hit is not None:
@@ -123,14 +159,22 @@ class DebugPanel:
         lines.append(f"INPUT {history}")
         entries = " | ".join(scene.input.describe_entries()) or "-"
         lines.append(f"BUFFER {entries}")
-        lines.append(f"MISSING FRAMES {len(lina.anim.missing)}")
-        for path in list(lina.anim.missing)[:3]:
+        lina_missing = set(lina.anim.missing) | set(lina.anim.missing_paths())
+        enemy_missing = (
+            set(enemy.anim.missing) | set(enemy.anim.missing_paths())
+            if enemy.anim is not None else set()
+        )
+        lines.append(f"MISSING LINA {len(lina_missing)}  ENEMY {len(enemy_missing)}")
+        for path in list(lina_missing)[:2]:
+            lines.append("  !" + path.replace("\\", "/").split("/")[-1])
+        for path in list(enemy_missing)[:2]:
             lines.append("  !" + path.replace("\\", "/").split("/")[-1])
         lines.append(f"RELOAD {'OK' if scene.store.last_ok else 'FAIL'}")
         if scene.store.last_error:
             lines.append("!ERR " + scene.store.last_error)
         lines.append("F1 boxes F2 panel F3 pause F4 step")
-        lines.append("F5 reload F6 speed F7 inv F8 dummy reset")
+        lines.append("F5 reload F6 speed F7 mode F8 AI/inv")
         lines.append("F9 reset F10 flame F11 status F12 hurt")
-        lines.append("Arrows move dummy  PgUp/PgDn HP")
+        lines.append("V axe C dash X throw  B blocks")
+        lines.append("Arrows move  PgUp/PgDn HP  R restart")
         return lines

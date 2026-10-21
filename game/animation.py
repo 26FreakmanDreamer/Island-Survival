@@ -1,4 +1,4 @@
-"""Frame animation with per-frame durations, facing flips and flame tint."""
+"""Frame animation with per-frame durations and facing flips."""
 
 from __future__ import annotations
 
@@ -9,15 +9,6 @@ import pygame
 FRAME_SIZE = (256, 256)
 
 
-def _tint_flame(surface: pygame.Surface) -> pygame.Surface:
-    tinted = surface.copy()
-    tinted.fill((215, 100, 85, 255), special_flags=pygame.BLEND_RGBA_MULT)
-    glow = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
-    glow.fill((65, 22, 0, 0))
-    tinted.blit(glow, (0, 0), special_flags=pygame.BLEND_RGBA_ADD)
-    return tinted
-
-
 class AnimationPlayer:
     def __init__(
         self,
@@ -26,6 +17,8 @@ class AnimationPlayer:
         frames_dir: Path,
         fallback_path: Path,
         pivot: tuple[int, int],
+        frame_size: tuple[int, int] = FRAME_SIZE,
+        frame_offsets: dict[str, int] | None = None,
     ) -> None:
         self.default_clips = clips
         self.flame_clips = flame_clips
@@ -34,6 +27,8 @@ class AnimationPlayer:
         self.frames_dir = frames_dir
         self.fallback_path = fallback_path
         self.pivot = (int(pivot[0]), int(pivot[1]))
+        self.frame_size = (int(frame_size[0]), int(frame_size[1]))
+        self.frame_offsets = frame_offsets or {}
         self.cache: dict[tuple, pygame.Surface] = {}
         self.missing: set[str] = set()
         self.clip_name = "idle"
@@ -105,7 +100,22 @@ class AnimationPlayer:
             return ""
         return frames[min(self.frame_index, len(frames) - 1)]
 
-    def _load(self, path: Path, flame: bool) -> pygame.Surface:
+    def missing_paths(self) -> list[str]:
+        """Every configured frame path that is not present on disk."""
+        paths: list[str] = []
+        seen: set[str] = set()
+        for clips in (self.default_clips, self.flame_clips):
+            for clip in clips.values():
+                for rel in clip.get("frames", []):
+                    if rel in seen:
+                        continue
+                    seen.add(rel)
+                    path = self.frames_dir / rel
+                    if not path.exists():
+                        paths.append(str(path))
+        return paths
+
+    def _load(self, path: Path) -> pygame.Surface:
         if path.exists():
             try:
                 surface = pygame.image.load(str(path)).convert_alpha()
@@ -119,12 +129,10 @@ class AnimationPlayer:
             surface = self._load_fallback()
             mtime = 0.0
 
-        if surface.get_size() != FRAME_SIZE:
-            surface = pygame.transform.smoothscale(surface, FRAME_SIZE)
-        if flame:
-            surface = _tint_flame(surface)
+        if surface.get_size() != self.frame_size:
+            surface = pygame.transform.smoothscale(surface, self.frame_size)
 
-        key = (str(path), mtime, flame)
+        key = (str(path), mtime)
         self.cache[key] = surface
         return surface
 
@@ -132,21 +140,21 @@ class AnimationPlayer:
         try:
             surface = pygame.image.load(str(self.fallback_path)).convert_alpha()
         except pygame.error:
-            surface = pygame.Surface(FRAME_SIZE, pygame.SRCALPHA)
+            surface = pygame.Surface(self.frame_size, pygame.SRCALPHA)
             pygame.draw.rect(surface, (180, 120, 220, 255), (88, 34, 80, 210))
-        if surface.get_size() != FRAME_SIZE:
-            surface = pygame.transform.smoothscale(surface, FRAME_SIZE)
+        if surface.get_size() != self.frame_size:
+            surface = pygame.transform.smoothscale(surface, self.frame_size)
         return surface
 
-    def surface(self, flame: bool = False, facing: int = 1) -> pygame.Surface:
+    def surface(self, facing: int = 1) -> pygame.Surface:
         rel = self.current_frame_path()
         path = self.frames_dir / rel if rel else self.fallback_path
         mtime = path.stat().st_mtime if path.exists() else 0.0
-        key = (str(path), mtime, flame, facing)
+        key = (str(path), mtime, facing)
         if key in self.cache:
             return self.cache[key]
 
-        surface = self._load(path, flame)
+        surface = self._load(path)
         if facing < 0:
             surface = pygame.transform.flip(surface, True, False)
         self.cache[key] = surface
@@ -158,10 +166,17 @@ class AnimationPlayer:
         x: float,
         y: float,
         facing: int = 1,
-        flame: bool = False,
     ) -> None:
-        surface = self.surface(flame=flame, facing=facing)
+        surface = self.surface(facing=facing)
+        # The flame sprites were generated with slightly different horizontal
+        # framing per frame. Apply the baked alignment offset so the body stays
+        # at the same world position as the normal form; mirror it when flipped.
+        offset = 0
+        if self.variant == "flame":
+            offset = self.frame_offsets.get(self.current_frame_path(), 0)
+            if facing < 0:
+                offset = -offset
         pivot_x, pivot_y = self.pivot
         if facing < 0:
             pivot_x = surface.get_width() - pivot_x
-        target.blit(surface, (round(x - pivot_x), round(y - pivot_y)))
+        target.blit(surface, (round(x - pivot_x + offset), round(y - pivot_y)))

@@ -18,9 +18,11 @@ class Stage:
             name: float(height) for name, height in stage_cfg["lane_heights"].items()
         }
         self.blocks = [pygame.Rect(int(x), int(y), int(w), int(h)) for x, y, w, h in stage_cfg["blocks"]]
+        self.blocks_enabled = True
         self.land_margin = float(stage_cfg.get("land_margin", 8.0))
         self.player_spawn = tuple(stage_cfg["player_spawn"])
         self.dummy_spawn = tuple(stage_cfg["dummy_spawn"])
+        self.warrior_spawn = tuple(stage_cfg["warrior_spawn"])
         self.background = self._load_background()
 
     @staticmethod
@@ -36,8 +38,17 @@ class Stage:
         height = self.lane_heights.get(name, self.lane_heights["mid"])
         return feet_y - height
 
+    def set_blocks_enabled(self, enabled: bool) -> None:
+        self.blocks_enabled = bool(enabled)
+
+    def toggle_blocks(self) -> bool:
+        self.blocks_enabled = not self.blocks_enabled
+        return self.blocks_enabled
+
     def draw(self, surface: pygame.Surface) -> None:
         surface.blit(self.background, (0, 0))
+        if not self.blocks_enabled:
+            return
         for block in self.blocks:
             pygame.draw.rect(surface, (94, 64, 42), block)
             pygame.draw.rect(surface, (132, 94, 60), block.inflate(-6, -6))
@@ -60,6 +71,8 @@ class Stage:
         """Debug-only wall/block outlines."""
         pygame.draw.line(surface, (255, 210, 80), (self.walls[0], 0), (self.walls[0], SCREEN_H), 1)
         pygame.draw.line(surface, (255, 210, 80), (self.walls[1], 0), (self.walls[1], SCREEN_H), 1)
+        if not self.blocks_enabled:
+            return
         for block in self.blocks:
             pygame.draw.rect(surface, (255, 210, 80), block, 1)
 
@@ -104,6 +117,9 @@ class Stage:
             fighter.x = high - half
             fighter.kb_vx = 0.0
 
+        if not self.blocks_enabled:
+            return
+
         body = self.body_rect(fighter)
         for block in self.blocks:
             if fighter.y <= block.top + 1 or not body.colliderect(block):
@@ -133,11 +149,12 @@ class Stage:
             fighter.vy = 0.0
             landed = True
 
-        for block in self.blocks:
-            if fighter.vy >= 0 and previous_y <= block.top + 1 and fighter.y >= block.top:
-                if block.left - self.land_margin <= fighter.x <= block.right + self.land_margin:
-                    fighter.y = float(block.top)
-                    fighter.vy = 0.0
-                    landed = True
+        if self.blocks_enabled:
+            for block in self.blocks:
+                if fighter.vy >= 0 and previous_y <= block.top + 1 and fighter.y >= block.top:
+                    if block.left - self.land_margin <= fighter.x <= block.right + self.land_margin:
+                        fighter.y = float(block.top)
+                        fighter.vy = 0.0
+                        landed = True
 
         fighter.on_ground = landed

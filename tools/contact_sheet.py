@@ -43,8 +43,13 @@ def main() -> int:
     parser.add_argument("--out", required=True)
     parser.add_argument("--durations", default="")
     parser.add_argument("--title", default="")
+    parser.add_argument("--cell", type=int, default=CELL)
+    parser.add_argument("--pivot-x", type=int, default=PIVOT[0])
+    parser.add_argument("--pivot-y", type=int, default=PIVOT[1])
     args = parser.parse_args()
 
+    cell = max(1, args.cell)
+    pivot = (args.pivot_x, args.pivot_y)
     frames_dir = _resolve(args.frames)
     out_path = _resolve(args.out)
     files = sorted(frames_dir.glob("*.png"))
@@ -54,8 +59,8 @@ def main() -> int:
 
     durations = [item.strip() for item in args.durations.split(",") if item.strip()]
     title = args.title or f"{args.action} — {len(files)} frames"
-    width = PAD + len(files) * (CELL + PAD)
-    height = TITLE_H + CELL + LABEL_H + PAD * 2
+    width = PAD + len(files) * (cell + PAD)
+    height = TITLE_H + cell + LABEL_H + PAD * 2
     sheet = Image.new("RGB", (width, height), (26, 28, 36))
     draw = ImageDraw.Draw(sheet)
     title_font = _font(20)
@@ -64,29 +69,29 @@ def main() -> int:
 
     for index, path in enumerate(files):
         frame = Image.open(path).convert("RGBA")
-        if frame.size != (CELL, CELL):
-            frame = frame.resize((CELL, CELL), Image.LANCZOS)
-        cell_x = PAD + index * (CELL + PAD)
+        if frame.size != (cell, cell):
+            frame = frame.resize((cell, cell), Image.LANCZOS)
+        cell_x = PAD + index * (cell + PAD)
         cell_y = TITLE_H
-        board = _checkerboard((CELL, CELL))
+        board = _checkerboard((cell, cell))
         board.paste(frame, (0, 0), frame)
 
         overlay = ImageDraw.Draw(board)
-        overlay.line([(0, PIVOT[1]), (CELL, PIVOT[1])], fill=(255, 210, 80), width=1)
-        overlay.line([(PIVOT[0], 0), (PIVOT[0], CELL)], fill=(120, 220, 255), width=1)
+        overlay.line([(0, pivot[1]), (cell, pivot[1])], fill=(255, 210, 80), width=1)
+        overlay.line([(pivot[0], 0), (pivot[0], cell)], fill=(120, 220, 255), width=1)
         overlay.line(
-            [(PIVOT[0] - 8, PIVOT[1]), (PIVOT[0] + 8, PIVOT[1])],
+            [(pivot[0] - 8, pivot[1]), (pivot[0] + 8, pivot[1])],
             fill=(255, 70, 70), width=2,
         )
         overlay.line(
-            [(PIVOT[0], PIVOT[1] - 8), (PIVOT[0], PIVOT[1] + 8)],
+            [(pivot[0], pivot[1] - 8), (pivot[0], pivot[1] + 8)],
             fill=(255, 70, 70), width=2,
         )
         sheet.paste(board, (cell_x, cell_y))
 
         duration = durations[index] if index < len(durations) else "?"
         label = f"{index:02d}  {path.name}  {duration}s"
-        draw.text((cell_x + 4, cell_y + CELL + 8), label, fill=(235, 235, 245), font=label_font)
+        draw.text((cell_x + 4, cell_y + cell + 8), label, fill=(235, 235, 245), font=label_font)
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(out_path)

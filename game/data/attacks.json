@@ -58,5 +58,47 @@
     "events": [
       {"t": 0.26, "type": "projectile", "id": "q_wave", "lane": "fist", "speed": 700, "range": 520, "knockback": 150}
     ]
+  },
+  "axe_slash": {
+    "damage_mult": 1.0,
+    "duration": 0.75,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.3,
+    "hitstop": 0.08,
+    "armor_until": 0.55,
+    "events": [
+      {"t": 0.25, "until": 0.55, "type": "hitbox", "box": [36, -205, 150, 110], "knockback": 380}
+    ]
+  },
+  "dash": {
+    "damage_mult": 1.0,
+    "duration": 0.5,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.3,
+    "hitstop": 0.08,
+    "armor_until": 0.34,
+    "events": [
+      {"t": 0.06, "until": 0.34, "type": "dash", "speed": 900},
+      {"t": 0.06, "until": 0.34, "type": "hitbox", "box": [20, -190, 120, 140],
+       "damage": 30, "knockback": 0, "launch": 760, "knock_up": 1.5}
+    ]
+  },
+  "axe_throw": {
+    "damage_mult": 1.0,
+    "duration": 1.2,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.3,
+    "hitstop": 0.08,
+    "armor_until": 0.34,
+    "events": [
+      {"t": 0.35, "type": "projectile", "id": "axe_throw", "lane": "high",
+       "speed": 1250, "range": 420, "knockback": 150, "damage": 15}
+    ]
   }
 }

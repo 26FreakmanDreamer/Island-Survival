@@ -20,6 +20,8 @@ class Lina(Fighter):
             FRAMES_DIR,
             CANONICAL_LINA_V1,
             store.animations["pivot"],
+            frame_size=store.animations.get("frame_size", (256, 256)),
+            frame_offsets=store.animations.get("flame_offsets", {}),
         )
         x, y = stage.player_spawn
         super().__init__(
@@ -79,35 +81,58 @@ class Lina(Fighter):
             return 0.0
         return min((self.flame_hits + 1) * self.flame_step, self.flame_cap)
 
-    def take_hit(self, damage: float, knockback: float, hitstun: float, direction: int) -> bool:
+    def take_hit(
+        self,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        direction: int,
+        launch: float = 0.0,
+    ) -> bool:
+        was_transforming = self.state == FighterState.TRANSFORM and not self.reverting
+        was_reverting = self.state == FighterState.TRANSFORM and self.reverting
         self.queued_action = None
-        return super().take_hit(damage, knockback, hitstun, direction)
+        hit = super().take_hit(damage, knockback, hitstun, direction, launch=launch)
+        if hit and was_reverting:
+            # Being hit interrupts the fade-out; resume it after hitstun.
+            self.reverting = False
+            self.pending_revert = True
+        elif hit and was_transforming:
+            # The transform was interrupted after the energy was spent; finish
+            # the form switch so hurt/KO use the flame art instead of vanishing.
+            self.anim.set_variant("flame")
+        return hit
+
+    def cancel_attack(self) -> None:
+        self.queued_action = None
+        super().cancel_attack()
 
     # --- update -------------------------------------------------------------
     def update(self, dt: float, input_state, target, scene) -> None:
         self.update_common(dt)
         self.q_cd = max(0.0, self.q_cd - dt)
         self.e_cd = max(0.0, self.e_cd - dt)
-        if self.pending_variant and self.state in (
-            FighterState.IDLE,
-            FighterState.WALK,
-            FighterState.CROUCH,
-            FighterState.AIR,
-        ):
-            self._apply_pending_variant()
 
         if self.flame_time > 0.0:
             self.flame_time = max(0.0, self.flame_time - dt)
             if self.flame_time <= 0.0:
                 self.flame_hits = 0
-                self.pending_variant = "normal"
+                self.pending_revert = True
                 if self.state in (
                     FighterState.IDLE,
                     FighterState.WALK,
                     FighterState.CROUCH,
                     FighterState.AIR,
                 ):
-                    self._apply_pending_variant()
+                    self._start_revert()
+
+        if self.pending_revert and self.state in (
+            FighterState.IDLE,
+            FighterState.WALK,
+            FighterState.CROUCH,
+            FighterState.AIR,
+        ):
+            self._start_revert()
 
         if self.state == FighterState.KO:
             self.vx = 0.0
@@ -119,9 +144,11 @@ class Lina(Fighter):
             self.vx = 0.0
             self.anim.update(dt)
             if self.hitstun <= 0.0 and self.hp > 0.0:
-                self.state = FighterState.IDLE
-                self.anim.set_clip("idle")
-                self._apply_pending_variant()
+                if self.pending_revert:
+                    self._start_revert()
+                else:
+                    self.state = FighterState.IDLE
+                    self.anim.set_clip("idle")
             self.stage.move_fighter(self, dt)
             return
 
@@ -130,7 +157,11 @@ class Lina(Fighter):
             self.anim.update(dt)
             if self.anim.finished:
                 self.state = FighterState.IDLE
-                self.anim.set_variant("flame")
+                if self.reverting:
+                    self.reverting = False
+                    self.anim.set_variant("normal")
+                else:
+                    self.anim.set_variant("flame")
                 self.anim.set_clip("idle", reset=True)
             self.stage.move_fighter(self, dt)
             return
@@ -179,13 +210,15 @@ class Lina(Fighter):
         self.anim.update(dt)
 
         if runtime.finished:
+            if self.pending_revert:
+                self._start_revert()
+                return
             if self._execute_queued(input_state, scene, target):
                 return
             self.state = FighterState.IDLE
             self.attack_runtime = None
             self.attack_id = None
             self.anim.set_clip("idle")
-            self._apply_pending_variant()
 
     def _execute_queued(self, input_state, scene, target) -> bool:
         action = self.queued_action
@@ -338,6 +371,20 @@ class Lina(Fighter):
         self.attack_runtime = None
         self.attack_id = None
         self.queued_action = None
+        self.pending_revert = False
+        self.reverting = False
+
+    def _start_revert(self) -> None:
+        """Play the 2-frame flame-to-normal fade, then switch variants."""
+        self.pending_revert = False
+        self.reverting = True
+        self.state = FighterState.TRANSFORM
+        self.vx = 0.0
+        self.attack_runtime = None
+        self.attack_id = None
+        self.queued_action = None
+        self.anim.set_variant("flame")
+        self.anim.set_clip("revert", reset=True)
 
     def on_hit_success(self, attack: dict, target, bonus: float) -> None:
         if self.flame_time > 0.0:
@@ -364,21 +411,6 @@ class Lina(Fighter):
         elif projectile.grant_energy:
             self.energy = min(self.max_energy, self.energy + projectile.energy_gain)
 
-    def _apply_pending_variant(self) -> None:
-        if not self.pending_variant:
-            return
-        variant = self.pending_variant
-        self.pending_variant = None
-        self.anim.set_variant(variant)
-        clip = {
-            FighterState.IDLE: "idle",
-            FighterState.WALK: "walk",
-            FighterState.CROUCH: "crouch",
-            FighterState.AIR: "jump",
-        }.get(self.state)
-        if clip:
-            self.anim.set_clip(clip, reset=True)
-
     # --- reset --------------------------------------------------------------
     def reset(self) -> None:
         x, y = self.stage.player_spawn
@@ -393,6 +425,7 @@ class Lina(Fighter):
         self.attack_runtime = None
         self.attack_id = None
         self.queued_action = None
-        self.pending_variant = None
+        self.pending_revert = False
+        self.reverting = False
         self.anim.set_variant("normal")
         self.anim.set_clip("idle", reset=True)

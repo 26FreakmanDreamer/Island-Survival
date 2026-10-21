@@ -33,6 +33,31 @@
       "crouching": [56, 130]
     }
   },
+  "warrior": {
+    "hp": 300,
+    "basic_atk": 24,
+    "extra_atk": 0,
+    "stage_body_width": 120,
+    "move": {
+      "walk": 160,
+      "jump_v": 700,
+      "gravity": 2200
+    },
+    "hurtbox": {
+      "standing": [84, 230],
+      "crouching": [84, 230]
+    },
+    "ai": {
+      "attack_range": 160,
+      "attack_cooldown": 0.9,
+      "skill_gap": 0.9,
+      "dash_range": 340,
+      "dash_cooldown": 2.5,
+      "throw_min_range": 180,
+      "throw_range": 420,
+      "throw_cooldown": 2.8
+    }
+  },
   "dummy": {
     "hp": 1000,
     "invincible": false,

@@ -56,6 +56,15 @@ class AttackRuntime:
                         if self.target.hurtbox().colliderect(rect):
                             self.hit_targets.add(id(self.target))
                             resolve_hit(self.scene, self.attacker, self.target, self.data, event)
+            elif event["type"] == "dash":
+                until = float(event.get("until", event_time + FIXED_DT))
+                if event_time <= self.time < until:
+                    speed = float(event.get("speed", 0.0))
+                    if speed:
+                        self.scene.stage.move_x(
+                            self.attacker,
+                            self.attacker.facing * speed * dt,
+                        )
             elif event["type"] == "projectile":
                 if self.time >= event_time and index not in self.spawned_events:
                     self.spawned_events.add(index)
@@ -70,16 +79,29 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         return
 
     bonus = attacker.current_flame_bonus()
-    base = attacker.atk * float(event.get("damage_mult", attack.get("damage_mult", 1.0)))
-    damage = base * (1.0 + bonus) * (1.0 - target.statuses.damage_reduction())
-    damage = max(0.0, damage)
+    if "damage" in event:
+        damage = float(event["damage"]) * (1.0 + bonus)
+    else:
+        base = attacker.atk * float(event.get("damage_mult", attack.get("damage_mult", 1.0)))
+        damage = base * (1.0 + bonus)
+    damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
 
     knockback = float(event.get("knockback", 0.0))
     hitstun = float(attack.get("hitstun", scene.store.stats["combat"]["hitstun"]))
     hitstop = float(attack.get("hitstop", scene.store.stats["combat"]["hitstop"]))
+    launch = float(event.get("launch", 0.0))
+    if target.statuses.has("super_armor"):
+        launch = 0.0
+    knock_up_time = float(event.get("knock_up", 0.0))
 
     if damage > 0.0:
-        target.take_hit(damage, knockback, hitstun, attacker.facing)
+        target.take_hit(damage, knockback, hitstun, attacker.facing, launch=launch)
+        if knock_up_time > 0.0 and launch > 0.0 and target.hp > 0.0:
+            target.statuses.add(
+                "knock_up",
+                knock_up_time,
+                source=getattr(attacker, "name", None),
+            )
         if target.hp <= 0.0 or target.flash > 0.0:
             scene.particles.emit_hit(target.x, target.y - 120, (255, 210, 120))
         attacker.on_hit_success(attack, target, bonus)
@@ -87,7 +109,7 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
 
     scene.last_hit = {
         "attacker": getattr(attacker, "name", "Lina"),
-        "target": getattr(target, "name", "Dummy"),
+        "target": getattr(target, "name", "Enemy"),
         "damage": damage,
         "bonus": bonus,
         "knockback": knockback,
@@ -109,7 +131,7 @@ def resolve_projectile_hit(scene, projectile) -> None:
 
     scene.last_hit = {
         "attacker": getattr(projectile.owner, "name", "Lina"),
-        "target": getattr(target, "name", "Dummy"),
+        "target": getattr(target, "name", "Enemy"),
         "damage": damage,
         "bonus": projectile.flame_bonus,
         "knockback": projectile.knockback,

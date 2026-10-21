@@ -9,6 +9,7 @@ from .fighter import Fighter, FighterState
 
 class Dummy(Fighter):
     name = "Dummy"
+    show_health_bar = True
 
     def __init__(self, store, stage) -> None:
         cfg = store.stats["dummy"]
@@ -65,18 +66,6 @@ class Dummy(Fighter):
         pygame.draw.circle(surface, (196, 58, 48), (round(self.x), target_y), 21, 3)
         pygame.draw.circle(surface, (196, 58, 48), (round(self.x), target_y), 6)
 
-        bar_width = 120
-        bar_height = 10
-        bar_x = round(self.x - bar_width * 0.5)
-        bar_y = round(self.y - 215)
-        pygame.draw.rect(surface, (20, 20, 20), (bar_x, bar_y, bar_width, bar_height))
-        fill = max(0.0, min(1.0, self.hp / self.max_hp))
-        pygame.draw.rect(
-            surface,
-            (214, 70, 58),
-            (bar_x + 1, bar_y + 1, round((bar_width - 2) * fill), bar_height - 2),
-        )
-        if self.invincible:
-            pygame.draw.rect(surface, (120, 220, 255), (bar_x, bar_y, bar_width, bar_height), 1)
+        self.draw_health_bar(surface)
         if self.flash > 0.0:
             pygame.draw.rect(surface, (255, 255, 255), self.hurtbox(), 2)

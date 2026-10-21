@@ -23,6 +23,8 @@ class FighterState(IntEnum):
 
 
 class Fighter:
+    show_health_bar = False
+
     def __init__(
         self,
         x: float,
@@ -101,7 +103,14 @@ class Fighter:
             self.kb_vx = 0.0
 
     # --- reactions ----------------------------------------------------------
-    def take_hit(self, damage: float, knockback: float, hitstun: float, direction: int) -> bool:
+    def take_hit(
+        self,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        direction: int,
+        launch: float = 0.0,
+    ) -> bool:
         if self.invincible or self.hp <= 0.0:
             return False
         self.hp = max(0.0, self.hp - damage)
@@ -121,6 +130,9 @@ class Fighter:
         self.state = FighterState.HURT
         if self.anim is not None:
             self.anim.set_clip("hurt", reset=True)
+        if launch > 0.0:
+            self.vy = -launch
+            self.on_ground = False
         if knockback:
             self.kb_start = knockback * (1 if direction >= 0 else -1)
             self.kb_vx = self.kb_start
@@ -146,6 +158,9 @@ class Fighter:
     def on_hit_success(self, attack: dict, target, bonus: float) -> None:
         return
 
+    def on_projectile_hit(self, projectile) -> None:
+        return
+
     # --- reset --------------------------------------------------------------
     def reset_common(self, x: float, y: float, facing: int) -> None:
         self.x = float(x)
@@ -163,13 +178,52 @@ class Fighter:
         self.flash = 0.0
         self.on_ground = True
         self.statuses.clear()
+        self.attack_runtime = None
+        self.attack_id = None
+
+    def cancel_attack(self) -> None:
+        """Drop the current attack; used when the scene swaps targets."""
+        self.attack_runtime = None
+        self.attack_id = None
+        if self.state == FighterState.ATTACK:
+            self.state = FighterState.IDLE
+            if self.anim is not None:
+                self.anim.set_clip("idle", reset=True)
 
     # --- rendering ----------------------------------------------------------
+    def draw_health_bar(
+        self,
+        surface: pygame.Surface,
+        width: int = 120,
+        height: int = 10,
+    ) -> None:
+        bar_x = round(self.x - width * 0.5)
+        bar_y = round(self.y - self.hurtbox_dims[1] - 30.0)
+        pygame.draw.rect(surface, (20, 20, 20), (bar_x, bar_y, width, height))
+        fill = max(0.0, min(1.0, self.hp / self.max_hp)) if self.max_hp else 0.0
+        pygame.draw.rect(
+            surface,
+            (214, 70, 58),
+            (bar_x + 1, bar_y + 1, round((width - 2) * fill), height - 2),
+        )
+        if self.invincible:
+            pygame.draw.rect(surface, (120, 220, 255), (bar_x, bar_y, width, height), 1)
+
     def draw(self, surface: pygame.Surface) -> None:
         if self.anim is not None:
             flame = bool(getattr(self, "flame_time", 0.0) > 0.0)
-            if flame and (self.anim.clip_name == "transform" or self.anim.current_is_flame_frame):
-                flame = False
-            self.anim.draw(surface, self.x, self.y, self.facing, flame=flame)
+            # In flame form, only dedicated flame art may be drawn. A normal
+            # variant (e.g. an interrupted transform) draws its normal frames
+            # untinted rather than disappearing; a flame-variant clip without
+            # flame art is skipped.
+            if (
+                not flame
+                or self.anim.variant == "normal"
+                or self.anim.clip_name == "transform"
+                or self.anim.current_is_flame_frame
+            ):
+                self.anim.draw(surface, self.x, self.y, self.facing)
         if self.flash > 0.0:
             pygame.draw.rect(surface, (255, 255, 255), self.hurtbox(), 2)
+        if self.show_health_bar:
+            self.draw_health_bar(surface)

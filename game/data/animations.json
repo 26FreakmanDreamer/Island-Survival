@@ -1,6 +1,8 @@
 {
   "frame_size": [256, 256],
   "pivot": [128, 244],
+  "warrior_frame_size": [384, 384],
+  "warrior_pivot": [192, 372],
   "clips": {
     "idle": {
       "loop": true,
@@ -63,6 +65,48 @@
       "durations": [0.15, 0.15, 0.15, 0.15]
     }
   },
+  "warrior_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.18, 0.18, 0.18, 0.18]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png", "walk/walk_04.png", "walk/walk_05.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "dash": {
+      "loop": false,
+      "frames": ["dash/dash_00.png", "dash/dash_01.png", "dash/dash_02.png", "dash/dash_03.png", "dash/dash_04.png"],
+      "durations": [0.08, 0.10, 0.12, 0.10, 0.10]
+    },
+    "axe_throw": {
+      "loop": false,
+      "frames": ["axe_throw/axe_throw_00.png", "axe_throw/axe_throw_01.png", "axe_throw/axe_throw_02.png", "axe_throw/axe_throw_03.png", "axe_throw/axe_throw_04.png", "axe_throw/axe_throw_05.png", "axe_throw/axe_throw_06.png"],
+      "durations": [0.15, 0.10, 0.10, 0.10, 0.45, 0.15, 0.15]
+    },
+    "axe_slash": {
+      "loop": false,
+      "frames": ["axe_slash/axe_slash_00.png", "axe_slash/axe_slash_01.png", "axe_slash/axe_slash_02.png", "axe_slash/axe_slash_03.png", "axe_slash/axe_slash_04.png", "axe_slash/axe_slash_05.png"],
+      "durations": [0.08, 0.08, 0.09, 0.15, 0.15, 0.20]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
+      "durations": [0.18, 0.18, 0.18, 0.18]
+    }
+  },
   "flame_clips": {
     "idle": {
       "loop": true,
@@ -108,6 +152,65 @@
       "loop": false,
       "frames": ["flame/q/q_00.png", "flame/q/q_01.png", "flame/q/q_02.png", "flame/q/q_03.png"],
       "durations": [0.06, 0.10, 0.10, 0.09]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["flame/hurt/hurt_00.png", "flame/hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["flame/ko/ko_00.png", "flame/ko/ko_01.png", "flame/ko/ko_02.png", "flame/ko/ko_03.png"],
+      "durations": [0.15, 0.15, 0.15, 0.15]
+    },
+    "revert": {
+      "loop": false,
+      "frames": ["flame/revert/revert_00.png", "flame/revert/revert_01.png"],
+      "durations": [0.12, 0.12]
     }
+  }
+,
+  "flame_offsets": {
+    "flame/crouch/crouch_00.png": -42,
+    "flame/hurt/hurt_00.png": -25,
+    "flame/hurt/hurt_01.png": -28,
+    "flame/idle/idle_00.png": -46,
+    "flame/idle/idle_01.png": -44,
+    "flame/idle/idle_02.png": -46,
+    "flame/idle/idle_03.png": -42,
+    "flame/jump/jump_00.png": -34,
+    "flame/jump/jump_01.png": -46,
+    "flame/kick_l/kick_l_00.png": -43,
+    "flame/kick_l/kick_l_01.png": -12,
+    "flame/kick_l/kick_l_02.png": -11,
+    "flame/kick_l/kick_l_03.png": -46,
+    "flame/kick_r/kick_r_00.png": -43,
+    "flame/kick_r/kick_r_01.png": -41,
+    "flame/kick_r/kick_r_02.png": -39,
+    "flame/kick_r/kick_r_03.png": -41,
+    "flame/ko/ko_00.png": -23,
+    "flame/ko/ko_01.png": -3,
+    "flame/ko/ko_02.png": -6,
+    "flame/ko/ko_03.png": -6,
+    "flame/punch_l/punch_l_00.png": -42,
+    "flame/punch_l/punch_l_01.png": -28,
+    "flame/punch_l/punch_l_02.png": -20,
+    "flame/punch_l/punch_l_03.png": -33,
+    "flame/punch_r/punch_r_00.png": -42,
+    "flame/punch_r/punch_r_01.png": -25,
+    "flame/punch_r/punch_r_02.png": -32,
+    "flame/punch_r/punch_r_03.png": -42,
+    "flame/q/q_00.png": -43,
+    "flame/q/q_01.png": -25,
+    "flame/q/q_02.png": -32,
+    "flame/q/q_03.png": -42,
+    "flame/revert/revert_00.png": -43,
+    "flame/revert/revert_01.png": -47,
+    "flame/walk/walk_00.png": -48,
+    "flame/walk/walk_01.png": -44,
+    "flame/walk/walk_02.png": -45,
+    "flame/walk/walk_03.png": -42,
+    "flame/walk/walk_04.png": -47,
+    "flame/walk/walk_05.png": -44
   }
 }

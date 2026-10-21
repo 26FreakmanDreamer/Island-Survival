@@ -10,8 +10,11 @@ GAME_DIR = ROOT / "game"
 DATA_DIR = GAME_DIR / "data"
 ASSETS_DIR = ROOT / "assets"
 FRAMES_DIR = ASSETS_DIR / "frames" / "lina"
+WARRIOR_FRAMES_DIR = ASSETS_DIR / "frames" / "warrior"
 GENERATED_DIR = ASSETS_DIR / "generated"
 CANONICAL_LINA_V1 = ROOT / "Image" / "Character" / "lina-seabright-v1-256.png"
+CANONICAL_WARRIOR = ROOT / "Image" / "Enemy" / "warrior-336.png"
+AXE_SPRITE_PATH = ASSETS_DIR / "sprites" / "axe" / "axe_throw.png"
 CANONICAL_LINA_V2 = ROOT / "Image" / "Character" / "lina-seabright-v2-256.png"
 BACKGROUND_PATH = ASSETS_DIR / "backgrounds" / "island-arena-16x9.png"
 
@@ -19,8 +22,8 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "dummy", "combat")
-REQUIRED_ATTACKS = ("punch_l", "punch_r", "kick_l", "kick_r", "q")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "combat")
+REQUIRED_ATTACKS = ("punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw")
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
     "kick_l", "kick_r", "q", "transform", "hurt", "ko",
@@ -28,7 +31,11 @@ REQUIRED_CLIPS = (
 REQUIRED_FLAME_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r", "kick_l", "kick_r", "q",
 )
-REQUIRED_STAGE = ("ground_y", "walls", "lane_heights", "blocks", "player_spawn", "dummy_spawn")
+REQUIRED_WARRIOR_CLIPS = ("idle", "walk", "jump", "dash", "axe_throw", "axe_slash", "hurt", "ko")
+REQUIRED_STAGE = (
+    "ground_y", "walls", "lane_heights", "blocks",
+    "player_spawn", "dummy_spawn", "warrior_spawn",
+)
 
 
 class JsonStore:
@@ -73,6 +80,16 @@ class JsonStore:
         for key in REQUIRED_STATS:
             if key not in stats:
                 raise ValueError(f"stats.json missing '{key}'")
+        warrior = stats.get("warrior", {})
+        for key in ("hp", "basic_atk", "extra_atk", "stage_body_width", "move", "hurtbox", "ai"):
+            if key not in warrior:
+                raise ValueError(f"stats.json warrior missing '{key}'")
+        for key in (
+            "attack_range", "attack_cooldown", "skill_gap", "dash_range", "dash_cooldown",
+            "throw_min_range", "throw_range", "throw_cooldown",
+        ):
+            if key not in warrior.get("ai", {}):
+                raise ValueError(f"stats.json warrior.ai missing '{key}'")
         for key in REQUIRED_ATTACKS:
             if key not in attacks:
                 raise ValueError(f"attacks.json missing '{key}'")
@@ -87,6 +104,17 @@ class JsonStore:
         for key, clip in flame_clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json flame clip '{key}' frame/duration count mismatch")
+        warrior_clips = animations.get("warrior_clips", {})
+        for key in REQUIRED_WARRIOR_CLIPS:
+            if key not in warrior_clips:
+                raise ValueError(f"animations.json missing warrior clip '{key}'")
+        for key, clip in warrior_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(f"animations.json warrior clip '{key}' frame/duration count mismatch")
+        for key in ("warrior_frame_size", "warrior_pivot"):
+            value = animations.get(key)
+            if not (isinstance(value, list) and len(value) == 2):
+                raise ValueError(f"animations.json missing or invalid '{key}'")
         stage = debug.get("stage", {})
         for key in REQUIRED_STAGE:
             if key not in stage:

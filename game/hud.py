@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pygame
 
+from .config import SCREEN_W
+
 
 def _font(size: int, bold: bool = False) -> pygame.font.Font:
     try:
@@ -55,7 +57,7 @@ class HUD:
 
     def draw(self, surface: pygame.Surface, scene) -> None:
         lina = scene.lina
-        dummy = scene.dummy
+        enemy = scene.enemy
 
         panel = pygame.Surface((300, 142), pygame.SRCALPHA)
         panel.fill((8, 12, 18, 178))
@@ -95,11 +97,36 @@ class HUD:
             surface.blit(self.text.render("FLAME -", True, (150, 150, 160)), (24, 138))
 
         label = self.small.render(
-            f"DUMMY {dummy.hp:.0f}/{dummy.max_hp:.0f}",
+            f"{enemy.name.upper()} {enemy.hp:.0f}/{enemy.max_hp:.0f}",
             True,
             (240, 232, 220),
         )
+        label_y = round(enemy.y - enemy.hurtbox_dims[1] - 46.0)
         surface.blit(
             label,
-            (round(dummy.x - label.get_width() * 0.5), round(dummy.y - 236)),
+            (round(enemy.x - label.get_width() * 0.5), label_y),
         )
+
+        if not scene.stage.blocks_enabled:
+            hint = self.text.render("BLOCKS OFF  (B)", True, (255, 210, 80))
+            surface.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, 18))
+
+        self.draw_result(surface, scene)
+
+    def draw_result(self, surface: pygame.Surface, scene) -> None:
+        if scene.match_over is None:
+            return
+
+        band = pygame.Surface((SCREEN_W, 130), pygame.SRCALPHA)
+        band.fill((8, 10, 16, 190))
+        surface.blit(band, (0, 210))
+
+        if scene.match_over == "WIN":
+            title, color = "VICTORY", (110, 235, 150)
+        else:
+            title, color = "DEFEATED", (240, 90, 80)
+
+        image = self.big.render(title, True, color)
+        surface.blit(image, (SCREEN_W // 2 - image.get_width() // 2, 236))
+        hint = self.text.render("R Restart    F9 Reset", True, (230, 230, 240))
+        surface.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, 282))
