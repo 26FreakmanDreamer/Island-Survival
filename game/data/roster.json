@@ -12,6 +12,17 @@
       "pivot": "pivot",
       "frames_dir": "lina",
       "fallback": "Image/Character/lina-seabright-v1-256.png"
+    },
+    "nyra": {
+      "name": "Nyra Steel",
+      "class": "nyra",
+      "stats": "nyra",
+      "spawn": "player_spawn",
+      "clips": "nyra_clips",
+      "frame_size": "nyra_frame_size",
+      "pivot": "nyra_pivot",
+      "frames_dir": "nyra",
+      "fallback": "Image/Character/nyra-steel-256.png"
     }
   },
   "enemies": {
@@ -26,6 +37,20 @@
       "frames_dir": "warrior",
       "fallback": "Image/Enemy/warrior-336.png",
       "skill_slots": ["axe_slash", "dash", "axe_throw", null],
+      "separates": true,
+      "decides_match": true
+    },
+    "veno": {
+      "name": "Veno-Spider",
+      "class": "veno",
+      "stats": "veno",
+      "spawn": "veno_spawn",
+      "clips": "veno_clips",
+      "frame_size": "veno_frame_size",
+      "pivot": "veno_pivot",
+      "frames_dir": "veno",
+      "fallback": "Image/Enemy/veno-spider-128.png",
+      "skill_slots": ["veno_bite", "veno_poison", "veno_web", null],
       "separates": true,
       "decides_match": true
     },

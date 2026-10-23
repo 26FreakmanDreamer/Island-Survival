@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pygame
 
 from .combat import attack_damage
@@ -11,9 +13,10 @@ from .fighter import Fighter, FighterState
 from .hud import HUD
 from .input import InputState
 from .particles import ParticleSystem, draw_knock_up_vortex
-from .projectile import AxeThrow, QWave
+from .projectile import AimedProjectile, AxeThrow, QWave, SwordWave
 from .roster import create_fighter
 from .stage import Stage
+from .wave_fx import WaveEffect
 
 DEBUG_KEYS = {
     pygame.K_F1,
@@ -63,6 +66,7 @@ class ArenaScene:
         self.last_hit: dict | None = None
         self.debug_hitboxes: list[pygame.Rect] = []
         self.projectiles: list = []
+        self.wave_effects: list[WaveEffect] = []
         self.status_demo_index = 0
         self.time_scales = [0.25, 0.5, 1.0, 2.0]
         self.time_scale_index = 2
@@ -106,6 +110,7 @@ class ArenaScene:
         self.enemy = create_fighter(self.enemy_spec, self.store, self.stage)
         self.stage.blocks_enabled = blocks_enabled
         self.projectiles = []
+        self.wave_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -210,6 +215,7 @@ class ArenaScene:
         self.player.reset()
         self.enemy.reset()
         self.projectiles = []
+        self.wave_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -230,6 +236,7 @@ class ArenaScene:
 
         self.debug_hitboxes.clear()
         self.input.update(dt)
+        self._update_wave_effects(dt)
         self.player.update(dt, self.input, self.enemy, self)
         self.enemy.update(dt, self)
         self._separate_fighters(dt)
@@ -248,6 +255,11 @@ class ArenaScene:
             self.particles.emit_flame(self.player.x, self.player.y)
         if self.enemy.statuses.has("burn"):
             self.particles.emit_flame(self.enemy.x, self.enemy.y - 90.0)
+        if self.tick_count % 2 == 0:
+            if self.player.statuses.has("poison") and self.player.hp > 0.0:
+                self.particles.emit_poison(self.player.x, self.player.y)
+            if self.enemy.statuses.has("poison") and self.enemy.hp > 0.0:
+                self.particles.emit_poison(self.enemy.x, self.enemy.y)
 
     def _can_stand(self, fighter, x: float) -> bool:
         half = fighter.stage_half_width
@@ -270,6 +282,9 @@ class ArenaScene:
     def _separate_fighters(self, dt: float = FIXED_DT) -> None:
         """Keep the enemy's center from crossing the player's center."""
         if not self.enemy_spec.get("separates", False):
+            return
+        runtime = getattr(self.player, "attack_runtime", None)
+        if runtime is not None and runtime.data.get("pass_through_enemy"):
             return
         if self.player.hp <= 0.0 or self.enemy.hp <= 0.0:
             return
@@ -314,6 +329,47 @@ class ArenaScene:
         if delta and self._can_stand(fighter, fighter.x + delta):
             self.stage.move_x(fighter, delta)
 
+    def push_apart(self, a, b) -> None:
+        """Resolve an overlap after a pass-through dash.
+
+        The enemy yields first; if a wall or block prevents that, push the
+        dasher back to the other side.
+        """
+        if a.hp <= 0.0 or b.hp <= 0.0:
+            return
+        if not self.stage.body_rect(a).colliderect(self.stage.body_rect(b)):
+            return
+        min_dist = a.stage_half_width + b.stage_half_width
+        dx = b.x - a.x
+        side = 1 if dx >= 0.0 else -1
+        if abs(dx) < 0.01:
+            side = -a.facing
+        target_x = a.x + side * min_dist
+        if self._can_stand(b, b.x) and self._can_stand(b, target_x):
+            self.stage.move_x(b, target_x - b.x)
+            return
+        a_target = b.x - side * min_dist
+        if self._can_stand(a, a.x) and self._can_stand(a, a_target):
+            self.stage.move_x(a, a_target - a.x)
+
+    def _update_wave_effects(self, dt: float) -> None:
+        for effect in self.wave_effects:
+            effect.update(dt)
+        self.wave_effects = [effect for effect in self.wave_effects if effect.alive]
+
+    def spawn_wave_effect(
+        self,
+        attacker,
+        event: dict,
+        cast_x: float | None = None,
+        cast_y: float | None = None,
+        cast_facing: int | None = None,
+    ) -> None:
+        x = float(cast_x if cast_x is not None else attacker.x)
+        y = float(cast_y if cast_y is not None else attacker.y)
+        facing = int(cast_facing if cast_facing is not None else attacker.facing)
+        self.wave_effects.append(WaveEffect(x, y, facing, event))
+
     def _check_match_end(self) -> None:
         if not self.enemy_spec.get("decides_match", False) or self.match_over is not None:
             return
@@ -332,7 +388,56 @@ class ArenaScene:
         target = self.opponent_of(attacker)
 
         projectile_kind = event.get("projectile", "q_wave")
-        if projectile_kind == "axe":
+        if projectile_kind == "sword_wave":
+            projectile = SwordWave(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * 44.0,
+                y=lane_y,
+                direction=direction,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 560.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
+                hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+            )
+        elif projectile_kind in ("venom_glob", "web_bolt"):
+            origin_height = float(event.get("origin_height", 100.0))
+            origin_x = attacker.x + direction * 24.0
+            origin_y = attacker.y - origin_height
+            if target is not None:
+                aim_x = target.x
+                aim_y = target.y - target.hurtbox_dims[1] * 0.5
+            else:
+                aim_x = origin_x + direction * 320.0
+                aim_y = origin_y
+            distance = math.hypot(aim_x - origin_x, aim_y - origin_y)
+            if distance < 1e-6:
+                ux, uy = float(direction), 0.0
+            else:
+                ux = (aim_x - origin_x) / distance
+                uy = (aim_y - origin_y) / distance
+            speed = float(event.get("speed", 520.0))
+            projectile = AimedProjectile(
+                owner=attacker,
+                target=target,
+                x=origin_x,
+                y=origin_y,
+                vx=ux * speed,
+                vy=uy * speed,
+                max_range=float(event.get("range", 800.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
+                hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+                kind=projectile_kind,
+                radius=18.0 if projectile_kind == "venom_glob" else 14.0,
+                status=event.get("status"),
+                status_duration=float(event.get("status_duration", 0.0)),
+                status_dps_pct=float(event.get("status_dps_pct", 0.0)),
+            )
+        elif projectile_kind == "axe":
             projectile = AxeThrow(
                 owner=attacker,
                 target=target,
@@ -470,14 +575,65 @@ class ArenaScene:
                 surface, fighter.x, fighter.y, progress, elapsed * spin, cfg
             )
 
+    def _draw_status_fx(self, surface: pygame.Surface, fighter) -> None:
+        if fighter.hp <= 0.0:
+            return
+        rect = fighter.hurtbox()
+        if fighter.statuses.has("poison"):
+            pulse = 0.18 + 0.10 * (0.5 + 0.5 * math.sin(self.sim_time * 6.0))
+            overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
+            overlay.fill((70, 210, 90, round(255 * pulse)))
+            surface.blit(overlay, rect.topleft)
+        if fighter.statuses.has("stun"):
+            head_y = fighter.y - fighter.hurtbox_dims[1] - 18.0
+            for index in range(3):
+                angle = self.sim_time * 4.0 + index * (math.tau / 3.0)
+                x = fighter.x + math.cos(angle) * 16.0
+                y = head_y + math.sin(angle) * 6.0
+                pygame.draw.circle(surface, (255, 224, 90), (round(x), round(y)), 4)
+                pygame.draw.circle(surface, (255, 250, 210), (round(x), round(y)), 2)
+
+    def _draw_mark_fx(self, surface: pygame.Surface) -> None:
+        if not hasattr(self.player, "marks") or self.enemy.hp <= 0.0:
+            return
+        marks = int(getattr(self.player, "marks", 0))
+        burst = float(getattr(self.player, "mark_burst_time", 0.0))
+        base_y = self.enemy.y - self.enemy.hurtbox_dims[1] - 70.0
+        for index in range(3):
+            x = self.enemy.x + (index - 1) * 16.0
+            filled = index < marks
+            color = (190, 225, 255) if filled else (90, 110, 135)
+            points = [
+                (round(x), round(base_y - 6)),
+                (round(x + 6), round(base_y)),
+                (round(x), round(base_y + 6)),
+                (round(x - 6), round(base_y)),
+            ]
+            pygame.draw.polygon(surface, color, points)
+            if filled:
+                pygame.draw.polygon(surface, (245, 252, 255), points, 1)
+        if burst > 0.0:
+            progress = max(0.0, min(1.0, 1.0 - burst / 0.4))
+            radius = 10 + round(38 * progress)
+            alpha = max(0, round(200 * (1.0 - progress)))
+            ring = pygame.Surface((radius * 2 + 8, radius * 2 + 8), pygame.SRCALPHA)
+            center = ring.get_width() // 2
+            pygame.draw.circle(ring, (200, 235, 255, alpha), (center, center), radius, 3)
+            surface.blit(ring, (round(self.enemy.x - center), round(base_y - center)))
+
     def draw(self, surface: pygame.Surface) -> None:
         self.stage.draw(surface)
         self._draw_knock_up_effects(surface)
         self.enemy.draw(surface)
+        self._draw_status_fx(surface, self.enemy)
         for projectile in self.projectiles:
             projectile.draw(surface)
         self.particles.draw(surface)
         self.player.draw(surface)
+        for effect in self.wave_effects:
+            effect.draw(surface)
+        self._draw_status_fx(surface, self.player)
+        self._draw_mark_fx(surface)
         self.hud.draw(surface, self)
         if self.show_overlay:
             self.overlay.draw(surface, self)

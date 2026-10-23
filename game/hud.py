@@ -79,19 +79,19 @@ class HUD:
                 f"ENERGY {player.energy:.0f}/{player.max_energy:.0f}",
             )
 
-        if has_energy and hasattr(player, "q_cd") and hasattr(player, "e_cd"):
+        if hasattr(player, "q_cd") and hasattr(player, "e_cd"):
             q_label = "Q READY" if player.q_cd <= 0.0 else f"Q {player.q_cd:.1f}s"
             if player.e_cd > 0.0:
                 e_label = f"E {player.e_cd:.1f}s"
-            elif player.energy < player.max_energy:
+            elif has_energy and player.energy < player.max_energy:
                 e_label = "E NEED 100"
             else:
                 e_label = "E READY"
-            self._badge(surface, 24, 106, 126, 28, q_label, player.q_cd <= 0.0)
-            self._badge(
-                surface, 158, 106, 130, 28, e_label,
-                player.e_cd <= 0.0 and player.energy >= player.max_energy,
+            e_ready = player.e_cd <= 0.0 and (
+                not has_energy or player.energy >= player.max_energy
             )
+            self._badge(surface, 24, 106, 126, 28, q_label, player.q_cd <= 0.0)
+            self._badge(surface, 158, 106, 130, 28, e_label, e_ready)
 
         if hasattr(player, "flame_time") and hasattr(player, "current_flame_bonus"):
             if player.flame_time > 0.0:

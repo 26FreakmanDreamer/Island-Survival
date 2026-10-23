@@ -15,7 +15,8 @@
     ],
     "player_spawn": [280, 620],
     "dummy_spawn": [1000, 620],
-    "warrior_spawn": [1000, 620]
+    "warrior_spawn": [1000, 620],
+    "veno_spawn": [1000, 620]
   },
   "roster": {
     "default_character": "lina",

@@ -17,8 +17,12 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "combat")
-REQUIRED_ATTACKS = ("punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "combat")
+REQUIRED_ATTACKS = (
+    "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
+    "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
+    "veno_bite", "veno_poison", "veno_web",
+)
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
     "kick_l", "kick_r", "q", "transform", "hurt", "ko",
@@ -27,14 +31,22 @@ REQUIRED_FLAME_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r", "kick_l", "kick_r", "q",
 )
 REQUIRED_WARRIOR_CLIPS = ("idle", "walk", "jump", "dash", "axe_throw", "axe_slash", "hurt", "ko")
+REQUIRED_NYRA_CLIPS = (
+    "idle", "walk", "jump", "crouch", "hurt", "ko",
+    "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
+)
+REQUIRED_VENO_CLIPS = (
+    "idle", "walk", "hover", "jump", "hurt", "ko",
+    "veno_bite", "veno_poison", "veno_web",
+)
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks",
-    "player_spawn", "dummy_spawn", "warrior_spawn",
+    "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy")
-PLAYABLE_CLASSES = ("lina",)
-ANIMATED_CLASSES = ("lina", "warrior")
-PROJECTILE_KINDS = ("q_wave", "axe")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno")
+PLAYABLE_CLASSES = ("lina", "nyra")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno")
+PROJECTILE_KINDS = ("q_wave", "axe", "sword_wave", "venom_glob", "web_bolt")
 
 
 class JsonStore:
@@ -144,6 +156,52 @@ class JsonStore:
         ):
             if key not in warrior.get("ai", {}):
                 raise ValueError(f"stats.json warrior.ai missing '{key}'")
+        nyra = stats.get("nyra", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move", "cooldowns", "hurtbox",
+        ):
+            if key not in nyra:
+                raise ValueError(f"stats.json nyra missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in nyra.get("move", {}):
+                raise ValueError(f"stats.json nyra.move missing '{key}'")
+        for key in ("q", "e"):
+            if key not in nyra.get("cooldowns", {}):
+                raise ValueError(f"stats.json nyra.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in nyra.get("hurtbox", {}):
+                raise ValueError(f"stats.json nyra.hurtbox missing '{key}'")
+        veno = stats.get("veno", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "hover", "ai",
+        ):
+            if key not in veno:
+                raise ValueError(f"stats.json veno missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in veno.get("move", {}):
+                raise ValueError(f"stats.json veno.move missing '{key}'")
+        for key in ("bite", "poison", "web"):
+            if key not in veno.get("cooldowns", {}):
+                raise ValueError(f"stats.json veno.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in veno.get("hurtbox", {}):
+                raise ValueError(f"stats.json veno.hurtbox missing '{key}'")
+        hover = veno.get("hover", {})
+        for key in (
+            "base", "min", "max", "vertical_speed", "descend_speed",
+            "oscillation", "oscillation_rate",
+        ):
+            if key not in hover:
+                raise ValueError(f"stats.json veno.hover missing '{key}'")
+        if not (float(hover["min"]) <= float(hover["base"]) <= float(hover["max"])):
+            raise ValueError("stats.json veno.hover must satisfy min <= base <= max")
+        for key in (
+            "bite_range", "close_range", "ranged_range",
+            "decision_interval", "hover_min_time",
+        ):
+            if key not in veno.get("ai", {}):
+                raise ValueError(f"stats.json veno.ai missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -172,6 +230,24 @@ class JsonStore:
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json warrior clip '{key}' frame/duration count mismatch")
         for key in ("warrior_frame_size", "warrior_pivot"):
+            value = animations.get(key)
+            if not (isinstance(value, list) and len(value) == 2):
+                raise ValueError(f"animations.json missing or invalid '{key}'")
+        nyra_clips = animations.get("nyra_clips", {})
+        for key in REQUIRED_NYRA_CLIPS:
+            if key not in nyra_clips:
+                raise ValueError(f"animations.json missing nyra clip '{key}'")
+        for key, clip in nyra_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(f"animations.json nyra clip '{key}' frame/duration count mismatch")
+        veno_clips = animations.get("veno_clips", {})
+        for key in REQUIRED_VENO_CLIPS:
+            if key not in veno_clips:
+                raise ValueError(f"animations.json missing veno clip '{key}'")
+        for key, clip in veno_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(f"animations.json veno clip '{key}' frame/duration count mismatch")
+        for key in ("nyra_frame_size", "nyra_pivot", "veno_frame_size", "veno_pivot"):
             value = animations.get(key)
             if not (isinstance(value, list) and len(value) == 2):
                 raise ValueError(f"animations.json missing or invalid '{key}'")

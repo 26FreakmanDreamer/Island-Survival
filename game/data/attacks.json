@@ -109,5 +109,110 @@
       {"t": 0.35, "type": "projectile", "id": "axe_throw", "projectile": "axe",
        "lane": "high", "speed": 1250, "range": 420, "knockback": 150}
     ]
+  },
+  "nyra_slash": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.31,
+    "lunge": 24,
+    "lunge_time": 0.08,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "marks_on_hit": 1,
+    "events": [
+      {"t": 0.13, "until": 0.21, "type": "hitbox", "box": [34, -170, 120, 60], "knockback": 80}
+    ]
+  },
+  "nyra_thrust": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.3,
+    "duration": 0.4,
+    "lunge": 30,
+    "lunge_time": 0.1,
+    "energy_gain": 0,
+    "hitstun": 0.25,
+    "hitstop": 0.07,
+    "marks_on_hit": 1,
+    "events": [
+      {"t": 0.12, "until": 0.22, "type": "hitbox", "box": [28, -165, 130, 48], "knockback": 220}
+    ]
+  },
+  "nyra_wave": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.4,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.25,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.0, "until": 0.12, "type": "hitbox", "anchor": "cast",
+       "box": [28, -165, 130, 48], "knockback": 160},
+      {"t": 0.12, "until": 0.3, "type": "hitbox", "anchor": "cast",
+       "box": [28, -212, 162, 123], "knockback": 160},
+      {"t": 0.3, "until": 0.4, "type": "hitbox", "anchor": "cast",
+       "box": [28, -165, 130, 48], "knockback": 160},
+      {"t": 0.04, "type": "fx", "fx": "nyra_wave"}
+    ]
+  },
+  "nyra_dash": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.8,
+    "duration": 0.45,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.3,
+    "hitstop": 0.08,
+    "pass_through_enemy": true,
+    "events": [
+      {"t": 0.06, "until": 0.34, "type": "dash", "speed": 900},
+      {"t": 0.06, "until": 0.30, "type": "hitbox", "box": [0, -180, 90, 180], "knockback": 250}
+    ]
+  },
+  "veno_bite": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.5,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.25,
+    "hitstop": 0.05,
+    "events": [
+      {"t": 0.18, "until": 0.30, "type": "hitbox", "box": [24, -120, 110, 90], "knockback": 120}
+    ]
+  },
+  "veno_poison": {
+    "basic_mult": 0.8,
+    "extra_mult": 0.8,
+    "duration": 0.6,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {"t": 0.25, "type": "projectile", "id": "veno_poison", "projectile": "venom_glob",
+       "origin_height": 100, "speed": 520, "range": 800, "knockback": 40,
+       "status": "poison", "status_duration": 3.0, "status_dps_pct": 0.03}
+    ]
+  },
+  "veno_web": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.65,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.1,
+    "hitstop": 0.04,
+    "events": [
+      {"t": 0.30, "type": "projectile", "id": "veno_web", "projectile": "web_bolt",
+       "origin_height": 100, "speed": 480, "range": 800, "knockback": 60,
+       "status": "stun", "status_duration": 1.0}
+    ]
   }
 }

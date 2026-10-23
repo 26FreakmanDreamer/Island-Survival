@@ -6,12 +6,16 @@ from .animation import AnimationPlayer
 from .config import ASSETS_DIR, ROOT
 from .dummy import Dummy
 from .lina import Lina
+from .nyra import Nyra
+from .veno import Veno
 from .warrior import Warrior
 
 FIGHTER_CLASSES = {
     "lina": Lina,
     "warrior": Warrior,
     "dummy": Dummy,
+    "nyra": Nyra,
+    "veno": Veno,
 }
 
 

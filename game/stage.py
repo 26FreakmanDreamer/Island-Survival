@@ -141,13 +141,13 @@ class Stage:
             fighter.kb_vx = 0.0
             body = self.body_rect(fighter)
 
-    def move_fighter(self, fighter, dt: float) -> None:
+    def move_fighter(self, fighter, dt: float, apply_gravity: bool = True) -> None:
         """AABB movement against walls, ground and block tops/sides."""
         total_vx = fighter.vx + fighter.kb_vx
         self.move_x(fighter, total_vx * dt)
 
         previous_y = fighter.y
-        if not fighter.on_ground:
+        if not fighter.on_ground and apply_gravity:
             gravity = fighter.gravity
             if fighter.statuses.has("knock_up"):
                 gravity = getattr(fighter, "knock_up_gravity", gravity)

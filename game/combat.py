@@ -26,13 +26,25 @@ def attack_damage(attacker, attack: dict, event: dict | None = None) -> float:
     return getattr(attacker, "atk", 0.0) * multiplier
 
 
-def local_box_to_rect(fighter, box: list[float]) -> pygame.Rect:
+def local_box_to_rect(
+    fighter,
+    box: list[float],
+    origin_x: float | None = None,
+    origin_y: float | None = None,
+    facing: int | None = None,
+) -> pygame.Rect:
     x, y, width, height = box
-    if fighter.facing >= 0:
-        left = fighter.x + x
+    if origin_x is None:
+        origin_x = fighter.x
+    if origin_y is None:
+        origin_y = fighter.y
+    if facing is None:
+        facing = fighter.facing
+    if facing >= 0:
+        left = origin_x + x
     else:
-        left = fighter.x - x - width
-    top = fighter.y + y
+        left = origin_x - x - width
+    top = origin_y + y
     return pygame.Rect(round(left), round(top), int(width), int(height))
 
 
@@ -50,6 +62,9 @@ class AttackRuntime:
         self.hit_targets: set[int] = set()
         self.lunge_done = False
         self.spawned_events: set[int] = set()
+        self.cast_x = float(attacker.x)
+        self.cast_y = float(attacker.y)
+        self.cast_facing = 1 if attacker.facing >= 0 else -1
 
     @property
     def duration(self) -> float:
@@ -69,7 +84,16 @@ class AttackRuntime:
             if event["type"] == "hitbox":
                 until = float(event.get("until", event_time + FIXED_DT))
                 if event_time <= self.time < until:
-                    rect = local_box_to_rect(self.attacker, event["box"])
+                    if event.get("anchor") == "cast":
+                        rect = local_box_to_rect(
+                            self.attacker,
+                            event["box"],
+                            self.cast_x,
+                            self.cast_y,
+                            self.cast_facing,
+                        )
+                    else:
+                        rect = local_box_to_rect(self.attacker, event["box"])
                     self.scene.debug_hitboxes.append(rect)
                     if self.target is not None and id(self.target) not in self.hit_targets:
                         if self.target.hurtbox().colliderect(rect):
@@ -88,6 +112,16 @@ class AttackRuntime:
                 if self.time >= event_time and index not in self.spawned_events:
                     self.spawned_events.add(index)
                     self.scene.spawn_projectile_from_event(self.attacker, self.data, event)
+            elif event["type"] == "fx":
+                if self.time >= event_time and index not in self.spawned_events:
+                    self.spawned_events.add(index)
+                    self.scene.spawn_wave_effect(
+                        self.attacker,
+                        event,
+                        cast_x=self.cast_x,
+                        cast_y=self.cast_y,
+                        cast_facing=self.cast_facing,
+                    )
 
         if self.time >= self.duration:
             self.finished = True

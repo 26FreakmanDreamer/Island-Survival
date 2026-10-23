@@ -108,6 +108,64 @@ wind-up does not shrink, and frames 03/04 use the one-handed rear grip (the hand
 pommel with a long empty haft section ahead of it) from the follow-through reference. The axe has a
 single upper crescent blade; the lower side is a blunt counterweight.
 
+## Nyra Steel (2026-10-22)
+
+- Approved side base: `assets/generated/base/nyra_side_base.png`; canonical source
+  `Image/Character/nyra-steel-256.png`. Canvas 384x384, pivot (192,372), body height 214.
+- Visual lock: short asymmetrical silver-white bob with a side fringe and dark ornament, red eyes,
+  black high-collared combat coat with silver piping and dark-blue lining, belted waist, layered
+  split skirt/coattails, dark thigh-high stockings with upper-thigh bands, fingerless gloves, black
+  boots with blue details, one long narrow silver sword with a cool-blue edge in the RIGHT hand.
+  No eyepatch. Do not mirror or duplicate the sword.
+- Frame inventory (25 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6,
+  nyra_thrust 3, nyra_wave 3, nyra_dash 3. The base's sword is held horizontally for clean
+  `--body-height` calibration. The 1-frame crouch is imported with `--body-height 173`, producing
+  a ~170px visible body (midway between the original 212px crouch and the 128px deep crouch); the
+  crouching hurtbox stays 56×130 and other clips use 214. The 6-frame slash follows: initial
+  front-down 45°; transition with
+  the sword at 10-20° below horizontal and the arm starting to extend; the redrawn v11 arm-forward
+  frame (219px tall, feet aligned at 372); the thrust_v5_01 long-sword contact; and two recovery
+  frames. Durations are 0.04/0.04/0.05/0.08/0.05/0.05, and the hitbox window is 0.13-0.21. The
+  wave starts with the sword forward-up 45°, then frame 01 holds a long blade horizontally with a
+  slightly bent elbow, and frame 02 finishes forward-down. Keep the energy wave separate from the
+  character frames: `game/wave_fx.py` plays six transparent sprites from
+  `assets/frames/nyra/nyra_wave_fx/`, anchored at the Q cast position. Frames 00/01/05 are
+  transparent; 02-04 are visible (durations 0.04/0.04/0.05/0.08/0.05/0.05) and map to the Q's
+  extended hitbox window (t=0.12-0.30). Outside that window the Q uses the RMB thrust hitbox.
+- Import:
+
+```text
+py tools/import_frames.py --action <action> --src assets/generated/raw/nyra/<action>_flat --out assets/generated/staged/nyra/<action> --base assets/generated/base/nyra_side_base.png --body-height 214 --canvas 384 --pivot-x 192 --pivot-y 372 --expect <n>
+py tools/contact_sheet.py --action nyra_<action> --frames assets/generated/staged/nyra/<action> --out assets/generated/contact_sheets/nyra_<action>_v1.png --durations <durations> --cell 384 --pivot-x 192 --pivot-y 372
+```
+
+- The lying KO frame can include a neutral gray ground rectangle from the generator even with a
+  transparent request. Remove it with `--remove-bg` first; if the rectangle remains, clear neutral
+  gray pixels (`110 <= r <= 180`, channel spread < 12) in the ground band before installing.
+
+## Veno-Spider (2026-10-22)
+
+- Approved side base: `assets/generated/base/veno_side_base.png`; canonical source
+  `Image/Enemy/veno-spider-128.png`. Canvas 320x320, pivot (160,308), body height 150.
+- Visual lock: giant black chitinous spider with a swollen high abdomen, sharp lime-green venom
+  patterns, green eyes, fangs, eight jointed legs with green bands and pale tips. Head and fangs
+  point right; abdomen trails left. All eight legs must remain distinct; no extra legs.
+- Frame inventory (20 minimal): idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, veno_bite 3,
+  veno_poison 3, veno_web 3. Idle and jump currently reuse a shared frame where the generator
+  drifted in size; hover is a hanging pose with no baked-in web line.
+- Import:
+
+```text
+py tools/import_frames.py --action <action> --src assets/generated/raw/veno/<action>_flat --out assets/generated/staged/veno/<action> --base assets/generated/base/veno_side_base.png --body-height 150 --canvas 320 --pivot-x 160 --pivot-y 308 --expect <n>
+py tools/contact_sheet.py --action veno_<action> --frames assets/generated/staged/veno/<action> --out assets/generated/contact_sheets/veno_<action>_v1.png --durations <durations> --cell 320 --pivot-x 160 --pivot-y 308
+```
+
+- Bite frames should show the mouth wide open on the rear/lunge frames; poison/web frames should
+  only show the pose, with the projectile drawn by the game. Hover frames must not include a web
+  strand; the scene draws it.
+- The generator's body-size lock is strict: reject or reuse a frame if the abdomen/head changes
+  size between frames of the same clip.
+
 ## Commands
 
 ```text

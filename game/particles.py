@@ -45,6 +45,21 @@ class ParticleSystem:
                 )
             )
 
+    def emit_poison(self, x: float, y: float) -> None:
+        life = random.uniform(0.35, 0.7)
+        self._add(
+            Particle(
+                x=x + random.uniform(-16, 16),
+                y=y - random.uniform(10, 90),
+                vx=random.uniform(-16, 16),
+                vy=random.uniform(-55, -18),
+                life=life,
+                max_life=life,
+                radius=random.uniform(2.0, 4.5),
+                color=random.choice(((70, 190, 90), (120, 230, 120), (40, 140, 60))),
+            )
+        )
+
     def emit_hit(self, x: float, y: float, color: tuple[int, int, int]) -> None:
         for _ in range(8):
             life = random.uniform(0.12, 0.28)

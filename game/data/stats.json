@@ -33,6 +33,25 @@
       "crouching": [56, 130]
     }
   },
+  "nyra": {
+    "hp": 100,
+    "basic_atk": 20,
+    "extra_atk": 0,
+    "stage_body_width": 100,
+    "move": {
+      "walk": 260,
+      "jump_v": 760,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "q": 8.0,
+      "e": 15.0
+    },
+    "hurtbox": {
+      "standing": [56, 210],
+      "crouching": [56, 130]
+    }
+  },
   "warrior": {
     "hp": 300,
     "basic_atk": 20,
@@ -56,6 +75,42 @@
       "throw_min_range": 180,
       "throw_range": 420,
       "throw_cooldown": 2.8
+    }
+  },
+  "veno": {
+    "hp": 50,
+    "basic_atk": 10,
+    "extra_atk": 0,
+    "stage_body_width": 140,
+    "move": {
+      "walk": 320,
+      "jump_v": 700,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "bite": 1.8,
+      "poison": 3.5,
+      "web": 5.0
+    },
+    "hurtbox": {
+      "standing": [150, 150],
+      "crouching": [150, 150]
+    },
+    "hover": {
+      "base": 220,
+      "min": 140,
+      "max": 300,
+      "vertical_speed": 170,
+      "descend_speed": 260,
+      "oscillation": 80,
+      "oscillation_rate": 1.2
+    },
+    "ai": {
+      "bite_range": 150,
+      "close_range": 140,
+      "ranged_range": 700,
+      "decision_interval": 0.1,
+      "hover_min_time": 0.3
     }
   },
   "dummy": {

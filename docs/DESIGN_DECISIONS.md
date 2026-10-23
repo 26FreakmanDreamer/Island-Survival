@@ -147,17 +147,106 @@ This document records the provisional rules used by the sandbox. Values live in
 - Match flow: for enemies with `decides_match`, WIN is set when their HP reaches 0 and LOSE when
   Lina HP reaches 0; R restarts after a result and F9 resets at any time.
 
+## Nyra Steel
+
+- Playable character. Canonical art `Image/Character/nyra-steel-256.png`; fallback uses the same
+  canonical file. Canvas 384x384, feet-center pivot (192,372), body about 214px.
+- Frames (25 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6, thrust 3,
+  Q wave 3, dash 3. Only right-facing frames are stored; the runtime mirrors for left. The crouch
+  frame is imported at ~170px, midway between the original 212px crouch and the 128px deep-crouch
+  variant, so it reads smaller than the 214px standing body without becoming tiny. The crouching
+  hurtbox remains 56×130; only the image was changed.
+- Stats: HP 100, basic ATK 20, extra ATK 0, `stage_body_width` 100, hurtbox 56x210 standing /
+  56x130 crouching, walk 260, jump_v 760, gravity 2200. No energy resource. Q cooldown 8s,
+  E cooldown 15s; both start ready.
+- LMB sword slash: `1.0 * basic + 1.0 * extra` = 20, 0.31s; hitbox `[34,-170,120,60]` active
+  t=0.13..0.21 (reach 154, matching the long blade); knockback 80; hitstun 0.2; hitstop 0.06;
+  adds 1 mark. The 6-frame clip is timed 0.04/0.04/0.05/0.08/0.05/0.05: initial front-down 45°
+  blade; a transition with the sword at 10-20° below horizontal and the arm starting to extend;
+  the redrawn v11 arm-forward frame (219px tall, feet aligned at 372); the thrust_v5_01 long-sword
+  contact, which covers the 0.13-0.21 hitbox; and two recovery frames. The total attack duration is
+  0.31s, matching the clip sum.
+- RMB thrust: `1.2 * basic + 1.3 * extra` = 24, 0.40s; hitbox `[28,-165,130,48]` active
+  t=0.12..0.22; knockback 220; hitstun 0.25; hitstop 0.07; adds 1 mark. The animation uses a longer
+  blade than the base so the reach reads clearly.
+- Q sword wave: `1.5 * basic + 1.5 * extra` = 30, 0.40s; cast-anchored per-frame hitboxes active
+  for the whole Q, knockback 160, hitstun 0.25, hitstop 0.06, one hit per target. The RMB thrust box
+  `[28,-165,130,48]` applies during t=0..0.12 and 0.30..0.40; the extended box `[28,-212,162,123]`
+  (reach 190) applies during effect frames 02-04, t=0.12..0.30. It does not spawn a projectile and
+  does not add or detonate marks. `game/wave_fx.py` plays six separate 384x384 transparent blue
+  sword-effect frames, triggered at t=0.04 and anchored at the cast position. Effect frames 00/01 are transparent; 02 appears
+  around t=0.12, 03 peaks around t=0.17, 04 fades in the same place around t=0.25, and 05 is transparent;
+  02-04 coincide with the extended hitbox window.
+  The 3-frame character clip starts with the sword forward-up about 45°, swings through horizontal,
+  then finishes forward-down. The effect is never baked into the character frames.
+- E dash thrust: `1.5 * basic + 1.8 * extra` = 30, 0.45s; dash event moves at 900px/s during
+  0.06..0.34s; hitbox `[0,-180,90,180]` active 0.06..0.30; knockback 250; hitstun 0.3; hitstop 0.08.
+  `pass_through_enemy` skips body separation during the attack; walls and blocks still stop the dash.
+  At dash end, `scene.push_apart` pushes the enemy to the far side, or pushes Nyra back if the enemy
+  cannot be moved. Does not add or detonate marks.
+- Marks: only LMB/RMB add exactly 1 mark per connecting attack (multi-hit/projectile events count
+  once). Max 3. The 4th melee hit detonates all marks for `1.8 * atk + 10% target max HP`, applies
+  damage reduction, then leaves exactly 1 mark. The burst adds 0.10s hitstop, emits particles and
+  draws an expanding ring above the enemy. Q/E neither add nor detonate marks. Marks clear on reset
+  and when the target dies.
+- Mark display: 3 pips are drawn above the enemy's head, filled by current stacks; F2 shows
+  `MARKS n/3 BURST ... LAST ...`. There is no numeric mark bar in the HUD.
+- HUD: Nyra has no energy bar; the Q/E cooldown badges are shown for any player with `q_cd`/`e_cd`.
+- Lock-on: `start_attack` calls `scene.face_target_if_locked`, so middle-mouse lock-on turns Nyra
+  toward the living enemy at attack start.
+
+## Veno-Spider
+
+- Enemy. Canonical art `Image/Enemy/veno-spider-128.png`; fallback uses the same canonical file.
+  Canvas 320x320, feet-center pivot (160,308), body about 150px.
+- Frames (20 minimal set): idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite 3, poison 3, web 3.
+  The hover clip is a hanging pose; the visible web strand is drawn by the scene, not baked into
+  the frames. Idle and jump use a shared frame where necessary to keep body size locked.
+- Stats: HP 50 (strict docx value), basic ATK 10, extra ATK 0, `stage_body_width` 140, hurtbox
+  150x150, walk 320, jump_v 700, gravity 2200. Cooldowns: bite 1.8s, poison 3.5s, web 5.0s.
+  Hover: base 220, min 140, max 300, vertical_speed 170, descend_speed 260, oscillation 80,
+  oscillation_rate 1.2. AI: bite_range 150, close_range 140, ranged_range 700, hover_min_time 0.3.
+- Bite: `1.5 * basic + 1.5 * extra` = 15, 0.50s; hitbox `[24,-120,110,90]` active t=0.18..0.30;
+  knockback 120; hitstun 0.25; hitstop 0.05. The bite frames show the mouth wide open on frames
+  0-1 and closing on frame 2.
+- Poison spit: `0.8 * basic + 0.8 * extra` = 8, 0.60s; projectile `venom_glob` spawns at t=0.25,
+  origin 100px above the feet, speed 520, range 800, knockback 40; hitstun 0.15; hitstop 0.04.
+  On hit, applies poison at 3% of the target's max HP per second for 3s. Repeated hits from the
+  same source (`veno_poison`) extend the remaining duration; different sources keep independent
+  instances. The projectile aims at the target's position at fire time and does not home.
+- Web shot: `1.0 * basic + 1.0 * extra` = 10, 0.65s; projectile `web_bolt` spawns at t=0.30,
+  origin 100px above the feet, speed 480, range 800, knockback 60; hitstun 0.1; hitstop 0.04.
+  On hit, applies 1s stun. Also aimed at the fire-time target position, no homing.
+- AI: on the ground it faces the player and chases, bites when within 150px and the bite is ready,
+  and ascends when the player is outside bite range and at least one ranged skill is ready. It can
+  hop over a block when both ranged skills are cooling down. While hovering it prioritizes poison,
+  then web; it descends when the player is within 140px, when both ranged skills are cooling down
+  (after 0.5s of hover), or when hit while airborne. While descending it drifts toward the player
+  if beyond bite range. An attack keeps the current mode and altitude.
+- Hover height is a sine wave around 220px, clamped to 140-300px. The low part of the cycle brings
+  the spider into melee and ground-hitbox reach (including Nyra's Q); the high part needs a jump
+  attack. The scene draws a pale web strand from the top of the screen to the spider while
+  ascending/hovering.
+- Status visuals: poison draws a pulsing green overlay and green particles; stun draws rotating
+  yellow stars above the head. F11 can force either status on any enemy for inspection.
+- Single spawn only. `skill_slots` is `["veno_bite", "veno_poison", "veno_web", null]`;
+  `separates` and `decides_match` are true. The docx `n=3` group is future multi-enemy work.
+- Force/skill cooldowns: `force_attack` works on the ground or in the air, clears the three
+  cooldowns, starts the requested attack and returns True; an empty Z slot is a safe no-op.
+  `skill_remaining` returns the matching cooldown for F2.
+
 ## Roster and skill slots
 
 - `game/data/roster.json` is the registry. Each character/enemy entry names its `class`, `stats`
   key, spawn key, animation table keys, frame folder, canonical fallback image, and (for enemies)
   `skill_slots`, `separates` and `decides_match`.
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
-  longer constructs Lina/Warrior/Dummy directly. A future playable class must keep Lina's
-  `update(dt, input_state, target, scene)` signature; only Lina is installed this round.
-- F7 cycles the enemy roster; `[` / `]` cycle the playable roster (only Lina is installed, so they
-  are safe no-ops). Switching performs a full match reset: both fighters respawn at full HP, and
-  projectiles, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
+  longer constructs Lina/Nyra/Warrior/Veno/Dummy directly. Playable classes keep Lina's
+  `update(dt, input_state, target, scene)` signature; Lina and Nyra are installed.
+- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → training Dummy); `[` / `]`
+  cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
+  respawn at full HP, and
+  projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
   cleared. The B block toggle is preserved; the enemy AI is forced off after a switch (startup and
   F9 still leave it on, and F8 toggles it).
 - `skill_slots` is a fixed 4-entry list of attack ids or `null`, in slot order. `V/C/X/Z` call
@@ -171,6 +260,6 @@ This document records the provisional rules used by the sandbox. Values live in
 
 ## Out of scope in the current sandbox
 
-Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, additional playable characters,
-enemies beyond Warrior/Dummy and their AI, packaging and automated tests/logs. The training dummy is
-a debug tool, not a spec enemy.
+Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
+Lina/Nyra, enemies beyond Warrior/Veno/Dummy and their AI, multi-enemy encounters (`n=3`),
+packaging and automated tests/logs. The training dummy is a debug tool, not a spec enemy.

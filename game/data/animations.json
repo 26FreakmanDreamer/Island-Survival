@@ -3,6 +3,10 @@
   "pivot": [128, 244],
   "warrior_frame_size": [384, 384],
   "warrior_pivot": [192, 372],
+  "nyra_frame_size": [384, 384],
+  "nyra_pivot": [192, 372],
+  "veno_frame_size": [320, 320],
+  "veno_pivot": [160, 308],
   "clips": {
     "idle": {
       "loop": true,
@@ -105,6 +109,105 @@
       "loop": false,
       "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
       "durations": [0.18, 0.18, 0.18, 0.18]
+    }
+  },
+  "nyra_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png"],
+      "durations": [0.14, 0.14]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["crouch/crouch_00.png"],
+      "durations": [0.30]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png"],
+      "durations": [0.30]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png"],
+      "durations": [0.35, 0.35]
+    },
+    "nyra_slash": {
+      "loop": false,
+      "frames": ["nyra_slash/nyra_slash_00.png", "nyra_slash/nyra_slash_01.png", "nyra_slash/nyra_slash_02.png", "nyra_slash/nyra_slash_03.png", "nyra_slash/nyra_slash_04.png", "nyra_slash/nyra_slash_05.png"],
+      "durations": [0.04, 0.04, 0.05, 0.08, 0.05, 0.05]
+    },
+    "nyra_thrust": {
+      "loop": false,
+      "frames": ["nyra_thrust/nyra_thrust_00.png", "nyra_thrust/nyra_thrust_01.png", "nyra_thrust/nyra_thrust_02.png"],
+      "durations": [0.10, 0.12, 0.16]
+    },
+    "nyra_wave": {
+      "loop": false,
+      "frames": ["nyra_wave/nyra_wave_00.png", "nyra_wave/nyra_wave_01.png", "nyra_wave/nyra_wave_02.png"],
+      "durations": [0.12, 0.12, 0.16]
+    },
+    "nyra_dash": {
+      "loop": false,
+      "frames": ["nyra_dash/nyra_dash_00.png", "nyra_dash/nyra_dash_01.png", "nyra_dash/nyra_dash_02.png"],
+      "durations": [0.08, 0.12, 0.25]
+    }
+  },
+  "veno_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png"],
+      "durations": [0.25, 0.25]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png"],
+      "durations": [0.12, 0.12]
+    },
+    "hover": {
+      "loop": true,
+      "frames": ["hover/hover_00.png", "hover/hover_01.png"],
+      "durations": [0.30, 0.30]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png"],
+      "durations": [0.30]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png"],
+      "durations": [0.35, 0.35]
+    },
+    "veno_bite": {
+      "loop": false,
+      "frames": ["veno_bite/veno_bite_00.png", "veno_bite/veno_bite_01.png", "veno_bite/veno_bite_02.png"],
+      "durations": [0.12, 0.12, 0.26]
+    },
+    "veno_poison": {
+      "loop": false,
+      "frames": ["veno_poison/veno_poison_00.png", "veno_poison/veno_poison_01.png", "veno_poison/veno_poison_02.png"],
+      "durations": [0.15, 0.15, 0.30]
+    },
+    "veno_web": {
+      "loop": false,
+      "frames": ["veno_web/veno_web_00.png", "veno_web/veno_web_01.png", "veno_web/veno_web_02.png"],
+      "durations": [0.16, 0.16, 0.33]
     }
   },
   "flame_clips": {

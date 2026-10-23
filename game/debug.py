@@ -106,6 +106,13 @@ class DebugPanel:
                 f"ENERGY {player.energy:5.1f}/{player.max_energy:.0f}  "
                 f"Q {player.q_cd:4.1f}s  E {player.e_cd:4.1f}s"
             )
+        elif hasattr(player, "q_cd") and hasattr(player, "e_cd"):
+            lines.append(f"Q {player.q_cd:4.1f}s  E {player.e_cd:4.1f}s")
+        if hasattr(player, "marks"):
+            lines.append(
+                f"MARKS {int(player.marks)}/3  BURST {player.mark_burst_time:4.2f}s  "
+                f"LAST {player.mark_burst_damage:5.1f}"
+            )
         if all(
             hasattr(player, attr)
             for attr in ("flame_time", "flame_hits", "current_flame_bonus")
@@ -175,7 +182,10 @@ class DebugPanel:
             lines.append(f"ENEMY INV {enemy.invincible}")
         if hasattr(enemy, "ai_enabled"):
             lines.append(f"ENEMY AI {'ON' if enemy.ai_enabled else 'OFF'}")
+        if hasattr(enemy, "skill_cd"):
             lines.append(f"SKILL GAP {enemy.skill_cd:.2f}s")
+        if hasattr(enemy, "mode"):
+            lines.append(f"MODE {enemy.mode}  HOVER {enemy.hover_height:.0f}")
         for projectile in scene.projectiles:
             if getattr(projectile, "kind", "") == "axe_throw":
                 lines.append(

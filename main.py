@@ -637,6 +637,333 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.stage.set_blocks_enabled(True)
     blocks_toggle_ok = blocks_pass_ok and scene.stage.blocks_enabled
 
+    # --- Phase C: Nyra Steel, marks, cooldowns and pass-through dash ---
+    scene.set_character("nyra")
+    scene.set_enemy("dummy")
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra_present = (
+        nyra.name == "Nyra Steel"
+        and nyra.max_hp == 100.0
+        and nyra.basic_atk == 20.0
+        and not hasattr(nyra, "energy")
+    )
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x + 80.0
+    nyra.facing = 1
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    nyra_slash_ok = abs(dummy.hp - 980.0) < 0.01 and nyra.marks == 1
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x + 80.0
+    nyra.facing = 1
+    burst_seen = False
+    for _ in range(4):
+        scene.input.buffer.press("punch")
+        for _ in range(30):
+            scene.tick(FIXED_DT)
+            if nyra.mark_detonations > 0 and not burst_seen:
+                burst_seen = nyra.mark_burst_time > 0.0
+    nyra_burst_ok = (
+        burst_seen
+        and nyra.mark_detonations == 1
+        and nyra.marks == 1
+    )
+    nyra_burst_damage_ok = abs(dummy.hp - 784.0) < 0.01
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x + 100.0
+    nyra.facing = 1
+    scene.input.buffer.press("kick")
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    nyra_thrust_ok = abs(dummy.hp - 976.0) < 0.01 and nyra.marks == 1
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x + 120.0
+    nyra.facing = 1
+    scene.input.buffer.press("q")
+    q_fx_seen = False
+    q_no_projectile = True
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+        if scene.wave_effects:
+            q_fx_seen = True
+        if scene.projectiles:
+            q_no_projectile = False
+    nyra_q_ok = (
+        abs(dummy.hp - 970.0) < 0.01
+        and nyra.marks == 0
+        and q_fx_seen
+        and q_no_projectile
+    )
+    nyra_q_cd_ok = nyra.q_cd > 6.0
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra.x = 100.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    dummy.x = 300.0
+    dummy.y = scene.stage.ground_y
+    dummy.on_ground = True
+    nyra.facing = 1
+    scene.input.buffer.press("q")
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+        if nyra.attack_runtime is not None:
+            break
+    q_out_of_thrust_ok = abs(dummy.hp - 1000.0) < 0.01
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+        if nyra.attack_runtime is None or nyra.attack_runtime.time >= 0.13:
+            break
+    nyra_q_range_ok = (
+        q_out_of_thrust_ok
+        and abs(dummy.hp - 970.0) < 0.01
+        and nyra.marks == 0
+    )
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra.x = 500.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    dummy.x = 680.0
+    dummy.y = scene.stage.ground_y
+    dummy.on_ground = True
+    nyra.facing = 1
+    scene.input.buffer.press("e")
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+    nyra_dash_ok = abs(dummy.hp - 970.0) < 0.01 and nyra.marks == 0
+    nyra_dash_cd_ok = nyra.e_cd > 13.0
+
+    scene.reset()
+    nyra = scene.player
+    nyra.marks = 2
+    scene.reset()
+    nyra = scene.player
+    nyra_marks_reset_ok = nyra.marks == 0
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x + 80.0
+    dummy.hp = 5.0
+    nyra.facing = 1
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    nyra_death_clear_ok = dummy.hp <= 0.0 and nyra.marks == 0
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    dummy.x = nyra.x - 80.0
+    nyra.facing = 1
+    scene.toggle_lock_on()
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    nyra_lock_ok = nyra.facing == -1 and dummy.hp < dummy.max_hp
+    if scene.lock_on:
+        scene.toggle_lock_on()
+
+    scene.set_enemy("veno")
+    scene.reset()
+    nyra = scene.player
+    veno = scene.enemy
+    veno.ai_enabled = False
+    nyra.x = 600.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    veno.x = 680.0
+    veno.y = scene.stage.ground_y
+    veno.on_ground = True
+    nyra.facing = 1
+    scene.input.buffer.press("e")
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+    nyra_dash_pass_ok = (
+        nyra.x > veno.x and abs(veno.x - nyra.x) >= 119.5
+    )
+    nyra_missing = len(nyra.anim.missing_paths())
+
+    # --- Phase D: Veno-Spider skills, statuses, hover AI and match flow ---
+    scene.set_character("lina")
+    scene.set_enemy("veno")
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno_present = (
+        veno.name == "Veno-Spider"
+        and veno.max_hp == 50.0
+        and veno.basic_atk == 10.0
+        and veno.skill_slots == ["veno_bite", "veno_poison", "veno_web", None]
+        and scene.enemy_spec.get("separates", False)
+        and scene.enemy_spec.get("decides_match", False)
+    )
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno.ai_enabled = False
+    player.x = veno.x - 80.0
+    player.y = scene.stage.ground_y
+    player.on_ground = True
+    veno.facing = -1
+    veno.force_attack(scene, player, "veno_bite")
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    veno_bite_ok = abs(player.hp - 85.0) < 0.01
+    veno_bite_cd_ok = veno.skill_remaining("veno_bite") > 1.0
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno.ai_enabled = False
+    player.x = veno.x - 300.0
+    player.y = scene.stage.ground_y
+    player.on_ground = True
+    veno.facing = -1
+    veno.force_attack(scene, player, "veno_poison")
+    poison_hit = False
+    for _ in range(90):
+        scene.tick(FIXED_DT)
+        if player.hp < player.max_hp:
+            poison_hit = True
+            break
+    poison = player.statuses.poisons[0] if player.statuses.poisons else None
+    veno_poison_ok = (
+        poison_hit
+        and abs(player.hp - 92.0) < 0.01
+        and poison is not None
+        and abs(poison.dps - 3.0) < 1e-6
+        and poison.remaining > 2.5
+    )
+
+    before_poison = (
+        player.statuses.poisons[0].remaining if player.statuses.poisons else 0.0
+    )
+    veno.force_attack(scene, player, "veno_poison")
+    stack_seen = False
+    for _ in range(90):
+        scene.tick(FIXED_DT)
+        if (
+            len(player.statuses.poisons) == 1
+            and player.statuses.poisons[0].remaining > before_poison + 1.0
+        ):
+            stack_seen = True
+            break
+    veno_poison_stack_ok = stack_seen and len(player.statuses.poisons) == 1
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno.ai_enabled = False
+    player.x = veno.x - 300.0
+    player.y = scene.stage.ground_y
+    player.on_ground = True
+    veno.facing = -1
+    veno.force_attack(scene, player, "veno_web")
+    for _ in range(90):
+        scene.tick(FIXED_DT)
+        if player.hp < player.max_hp:
+            break
+    veno_web_ok = abs(player.hp - 90.0) < 0.01 and player.statuses.has("stun")
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    player.x = 300.0
+    player.y = scene.stage.ground_y
+    player.on_ground = True
+    veno.x = 1000.0
+    veno.y = scene.stage.ground_y
+    veno.on_ground = True
+    veno.mode = "ground"
+    veno.hover_time = 0.0
+    veno.hover_phase = 0.0
+    veno.ai_enabled = True
+    ascended = False
+    for _ in range(120):
+        scene.tick(FIXED_DT)
+        if veno.mode in ("ascend", "hover") and veno.y < scene.stage.ground_y - 100.0:
+            ascended = True
+            break
+    veno_ai_ascent_ok = ascended
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno.ai_enabled = True
+    veno.mode = "hover"
+    veno.on_ground = False
+    veno.y = scene.stage.ground_y - 220.0
+    veno.vy = 0.0
+    veno.hover_time = 0.6
+    veno.poison_cd = 5.0
+    veno.web_cd = 5.0
+    veno.bite_cd = 5.0
+    player.x = veno.x - 400.0
+    landed = False
+    for _ in range(120):
+        scene.tick(FIXED_DT)
+        if veno.on_ground and veno.mode == "ground":
+            landed = True
+            break
+    veno_ai_descend_ok = landed
+
+    veno_slot_matches = {}
+    for key, expected in (
+        (pygame.K_v, "veno_bite"),
+        (pygame.K_c, "veno_poison"),
+        (pygame.K_x, "veno_web"),
+    ):
+        scene.reset()
+        veno = scene.enemy
+        veno.ai_enabled = False
+        scene.handle_debug_key(key)
+        veno_slot_matches[expected] = veno.attack_id == expected
+    scene.reset()
+    veno = scene.enemy
+    veno.ai_enabled = False
+    scene.handle_debug_key(pygame.K_z)
+    veno_slot_four_ok = veno.attack_id is None and veno.state != FighterState.ATTACK
+    veno_slots_ok = all(veno_slot_matches.values()) and veno_slot_four_ok
+
+    scene.reset()
+    veno = scene.enemy
+    player = scene.player
+    veno.ai_enabled = False
+    veno.hp = 20.0
+    player.x = veno.x - 80.0
+    player.facing = 1
+    player.start_attack("punch_r", scene, veno)
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    veno_win_ok = veno.hp <= 0.0 and scene.match_over == "WIN"
+    veno_missing = len(veno.anim.missing_paths())
+
+    scene.set_character("lina")
+    scene.set_enemy("warrior")
+    scene.reset()
+
     smoke_ticks = scene.tick_count
     scene.set_enemy("dummy")
     dummy_ok = scene.enemy.name == "Dummy"
@@ -697,7 +1024,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("warrior")
     character_noop_ok = not scene.set_character("lina")
     scene.handle_debug_key(pygame.K_LEFTBRACKET)
-    previous_character_ok = scene.character_id == "lina"
+    previous_character_ok = scene.character_id == "nyra"
+    nyra_switch_ai_off_ok = (
+        hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
+    )
     scene.handle_debug_key(pygame.K_RIGHTBRACKET)
     next_character_ok = scene.character_id == "lina"
 
@@ -710,7 +1040,9 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
 
     # F7 and B must work through the debug-key router, not only the helpers.
     scene.handle_debug_key(pygame.K_F7)
-    f7_cycle_ok = scene.enemy_id == "dummy"
+    f7_cycle_ok = scene.enemy_id == "veno"
+    scene.handle_debug_key(pygame.K_F7)
+    f7_dummy_ok = scene.enemy_id == "dummy"
     b_before = scene.stage.blocks_enabled
     scene.handle_debug_key(pygame.K_b)
     b_key_ok = scene.stage.blocks_enabled != b_before
@@ -731,6 +1063,11 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     switch_clears_ok = (
         had_projectile and not scene.projectiles and scene.hitstop == 0.0
     )
+    scene.set_enemy("veno")
+    veno_switch_ai_off_ok = not scene.enemy.ai_enabled
+    scene.handle_debug_key(pygame.K_F8)
+    veno_switch_ai_toggle_ok = scene.enemy.ai_enabled
+    scene.handle_debug_key(pygame.K_F8)
     scene.set_enemy("warrior")
 
     roster_ok = (
@@ -744,11 +1081,16 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and character_noop_ok
         and previous_character_ok
         and next_character_ok
+        and nyra_switch_ai_off_ok
         and b_preserved_ok
         and switch_clears_ok
         and f7_cycle_ok
+        and f7_dummy_ok
         and b_key_ok
         and lock_switch_off_ok
+        and veno_slots_ok
+        and veno_switch_ai_off_ok
+        and veno_switch_ai_toggle_ok
     )
     warrior_missing = len(scene.enemy.anim.missing_paths())
     scene.show_overlay = True
@@ -769,6 +1111,21 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"block_lunge_ok={block_lunge_ok} q_block_ok={q_block_ok} "
         f"lock_on_ok={lock_on_ok} lock_off_ok={lock_off_ok} "
         f"flame_ok={flame_ok} missing_frames={missing_frames} "
+        f"nyra_present={nyra_present} nyra_slash_ok={nyra_slash_ok} "
+        f"nyra_burst_ok={nyra_burst_ok} nyra_burst_damage_ok={nyra_burst_damage_ok} "
+        f"nyra_thrust_ok={nyra_thrust_ok} nyra_q_ok={nyra_q_ok} "
+        f"nyra_q_cd_ok={nyra_q_cd_ok} nyra_q_range_ok={nyra_q_range_ok} "
+        f"nyra_dash_ok={nyra_dash_ok} "
+        f"nyra_dash_cd_ok={nyra_dash_cd_ok} nyra_marks_reset_ok={nyra_marks_reset_ok} "
+        f"nyra_death_clear_ok={nyra_death_clear_ok} nyra_lock_ok={nyra_lock_ok} "
+        f"nyra_dash_pass_ok={nyra_dash_pass_ok} "
+        f"nyra_missing_frames={nyra_missing} "
+        f"veno_present={veno_present} veno_bite_ok={veno_bite_ok} "
+        f"veno_bite_cd_ok={veno_bite_cd_ok} veno_poison_ok={veno_poison_ok} "
+        f"veno_poison_stack_ok={veno_poison_stack_ok} veno_web_ok={veno_web_ok} "
+        f"veno_ai_ascent_ok={veno_ai_ascent_ok} veno_ai_descend_ok={veno_ai_descend_ok} "
+        f"veno_slots_ok={veno_slots_ok} veno_win_ok={veno_win_ok} "
+        f"veno_missing_frames={veno_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -803,6 +1160,32 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and q_block_ok
         and flame_ok
         and missing_frames == 0
+        and nyra_present
+        and nyra_slash_ok
+        and nyra_burst_ok
+        and nyra_burst_damage_ok
+        and nyra_thrust_ok
+        and nyra_q_ok
+        and nyra_q_cd_ok
+        and nyra_q_range_ok
+        and nyra_dash_ok
+        and nyra_dash_cd_ok
+        and nyra_marks_reset_ok
+        and nyra_death_clear_ok
+        and nyra_lock_ok
+        and nyra_dash_pass_ok
+        and nyra_missing == 0
+        and veno_present
+        and veno_bite_ok
+        and veno_bite_cd_ok
+        and veno_poison_ok
+        and veno_poison_stack_ok
+        and veno_web_ok
+        and veno_ai_ascent_ok
+        and veno_ai_descend_ok
+        and veno_slots_ok
+        and veno_win_ok
+        and veno_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok

@@ -1,5 +1,17 @@
 # Next Session — 新增 Character 与 Enemy（Handoff）
 
+> **下一轮 handoff（2026-10-23）**：Nyra / Veno 细节调整 + Lina Q 特效改造，直接使用 `docs/NEXT_SESSION_NYRA_VENO_LINA_Q.md`。
+>
+> **2026-10-22 实施状态（Q 于 2026-10-23 更新）**：Nyra Steel 与 Veno-Spider 已实现并通过 smoke（`exit=0`，`nyra_missing_frames=0`、`veno_missing_frames=0`、`warrior_missing_frames=0`）。
+> - 默认仍为 Lina vs Warrior；`[` / `]` 为 Lina ↔ Nyra；F7 为 Warrior → Veno → Dummy。
+> - Nyra：384×384 / pivot (192,372) / body 214，25 帧最小集（slash 6、thrust 3、wave 3、dash 3）；LMB 20、RMB 24、Q 30（8s）、E 30（15s）；Q 不再发射弹体，使用 cast-anchored 分段 hitbox：00/01/05 帧（及首尾空白段）用右键 thrust 的 `[28,-165,130,48]`，02–04 帧（t=0.12–0.30）用延长到剑光范围的 `[28,-212,162,123]`（最远 190px）；`game/wave_fx.py` 播放 `assets/frames/nyra/nyra_wave_fx/` 的 6 帧透明剑光贴图（00/01/05 透明，02 出现、03 最盛、04 原位淡出）；仅近战叠印记，第 4 次近战引爆 `1.8×atk + 10% 目标最大生命` 并保留 1 层；E 穿敌不穿地形。
+> - Veno：320×320 / pivot (160,308) / body 150，20 帧最小集；HP 50 / ATK 10；咬 15、毒 8 + 3%/s×3s、网 10 + 眩晕 1s；地面撕咬、浮空 140–300px（基准 220）优先毒/网；单只生成。
+> - 素材已安装到 `assets/frames/nyra/` 与 `assets/frames/veno/`；原始候选/接触表在 `assets/generated/`。
+> - **待办**：Veno 的 `n=3` 多敌人未实现；后续可把最小帧集扩到 Lina/Warrior 标准。`nyra_slash` 已扩为 6 帧（初始前下方 45° → 剑抬到水平下 10–20° 的过渡 → v11 大臂前伸帧（219px、脚底 372）→ 复用 thrust_v5_01 长剑接触 → 两张收势帧）；durations 0.04/0.04/0.05/0.08/0.05/0.05（总 0.31s），LMB hitbox `[34,-170,120,60]`，判定窗口 0.13–0.21。`nyra_wave` 起始剑指前上方 45°，frame 01 平举长剑、肘部微屈，frame 02 收到前下方 45°；剑气不再发射弹体，`wave_fx.py` 播放 6 帧透明剑光贴图，02–04 帧使用延长 hitbox `[28,-212,162,123]`（最远 190px），其他帧使用右键 thrust 的 `[28,-165,130,48]`。
+> - 工作区未提交；不要 revert / stash / 覆盖用户现有改动。
+>
+> 以下为 2026-10-21 的原始 handoff，架构说明仍有效；其中 branch/baseline 头部已过期（当前 `main`，HEAD `26db0cf`，工作区有未提交实现）。
+
 > 写于 2026-10-21，供下一次 session 直接读取。
 > 当前分支：`warrior-combat-sandbox-2026-10-21`
 > 基线提交：`054702b`，但工作区有未提交改动（roster/技能槽/击飞/输入缓冲/文档）。

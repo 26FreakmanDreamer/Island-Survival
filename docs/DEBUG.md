@@ -16,8 +16,13 @@ armor, recovery interruption, axe damage/KO, dash damage + knock-up (`dash_ok`),
 approach + block jump, body separation/facing stability (`overlap_ok`), capped separation with no
 enemy flip across a block (`separation_block_ok`), interrupted-transform
 visibility (`transform_hit_ok`), flame revert, flame alignment coverage (`flame_offset_ok`), roster
-switching (`roster_ok`), and the data-driven V/C/X/Z slots (`slots_ok`). It prints one `SMOKE ...`
-line and exits non-zero on failure. It uses SDL's dummy video driver.
+switching (`roster_ok`), and the data-driven V/C/X/Z slots (`slots_ok`). Phase C switches to Nyra
+against the Dummy and checks slash/thrust damage, 4-hit mark detonation (`nyra_burst_ok`,
+`nyra_burst_damage_ok`), Q hitbox/FX plus the extended-range window (`nyra_q_range_ok`), E dash
+damage/cooldowns, mark reset/death clearing, lock-on and
+the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs Veno-Spider and checks bite,
+poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots, win and `veno_missing_frames`.
+It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dummy video driver.
 
 ## Overlay and panel
 
@@ -31,6 +36,9 @@ line and exits non-zero on failure. It uses SDL's dummy video driver.
   clock/queued action, hitstun/knockback, positions/facing, player and current-enemy statuses, the
   enemy's four skill slots with remaining cooldowns (`S1 axe_slash 0.0s ... S4 -`), enemy AI
   flag/attack/armor, last hit, input history/buffer, missing frames, last reload status/error.
+  For Nyra the panel shows `Q ... E ...` without an energy line and adds `MARKS n/3 BURST ... LAST ...`.
+  For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; poison and stun appear in the status
+  list. The three mark pips above the enemy, the green poison pulse and the stun stars are draw-only.
 
 ## Simulation controls
 
@@ -46,8 +54,8 @@ line and exits non-zero on failure. It uses SDL's dummy video driver.
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Warrior → training Dummy → …) |
-| [ / ] | Cycle the playable character roster (currently Lina only) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider → training Dummy → …) |
+| [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
 | F10 | Fill energy and force the flame transform |
@@ -77,10 +85,22 @@ line and exits non-zero on failure. It uses SDL's dummy video driver.
    hitstun; `combat.knock_up_gravity` keeps her airborne for that window, so landing and control
    return together) and the cyan vortex at her feet shrinks/fades with the remaining time; PgDn to 0
    shows the KO and VICTORY banner; F12 at low Lina HP shows DEFEATED; R restarts.
-8. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
-   stops the AI from jumping over them. The toggle persists across F9 and resets on F5/rebuild.
-9. Edit `game/data/*.json` and press F5 to tune values without restarting.
-10. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
+8. Nyra checks: use `[` to switch to Nyra; LMB/RMB add marks (watch the 3 pips above the enemy),
+   the 4th melee hit detonates for `1.8×atk + 10% max HP` and leaves 1 mark; Q/E do not add marks.
+   Q uses the RMB thrust box on the blank effect frames and the extended box during effect frames
+   02-04, so a target just outside thrust range is hit only after the extended window opens; use F1
+   to see the box change. E passes through the enemy but stops at blocks/walls; at the end the bodies
+   are pushed apart. F2 shows `Q/E` cooldowns and `MARKS n/3`; lock-on (middle mouse) turns Nyra at
+   attack start.
+9. Veno checks: F7 to Veno; F8 toggles its AI. On the ground it chases and bites with a wide-open
+   mouth; at range it ascends on a web strand, hovers in a 140–300px sine wave and fires aimed
+   venom/web. V/C/X start bite/poison/web and Z is a no-op. F2 shows `MODE`/`HOVER`, slots and
+   cooldowns; F11 shows poison's green pulse and stun stars. Hit it while airborne to knock it into
+   descent. The web strand is draw-only, not a frame.
+10. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
+    stops the AI from jumping over them. The toggle persists across F9 and resets on F5/rebuild.
+11. Edit `game/data/*.json` and press F5 to tune values without restarting.
+12. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
     cache keys on path + mtime.
 
 ## Input checks
