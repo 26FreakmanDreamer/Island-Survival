@@ -1,0 +1,35 @@
+{
+  "frame_size": [
+    640,
+    320
+  ],
+  "layout": {
+    "columns": 3,
+    "rows": 2
+  },
+  "frame_order": "left-to-right, top-to-bottom",
+  "durations_ms": [
+    140,
+    100,
+    90,
+    90,
+    100,
+    180
+  ],
+  "pivot": [
+    160,
+    308
+  ],
+  "spider_source_poses": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0
+  ],
+  "layers": [
+    "spider",
+    "web"
+  ]
+}

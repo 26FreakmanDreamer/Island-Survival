@@ -2,6 +2,7 @@
 
 > 日期：2026-10-23
 > 用途：新 session 的 handoff。先读本文件，再按文末 prompt 开始。
+> **只做 Veno-Spider / Lina Q 特效时**：优先使用聚焦版 `docs/NEXT_SESSION_VENO_LINA_Q_VFX.md`；本文件保留 Nyra/Veno 全量上下文。
 > 原则：**先确认用户具体要改什么，再动代码/素材**；不要自行改数值，也不要 revert/stash 现有未提交改动。
 
 ---
@@ -31,7 +32,7 @@
 - 分支：`main`；最后提交：`26db0cf Complete data-driven roster, knock-up FX and sandbox polish`。
 - **所有 Nyra/Veno 实现与最近的 Q 改造都还未提交**。工作区有大量 modified 与 untracked 文件。
 - 不要执行 `git reset`、`git checkout -- .`、`git stash`、批量覆盖或删除。
-- `instruction.docx` 是用户修改过的文件；`UI Resources/`、`assets/generated/*`、`assets/frames/nyra/`、`assets/frames/veno/`、`game/wave_fx.py` 等是未跟踪内容。没有明确要求时不要动 `instruction.docx`、`UI Resources/`。
+- `instruction.docx` 是用户修改过的文件；`UI Resources/` 是未跟踪内容。`assets/frames/nyra/`、`assets/frames/veno/`、`game/slash_fx.py` 等已被 Git 跟踪。没有明确要求时不要动 `instruction.docx`、`UI Resources/`。
 - `Image/` 是 canonical 视觉源，**只读**，不得覆盖。
 
 ### 1.1 基线命令
@@ -50,8 +51,10 @@ run.bat --smoke-test
 
 ```text
 missing_frames=0
-nyra_q_ok=True
-nyra_q_range_ok=True
+nyra_wave_lmb_ok=True
+nyra_q_slash_ok=True
+nyra_q_slash_range_ok=True
+nyra_slash_fx_missing=0
 nyra_missing_frames=0
 veno_missing_frames=0
 warrior_missing_frames=0
@@ -65,7 +68,7 @@ roster_ok=True
 - 默认：**Lina vs Warrior**。
 - `[` / `]`：Lina ↔ Nyra。
 - F7：Warrior → Veno-Spider → Dummy。
-- F8：切换敌人 AI（无 AI 的敌人则切 invincible）。
+- F8：切换敌人 AI（无 AI 的敌人则切 invincible）；启动和 F5/F9/R 重置后 AI 默认关闭。
 - F9：重置；F5：热重载 JSON；F1：hitbox/hurtbox overlay；F2：debug panel。
 - B：开关 blocks；F6：时间倍率；F11：状态演示；F12：扣玩家血。
 - Veno 技能槽：V/C/X = bite/poison/web，Z 为空槽 no-op。
@@ -91,16 +94,16 @@ roster_ok=True
 
 | attack | 伤害 | duration | 判定/事件 | 备注 |
 |---|---:|---:|---|---|
-| `nyra_slash` | 20（1.0/1.0） | 0.31 | hitbox `[34,-170,120,60]`，t 0.13–0.21，knockback 80；lunge 24 @0.08 | +1 mark；hitstun 0.2，hitstop 0.06 |
-| `nyra_thrust` | 24（1.2/1.3） | 0.40 | hitbox `[28,-165,130,48]`，t 0.12–0.22，knockback 220；lunge 30 @0.10 | +1 mark；hitstun 0.25，hitstop 0.07 |
-| `nyra_wave`（Q） | 30（1.5/1.5） | 0.40 | **cast-anchored 分段 hitbox**：0–0.12 `[28,-165,130,48]`；0.12–0.30 `[28,-212,162,123]`（reach 190）；0.30–0.40 `[28,-165,130,48]`；fx t=0.04 | 不生成 projectile；不叠/不引 mark；hitstun 0.25，hitstop 0.06 |
-| `nyra_dash`（E） | 30（1.5/1.8） | 0.45 | dash 0.06–0.34 speed 900；hitbox `[0,-180,90,180]` 0.06–0.30，knockback 250 | `pass_through_enemy: true`；hitstun 0.3，hitstop 0.08；不叠 mark |
+| `nyra_wave`（LMB） | 20（1.0/1.0） | 0.30 | **cast-anchored 分段 hitbox**：0–0.06 `[28,-165,130,48]`；0.06–0.24 `[28,-212,162,123]`（reach 190）；0.24–0.30 `[28,-165,130,48]` | +1 mark；无 fx；hitstun 0.25，hitstop 0.06 |
+| `nyra_thrust` | 24（1.2/1.3） | 0.40 | 5 帧 0.08×5；hitbox `[28,-165,130,48]`，t 0.16–0.24，knockback 220；lunge 30 @0.10 | +1 mark；hitstun 0.25，hitstop 0.07 |
+| `nyra_slash`（Q） | 30（1.5/1.5） | 0.40 | 同三段 cast-anchored hitbox；fx t=0.04；`armor_until: 0.4` | 不生成 projectile；+1 mark、可引爆；霸体 0–0.40；hitstun 0.25，hitstop 0.06 |
+| `nyra_dash`（E） | 30（1.5/1.8） | 0.45 | dash 0.06–0.36 speed 1100（约 330px）；hitbox `[0,-180,90,180]` 0.06–0.36，knockback 250；`armor_until: 0.36` | `pass_through_enemy: true`；霸体 0.06–0.36；hitstun 0.3，hitstop 0.08；不叠 mark |
 
-Q 的 0.12–0.30 延长窗口对应 `nyra_wave_fx` 的**特效帧 02–04**。其他时间（含特效帧 00/01/05 的空白段和首尾）使用右键 thrust 的 hitbox。
+Q 的 0.12–0.30 延长窗口落在 `nyra_slash_fx` 的**特效帧 02–04** 显示区间内（0.09–0.35）；FX 02–04 与角色动画 02–04 帧对齐。LMB 的三段为 0–0.06 / 0.06–0.24 / 0.24–0.30；Q 的三段为 0–0.12 / 0.12–0.30 / 0.30–0.40。LMB 无特效，Q 在 t=0.04 触发特效。
 
 ### 2.3 印记被动（`game/nyra.py`）
 
-- 只有 `nyra_slash` / `nyra_thrust` 的近战命中叠 1 层；最多 3 层；Q/E 不叠也不引爆。
+- `nyra_wave`（LMB）/ `nyra_thrust`（RMB）/ `nyra_slash`（Q）的命中叠 1 层；最多 3 层；E 不叠也不引爆；Q 叠层且可引爆第 4 层。
 - 第 4 次近战命中引爆：`1.8 × atk + 0.10 × target.max_hp`，先乘目标的 damage reduction。
 - 引爆后保留 1 层；目标死亡则清 0。
 - 引爆额外 `0.10s` hitstop，粒子 + 敌人头顶扩散环；`mark_burst_time=0.4`。
@@ -111,20 +114,20 @@ Q 的 0.12–0.30 延长窗口对应 `nyra_wave_fx` 的**特效帧 02–04**。�
 
 - 画布 384×384，pivot `(192,372)`，body height 214；只存右向帧，运行时镜像。
 - 角色帧 25 张，位于 `assets/frames/nyra/`：
-  - idle 2、walk 2、jump 2、crouch 1、hurt 1、KO 2、`nyra_slash` 6、`nyra_thrust` 3、`nyra_wave` 3、`nyra_dash` 3。
-- `nyra_slash` 6 帧结构：初始前下方 45° → 过渡（剑水平下 10–20°，手臂开始前伸）→ v11 大臂前伸帧（219px，脚底 372）→ 复用 thrust_v5_01 长剑接触 → 两张收势；durations `0.04/0.04/0.05/0.08/0.05/0.05`。
-- `nyra_thrust`：frame 00/02 原版；frame 01 为 v5 长 sword，导入时按 body-height 238 单独处理，得到约 214 身高。
-- `nyra_wave` 角色 clip 仍是 3 帧，durations `0.12/0.12/0.16`，总计 0.40；**不要**把剑气烘进角色帧。
+  - idle 2、walk 2、jump 2、crouch 1、hurt 1、KO 2、`nyra_slash` 6、`nyra_thrust` 5、`nyra_wave` 5、`nyra_dash` 3。
+- `nyra_slash`（Q）6 帧结构：初始前下方 45° → 过渡（剑水平下 10–20°，手臂开始前伸）→ v11 大臂前伸帧（219px，脚底 372）→ 复用 thrust_v5_01 长剑接触 → 两张收势；durations `0.05/0.04/0.05/0.14/0.07/0.05`（总 0.40s）。
+- `nyra_thrust`：5 帧，durations `0.08/0.08/0.08/0.08/0.08`（总 0.40）；00 蓄力、01 前刺起始、02 全伸接触、03 回收、04 收势；单段 hitbox 0.16–0.24。frame 00/02/04 为原版；frame 01/03 为 5 帧版本的新过渡帧，导入时按 body-height 校准。
+- `nyra_wave`（LMB）角色 clip 为 5 帧，durations `0.06/0.06/0.06/0.06/0.06`，总计 0.30；00 高位起手（约 55–60°上）、01 抬剑（约 30°上）、02 水平、03 下压（约 20°下）、04 收势（约 45°下）；**不要**把剑气烘进角色帧。
 - `nyra_crouch` 是 1 帧 163×170（body ~170，导入用 `--body-height 173`）；蹲下 hurtbox 仍是 56×130，其他 clip 用 214。
 
-### 2.5 Q 特效（`game/wave_fx.py` + `assets/frames/nyra/nyra_wave_fx/`）
+### 2.5 Q 特效（`game/slash_fx.py` + `assets/frames/nyra/nyra_slash_fx/`）
 
 - 6 张独立的 384×384 透明剑光贴图，pivot `(192,372)`，cast-anchored 绘制。
-- durations：`0.04, 0.04, 0.05, 0.08, 0.05, 0.05`（总 0.31）。
+- durations：`0.02, 0.02, 0.05, 0.14, 0.07, 0.05`（总 0.35）。`fx` 事件标记在 t=0.04，60Hz 下首次生效在 t≈0.05；因此可见帧 02 从 t≈0.09 开始，02–04 与角色 02–04 帧对齐，特效在 t≈0.40 结束。
 - 帧 00/01/05 **完全透明**；02 出现（小 chevron），03 最盛（大 chevron，bbox reach 190），04 原位淡出。
-- `fx` 事件在 `nyra_wave` 的 t=0.04 触发；可见效果约在 t=0.12–0.30。
+- `fx` 事件在 `nyra_slash`（Q）的 t=0.04 触发；帧 02–04 与角色 slash 动画的 02–04 帧对齐（t=0.09–0.14 / 0.14–0.28 / 0.28–0.35），并覆盖 0.12–0.30 延长判定窗口。
 - 帧缓存按文件 mtime 失效，替换 PNG 后 F5 可刷新；`FRAME_DURATIONS` 是 Python 常量，改时长需重启进程。
-- 角色帧 `nyra_wave` 仍是 3 帧；Q 特效和角色帧是两个独立层。
+- Q 的角色帧 `nyra_slash` 是 6 帧（0.40s），LMB 的 `nyra_wave` 是 5 帧（0.30s）；特效和角色帧是两个独立层。
 
 ### 2.6 主要文件
 
@@ -133,7 +136,7 @@ Q 的 0.12–0.30 延长窗口对应 `nyra_wave_fx` 的**特效帧 02–04**。�
 | Nyra 类 | `game/nyra.py` |
 | 通用攻击 runtime / cast anchor / fx 事件 | `game/combat.py` |
 | 场景 FX / marks / dash push | `game/scene.py` |
-| Q 特效 | `game/wave_fx.py` |
+| Q 特效 | `game/slash_fx.py` |
 | 数值 / 攻击 / 动画 | `game/data/stats.json`、`attacks.json`、`animations.json` |
 | roster / 类注册 | `game/data/roster.json`、`game/roster.py` |
 | 校验 | `game/config.py` |
@@ -142,13 +145,15 @@ Q 的 0.12–0.30 延长窗口对应 `nyra_wave_fx` 的**特效帧 02–04**。�
 ### 2.7 调整 Nyra 时必须连带检查
 
 - 改伤害后，更新 `main.py` 里硬编码的 smoke 期望：
-  - `nyra_slash_ok`：Dummy 1000 → 980；
-  - `nyra_burst_damage_ok`：4 次 LMB 后 784（4×20 + 136）；
+  - `nyra_wave_lmb_ok`：Dummy 1000 → 980（LMB，+1 mark，无 FX）；
+  - `nyra_wave_burst_damage_ok`：4 次 LMB 后 784（4×20 + 136）；
   - `nyra_thrust_ok`：976；
-  - `nyra_q_ok`：970；
-  - `nyra_dash_ok`：970。
-- 改 slash/thrust 帧 dur 或 hitbox 窗口，要同步 `nyra_slash` 的 0.13–0.21 / `nyra_thrust` 的 0.12–0.22。
-- 改 Q 的延长范围/时序，要同步 `nyra_q_range_ok`（当前 Nyra 100 / Dummy 300，t<0.12 不受伤，t≥0.13 受伤）。
+  - `nyra_q_slash_ok`：970（Q，+1 mark，FX 出现）；
+  - `nyra_q_armor_ok`、`nyra_e_armor_ok`：霸体期间伤害照常、hitstun/knockback/launch/freeze/stun/slow 被免疫；
+  - `nyra_dash_ok`：970；`nyra_dash_distance_ok`：冲刺距离 ≥300px；
+  - `nyra_slash_fx_missing`：0（六帧存在性）。
+- 改 `nyra_slash`（Q）/`nyra_wave`（LMB）/`nyra_thrust`（RMB）帧 dur 或 hitbox 窗口，要同步 Q 的 0–0.12 / 0.12–0.30 / 0.30–0.40、LMB 的 0–0.06 / 0.06–0.24 / 0.24–0.30、`nyra_thrust` 的 0.16–0.24，以及 Q/E 的 `armor_until` 与 E 的 dash 0.06–0.36。
+- 改 Q 的延长范围/时序，要同步 `nyra_q_slash_range_ok`（当前 Nyra 100 / Dummy 300，t<0.12 不受伤，t≥0.13 受伤）。
 - 改 Veno hover 或 Nyra Q 的 y 范围时，检查交互：Veno base hover 220，Nyra Q 延长 box 顶到 212；低 hover（约 140）可被地面 Q 打到，base 220 不行。**当前 50 HP 的 Veno 在 3 次 LMB 后就死了（3×20=60），印记引爆通常不会发生在 Veno 身上**；若要让 Veno 体验 marks，需要另议 HP 或沙盒倍率。
 - 改 hurtbox 时检查 Lina Q（fist lane 142）和 Warrior axe throw 是否还能命中 Veno；Veno 的 150×150 hurtbox 是故意大于视觉高度的。
 - 改帧素材必须走 contact sheet；保持 384 canvas / pivot / body 214；蹲下保持 ~170 视觉身高但 hurtbox 130。
@@ -303,7 +308,7 @@ Q 的 0.12–0.30 延长窗口对应 `nyra_wave_fx` 的**特效帧 02–04**。�
 
 ### 4.5 如果改成 sprite FX，建议的落点
 
-- 新目录：`assets/frames/lina/q_fx/`（普通）与 `assets/frames/lina/flame/q_fx/`（火焰），或一个带 variant 的目录；命名和 `WaveEffect` 类似。
+- 新目录：`assets/frames/lina/q_fx/`（普通）与 `assets/frames/lina/flame/q_fx/`（火焰），或一个带 variant 的目录；命名和 `SlashEffect` 类似。
 - 画布/pivot：如果特效要相对 Lina 身体锚定，用 256×256 / pivot `(128,244)`；如果特效独立跟随 projectile，可用独立小画布 + 明确 draw offset，避免被 Lina 的 pivot 限制。
 - 发射特效：可由 `q` 的 `fx` 事件触发（`AttackRuntime` 已支持 `fx` + `anchor:"cast"`，可参考 Nyra Q）；但当前 `q` 没有 fx 事件。
 - 飞行/命中特效：在 `QWave.draw` / `QWave.update` 或 `resolve_projectile_hit` 里加，注意 hitstop 时冻结、普通/flame 颜色、F5。
@@ -362,7 +367,7 @@ run.bat --smoke-test
 ```
 
 - exit 0；所有 `*_missing_frames=0`；`roster_ok=True`。
-- 若改 Nyra 数值/判定：检查 `nyra_slash_ok`、`nyra_burst_ok`、`nyra_burst_damage_ok`、`nyra_thrust_ok`、`nyra_q_ok`、`nyra_q_range_ok`、`nyra_dash_ok`、`nyra_dash_cd_ok`。
+- 若改 Nyra 数值/判定：检查 `nyra_wave_lmb_ok`、`nyra_wave_burst_ok`、`nyra_wave_burst_damage_ok`、`nyra_thrust_ok`、`nyra_q_slash_ok`、`nyra_q_slash_cd_ok`、`nyra_q_slash_range_ok`、`nyra_slash_fx_missing`、`nyra_dash_ok`、`nyra_dash_cd_ok`。
 - 若改 Veno：`veno_bite_ok`、`veno_bite_cd_ok`、`veno_poison_ok`、`veno_poison_stack_ok`、`veno_web_ok`、`veno_ai_ascent_ok`、`veno_ai_descend_ok`、`veno_win_ok`。
 - 若改 Lina Q：`q_damage_ok`、`q_block_ok`、`flame_ok`、`switch_clears_ok`。
 
@@ -371,7 +376,7 @@ run.bat --smoke-test
 - F1：Nyra Q 三段 hitbox 切换；Veno hover hurtbox；Lina Q 的生成位置。
 - F2：Nyra `Q/E`、`MARKS`；Veno `MODE/HOVER`、slots/冷却；Lina energy。
 - `[`/`]`：Lina ↔ Nyra；F7：Warrior → Veno → Dummy。
-- Nyra：LMB/RMB 叠印记、4 次引爆、Q 不叠、E 穿敌不穿墙、蹲下 hurtbox、Q 特效 02–04 与延长框对齐。
+- Nyra：LMB/RMB/Q 叠印记、4 次引爆、Q/E 霸体（伤害照常、免疫控制）、E 冲刺约 330px 且穿敌不穿墙、蹲下 hurtbox、Q 特效 02–04 与延长框对齐。
 - Veno：地面咬、升空、悬垂毒/网、被打下来、V/C/X/Z、毒叠加、网眩晕。
 - Lina Q：普通/火焰两种形态的发射/飞行/命中；站在 block 上的 lane 高度；撞 block 或达到 range 后消失（当前无 wall 检查）；F5 热重载。
 - 若改素材：逐帧 contact sheet 检查尺寸、脚底、握剑/握斧、穿模；替换后 F5 看缓存是否刷新。
@@ -399,8 +404,8 @@ pygame.image.save(screen, "preview.png")
 ## 7. 已知 caveats / 不要踩
 
 - `SwordWave`（`kind="sword_wave"`）仍在 `game/projectile.py` 和 `PROJECTILE_KINDS` 中，但 Nyra Q 已不再使用；没有明确要求不要删除。
-- Nyra Q 的 `nyra_wave_fx` 6 帧**不在** `nyra.anim.missing_paths()` 的检查范围内；smoke 只验证 `scene.wave_effects` 出现，不验证 FX 帧加载/绘制。改特效后必须手动/F1 看一次。
-- `game/wave_fx.py` 的 `FRAME_DURATIONS` 是代码常量；F5 只刷新 PNG，不重新导入 Python。改时长需重启进程。
+- Nyra Q 的 `nyra_slash_fx` 6 帧**不在** `nyra.anim.missing_paths()` 的检查范围内；smoke 现在额外检查 `nyra_slash_fx_missing == 0`（文件存在），但不绘制；改特效后必须手动/F1 看一次。
+- `game/slash_fx.py` 的 `FRAME_DURATIONS` 是代码常量；F5 只刷新 PNG，不重新导入 Python。改时长需重启进程。
 - Veno idle 和 jump 当前共用同一张帧；若细化动作，注意 size lock。
 - Veno 的 150×150 hurtbox 是故意大于视觉高度；缩小可能让 Lina Q / axe throw 打空。
 - Nyra Q 的延长 box 顶到 212；Veno base hover 220 打不到，低 hover 可以；调 Q 或 hover 后重新测。
@@ -458,13 +463,13 @@ pygame.image.save(screen, "preview.png")
 战斗/命中                 game/combat.py
 场景/FX/绘制顺序          game/scene.py
 弹体                      game/projectile.py
-Nyra Q 特效               game/wave_fx.py
+Nyra Q 特效               game/slash_fx.py
 舞台/碰撞                 game/stage.py
 输入/HUD/调试             game/input.py, game/hud.py, game/debug.py
 数据                      game/data/{stats,attacks,animations,roster,debug}.json
 校验/类注册               game/config.py, game/roster.py
 角色帧                    assets/frames/{lina,nyra,veno,warrior}/
-Nyra Q 特效帧             assets/frames/nyra/nyra_wave_fx/
+Nyra Q 特效帧             assets/frames/nyra/nyra_slash_fx/
 生成/导入/接触表          tools/{collect_frames,import_frames,contact_sheet}.py
 设计/调试/素材文档        docs/{DESIGN_DECISIONS,DEBUG,ASSET_PIPELINE,IMAGE_GENERATION_RULES}.md
 旧 handoff                docs/NEXT_SESSION_CHARACTERS.md

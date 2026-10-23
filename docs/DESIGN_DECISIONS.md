@@ -71,7 +71,10 @@ This document records the provisional rules used by the sandbox. Values live in
 - Poison: 2% max HP/s. Same source reapplies and extends the duration; different sources keep
   independent instances that each deal damage. Poison is data-only in the first milestone and can be
   forced from the debug controls.
-- Super armor ignores control effects. Damage reduction is a percentage multiplier.
+- Super armor makes the fighter immune to control effects (knockback, knock_up, freeze, stun,
+  slow) while it is active; damage still applies and damage reduction is a separate percentage
+  multiplier. Nyra's Q and E use it during their armor windows.
+
 - The sandbox naturally triggers burn (flame hits), knockback (kick/Q), and knock-up (Warrior dash);
   stun, freeze, slow, poison, super armor and damage reduction are available through F11.
 
@@ -151,44 +154,50 @@ This document records the provisional rules used by the sandbox. Values live in
 
 - Playable character. Canonical art `Image/Character/nyra-steel-256.png`; fallback uses the same
   canonical file. Canvas 384x384, feet-center pivot (192,372), body about 214px.
-- Frames (25 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6, thrust 3,
-  Q wave 3, dash 3. Only right-facing frames are stored; the runtime mirrors for left. The crouch
+- Frames (29 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6 (Q), thrust 5,
+  wave 5 (LMB), dash 3. Only right-facing frames are stored; the runtime mirrors for left. The crouch
   frame is imported at ~170px, midway between the original 212px crouch and the 128px deep-crouch
   variant, so it reads smaller than the 214px standing body without becoming tiny. The crouching
   hurtbox remains 56×130; only the image was changed.
 - Stats: HP 100, basic ATK 20, extra ATK 0, `stage_body_width` 100, hurtbox 56x210 standing /
   56x130 crouching, walk 260, jump_v 760, gravity 2200. No energy resource. Q cooldown 8s,
   E cooldown 15s; both start ready.
-- LMB sword slash: `1.0 * basic + 1.0 * extra` = 20, 0.31s; hitbox `[34,-170,120,60]` active
-  t=0.13..0.21 (reach 154, matching the long blade); knockback 80; hitstun 0.2; hitstop 0.06;
-  adds 1 mark. The 6-frame clip is timed 0.04/0.04/0.05/0.08/0.05/0.05: initial front-down 45°
-  blade; a transition with the sword at 10-20° below horizontal and the arm starting to extend;
-  the redrawn v11 arm-forward frame (219px tall, feet aligned at 372); the thrust_v5_01 long-sword
-  contact, which covers the 0.13-0.21 hitbox; and two recovery frames. The total attack duration is
-  0.31s, matching the clip sum.
-- RMB thrust: `1.2 * basic + 1.3 * extra` = 24, 0.40s; hitbox `[28,-165,130,48]` active
-  t=0.12..0.22; knockback 220; hitstun 0.25; hitstop 0.07; adds 1 mark. The animation uses a longer
-  blade than the base so the reach reads clearly.
-- Q sword wave: `1.5 * basic + 1.5 * extra` = 30, 0.40s; cast-anchored per-frame hitboxes active
-  for the whole Q, knockback 160, hitstun 0.25, hitstop 0.06, one hit per target. The RMB thrust box
-  `[28,-165,130,48]` applies during t=0..0.12 and 0.30..0.40; the extended box `[28,-212,162,123]`
-  (reach 190) applies during effect frames 02-04, t=0.12..0.30. It does not spawn a projectile and
-  does not add or detonate marks. `game/wave_fx.py` plays six separate 384x384 transparent blue
-  sword-effect frames, triggered at t=0.04 and anchored at the cast position. Effect frames 00/01 are transparent; 02 appears
-  around t=0.12, 03 peaks around t=0.17, 04 fades in the same place around t=0.25, and 05 is transparent;
-  02-04 coincide with the extended hitbox window.
-  The 3-frame character clip starts with the sword forward-up about 45°, swings through horizontal,
-  then finishes forward-down. The effect is never baked into the character frames.
-- E dash thrust: `1.5 * basic + 1.8 * extra` = 30, 0.45s; dash event moves at 900px/s during
-  0.06..0.34s; hitbox `[0,-180,90,180]` active 0.06..0.30; knockback 250; hitstun 0.3; hitstop 0.08.
-  `pass_through_enemy` skips body separation during the attack; walls and blocks still stop the dash.
-  At dash end, `scene.push_apart` pushes the enemy to the far side, or pushes Nyra back if the enemy
-  cannot be moved. Does not add or detonate marks.
-- Marks: only LMB/RMB add exactly 1 mark per connecting attack (multi-hit/projectile events count
+- LMB sword wave: `1.0 * basic + 1.0 * extra` = 20, 0.30s; cast-anchored per-frame hitboxes active
+  for the whole attack, knockback 160, hitstun 0.25, hitstop 0.06, one hit per target; adds 1 mark.
+  The RMB thrust box `[28,-165,130,48]` applies during t=0..0.06 and 0.24..0.30; the extended box
+  `[28,-212,162,123]` (reach 190) applies during t=0.06..0.24. It does not spawn a projectile and has
+  no FX. The 5-frame clip is timed 0.06/0.06/0.06/0.06/0.06 (0.30s): high wind-up (sword about
+  55-60° above horizontal), raise transition (~30°), horizontal contact, down transition (~20°
+  below), and forward-down follow-through (~45°).
+- RMB thrust: `1.2 * basic + 1.3 * extra` = 24, 0.40s; 5-frame clip timed
+  0.08/0.08/0.08/0.08/0.08; hitbox `[28,-165,130,48]` active t=0.16..0.24; knockback 220; hitstun
+  0.25; hitstop 0.07; adds 1 mark. The animation uses a longer blade than the base so the reach
+  reads clearly.
+- Q sword slash: `1.5 * basic + 1.5 * extra` = 30, 0.40s; cast-anchored hitboxes: the RMB thrust box
+  during t=0..0.12 and 0.30..0.40, the extended box during t=0.12..0.30; same
+  knockback/hitstun/hitstop as LMB, one hit per target. Adds 1 mark and can detonate the 4th; has
+  super armor for the whole 0.40s (`armor_until: 0.4`). It does not spawn a projectile. The 6-frame
+  slash clip is retimed 0.05/0.04/0.05/0.14/0.07/0.05 (0.40s):
+  initial front-down 45° blade; a transition with the sword at 10-20° below horizontal and the arm
+  extending; the redrawn v11 arm-forward frame (219px tall, feet aligned at 372); the thrust_v5_01
+  long-sword contact; and two recovery frames. `game/slash_fx.py` plays six separate 384x384
+  transparent blue slash-effect frames, triggered at t=0.04 and anchored at the cast position. Its
+  durations are 0.02/0.02/0.05/0.14/0.07/0.05 (0.35s). The event is flagged at t=0.04 but first
+  fires on the 60Hz t≈0.05 tick; the two short transparent frames compensate so effect frames 02-04
+  align with the character's 02-04 frames at t=0.09-0.14 / 0.14-0.28 / 0.28-0.35 and overlap the
+  extended hitbox window, ending at t≈0.40. Frames 00/01/05 are transparent; 02 appears, 03 peaks, 04 fades in place. The effect is
+  never baked into the character frames.
+- E dash thrust: `1.5 * basic + 1.8 * extra` = 30, 0.45s; dash event moves at 1100px/s during
+  0.06..0.36s (~330px); hitbox `[0,-180,90,180]` active 0.06..0.36; knockback 250; hitstun 0.3;
+  hitstop 0.08; super armor during the dash (`armor_until: 0.36`). `pass_through_enemy` skips body
+  separation during the attack; walls and blocks still stop the dash. At dash end, `scene.push_apart`
+  pushes the enemy to the far side, or pushes Nyra back if the enemy cannot be moved. Does not add or
+  detonate marks.
+- Marks: LMB/RMB/Q add exactly 1 mark per connecting attack (multi-hit/projectile events count
   once). Max 3. The 4th melee hit detonates all marks for `1.8 * atk + 10% target max HP`, applies
   damage reduction, then leaves exactly 1 mark. The burst adds 0.10s hitstop, emits particles and
-  draws an expanding ring above the enemy. Q/E neither add nor detonate marks. Marks clear on reset
-  and when the target dies.
+  draws an expanding ring above the enemy. E neither adds nor detonates marks; Q adds and can
+  detonate. Marks clear on reset and when the target dies.
 - Mark display: 3 pips are drawn above the enemy's head, filled by current stacks; F2 shows
   `MARKS n/3 BURST ... LAST ...`. There is no numeric mark bar in the HUD.
 - HUD: Nyra has no energy bar; the Q/E cooldown badges are shown for any player with `q_cd`/`e_cd`.
@@ -247,8 +256,8 @@ This document records the provisional rules used by the sandbox. Values live in
   cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
-  cleared. The B block toggle is preserved; the enemy AI is forced off after a switch (startup and
-  F9 still leave it on, and F8 toggles it).
+  cleared. The B block toggle is preserved; the enemy AI is forced off whenever fighters are rebuilt
+  or reset — startup, F5 reload, roster switches, F9 and R — and F8 toggles it during a battle.
 - `skill_slots` is a fixed 4-entry list of attack ids or `null`, in slot order. `V/C/X/Z` call
   `Fighter.force_skill(scene, target, 0..3)`, which resolves the id and calls the class's
   `force_attack`. Undefined slots and enemies without `force_attack` (Dummy) are safe no-ops. F2

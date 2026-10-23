@@ -221,7 +221,7 @@ class AxeThrow:
 
 
 class SwordWave:
-    """Nyra's Q: a wide, single-hit crescent of sword energy."""
+    """Legacy Nyra sword-wave projectile; unused by current attack data."""
 
     kind = "sword_wave"
 

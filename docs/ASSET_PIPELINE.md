@@ -46,6 +46,13 @@ outfit, colors, proportions, hairstyle, camera distance, character scale, foot p
 lighting as the reference.
 ```
 
+**Size/centering note (all character prompts):** `centered with margin` is a composition instruction
+only. Never zoom, scale, stretch or shrink the character to center it or to fit the full body/weapon.
+This applies whether the weapon is raised, lowered or held horizontally. If the weapon makes the
+silhouette taller/wider, expand the generation canvas/margins or adjust the framing instead. The
+final runtime frame must use the character's canonical canvas/pivot; if the full weapon cannot fit
+at the fixed scale, stop and ask the user — do not shrink the character or crop the weapon.
+
 Then add the action/pose, e.g. "This is punch frame 2 of 4: the FRONT arm drives straight forward...".
 
 ## Flame-form generation
@@ -117,21 +124,26 @@ single upper crescent blade; the lower side is a blunt counterweight.
   split skirt/coattails, dark thigh-high stockings with upper-thigh bands, fingerless gloves, black
   boots with blue details, one long narrow silver sword with a cool-blue edge in the RIGHT hand.
   No eyepatch. Do not mirror or duplicate the sword.
-- Frame inventory (25 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6,
-  nyra_thrust 3, nyra_wave 3, nyra_dash 3. The base's sword is held horizontally for clean
+- Frame inventory (29 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6 (Q),
+  nyra_thrust 5, nyra_wave 5 (LMB), nyra_dash 3. The base's sword is held horizontally for clean
   `--body-height` calibration. The 1-frame crouch is imported with `--body-height 173`, producing
   a ~170px visible body (midway between the original 212px crouch and the 128px deep crouch); the
-  crouching hurtbox stays 56×130 and other clips use 214. The 6-frame slash follows: initial
+  crouching hurtbox stays 56×130 and other clips use 214. The 6-frame slash (Q) follows: initial
   front-down 45°; transition with
   the sword at 10-20° below horizontal and the arm starting to extend; the redrawn v11 arm-forward
   frame (219px tall, feet aligned at 372); the thrust_v5_01 long-sword contact; and two recovery
-  frames. Durations are 0.04/0.04/0.05/0.08/0.05/0.05, and the hitbox window is 0.13-0.21. The
-  wave starts with the sword forward-up 45°, then frame 01 holds a long blade horizontally with a
-  slightly bent elbow, and frame 02 finishes forward-down. Keep the energy wave separate from the
-  character frames: `game/wave_fx.py` plays six transparent sprites from
-  `assets/frames/nyra/nyra_wave_fx/`, anchored at the Q cast position. Frames 00/01/05 are
-  transparent; 02-04 are visible (durations 0.04/0.04/0.05/0.08/0.05/0.05) and map to the Q's
-  extended hitbox window (t=0.12-0.30). Outside that window the Q uses the RMB thrust hitbox.
+  frames. Durations are 0.05/0.04/0.05/0.14/0.07/0.05 (0.40s). The 5-frame wave (LMB) starts with
+  a high wind-up (sword ~55-60° above horizontal), then a raise transition (~30°), horizontal
+  contact, a down transition (~20° below), and a forward-down follow-through; durations
+  0.06/0.06/0.06/0.06/0.06 (0.30s). The 5-frame thrust (RMB) is timed
+  0.08/0.08/0.08/0.08/0.08 (0.40s); its single hitbox is active 0.16-0.24. Keep the energy wave
+  separate from the character frames:
+  `game/slash_fx.py` plays six transparent sprites from
+  `assets/frames/nyra/nyra_slash_fx/`, anchored at the Q cast position. Frames 00/01/05 are
+  transparent; 02-04 are visible (durations 0.02/0.02/0.05/0.14/0.07/0.05; the event is flagged at
+  t=0.04 but first fires on the 60Hz t≈0.05 tick) and align with the character's 02-04 frames; LMB
+  uses the extended `[28,-212,162,123]` box during t=0.06-0.24 (RMB thrust box outside), while Q
+  uses it during t=0.12-0.30 (RMB thrust box outside).
 - Import:
 
 ```text
@@ -192,6 +204,12 @@ py tools/contact_sheet.py --action warrior_idle --frames assets/generated/staged
 frames, the pose reference supplies the body scale/position while the fire aura may be larger than
 the body. `contact_sheet.py` renders a labeled checkerboard sheet with the pivot cross for approval;
 `--cell`/`--pivot-x`/`--pivot-y` must match the character's canvas.
+
+`--body-height`/`--canvas` set the character scale and final frame size; centering is done by
+foot/pivot placement, never by changing the body scale per frame. If a frame's full weapon cannot
+fit the canonical canvas at the approved body height, stop and ask the user; do not shrink the
+character, crop the weapon or change the runtime canvas without explicit approval. This applies
+whether the weapon is raised, lowered or held horizontally.
 
 The importer's background removal is two-stage: a corner flood fill for uniform gray/white backdrops,
 plus a connected near-white mask for checkerboards. In `--pose-ref` mode it also removes remaining

@@ -81,15 +81,19 @@
 - **武器尺寸和比例**；斧头长度、斧刃大小、斧柄粗细。
 - **镜头距离、透视角度、脚底基线**。
 - **画布缩放**：不要因为动作变大/变小而 zoom、拉伸、压扁或改变透视。
+- **居中不等于缩放**：把角色放到画布中心或脚底 pivot 上只允许**平移**；身体高度、头的大小、肩宽、四肢粗细、武器长度、镜头距离和脚底基线必须与 approved base 或同动作的最后一帧一致。为了居中、或为了把完整姿势/完整武器塞进画面而缩小或放大角色，属于失败帧。
+- **武器朝向不改变尺寸**：无论武器举起、放下还是平举，角色和武器都保持同一比例。姿势让画面变高/变宽时，**优先扩大生成/工作画布与留白、调整构图或重生成**，不要缩小人物。
 
 做法：
 
-- 以 approved base 为比例基准；动作帧只改变姿势，不改变角色比例。
+- 以 approved base 或同动作最后一帧为比例基准；动作帧只改变姿势，不改变角色/武器比例。
 - 武器可以伸出身体轮廓，但必须完整在画布内（或按已批准基准的裁切规则），比例不变。
+- 居中/构图只通过平移、画布尺寸或留白解决；不要为了居中/适配逐帧改 `--body-height`、scale 或 zoom。
+- 如果 canonical 运行时画布（如 Nyra 384×384 / pivot 192,372）在固定角色/武器尺寸下放不下完整武器：**停止并询问用户**；不要缩小人物、裁切武器或自动改姿势。运行时画布扩容属于单独的代码改动，需用户批准。
 - 接触表上用脚底基线和头顶位置对比 base；发现漂移就重生成该帧。
 - **不要**用 `smoothscale`/自由变换/擦除来“修”比例错误的帧；这会把错误带进游戏。
 
-**完成标准**：接触表中所有帧的头顶、脚底、身体高度、武器长度与 base 对齐；没有逐帧自动缩放。
+**完成标准**：接触表中所有帧的头顶、脚底、身体高度、武器长度与 base 或同动作最后一帧对齐；居中只平移不缩放；没有逐帧自动缩放。
 
 ## 6. 追加到每次 prompt 的固定块（英文）
 
@@ -100,6 +104,13 @@ Preserve the exact same character identity, body height, head size, shoulder wid
 limb proportions, weapon size, camera distance, foot position and lighting as the reference.
 Right-facing three-quarter side view, full body and the entire weapon inside the frame,
 flat transparent background, no shadow, no text, no border, no scenery.
+
+Centering and framing are positioning choices only: never zoom, scale, stretch or shrink the
+character to center it or to fit the full body/weapon. This applies whether the weapon is raised,
+lowered or held horizontally. If the weapon makes the silhouette taller or wider, keep the
+character and weapon scale fixed and expand the canvas/margins or adjust the framing instead.
+If the canonical runtime frame still cannot contain the full weapon at the fixed scale, stop and
+ask the user; do not shrink the character or crop the weapon.
 
 Correct near/far layering: the near arm and near leg are in front of the torso; the far arm
 and far leg stay behind it. The weapon is held by the same hand with a believable grip around
@@ -113,6 +124,7 @@ Only change the pose: <ACTION, FRAME N OF M>.
 - 动作句里明确写“which hand holds the weapon”“one-handed/two-handed”“near arm/leg”。
 - 投掷/释放帧明确写“hand releases the haft”“open palm”。
 - 如果模型反复把远侧手画到前面，在动作句里再次点明 `near-side arm in front, far-side arm behind the torso`。
+- 无论武器举起、放下还是平举，都不得为了居中/适配缩小人物；优先扩画布、留白或调整构图。
 
 ## 7. 生成后审批（Contact sheet gate）
 
@@ -123,6 +135,9 @@ Only change the pose: <ACTION, FRAME N OF M>.
 - [ ] 武器没有穿过身体、头发、服装；斧刃方向/单刃设计一致；没有第二把武器。
 - [ ] 所有相邻部件没有互穿、破洞、融合、漂浮碎片。
 - [ ] 身体高度、头身比、武器比例、镜头、脚底基线与 base 一致。
+- [ ] 居中/构图只发生平移；所有帧的身体高度、头身比、四肢粗细、武器长度与 base 或同动作最后一帧一致，没有为了居中/适配而 zoom 或逐帧缩放。
+- [ ] 武器举起、放下或平举时仍保持同一角色/武器比例；画面变高/变宽时是扩画布/留白，而不是缩小人物。
+- [ ] 若 canonical 运行时画布在固定尺寸下放不下完整武器，已停止并询问用户，没有自行缩小/裁切/改姿势。
 - [ ] 全身和完整武器在画面内；没有影子、文字、边框、背景。
 - [ ] 与前后帧的姿势连续，没有突然换手/换脚/换武器角度。
 

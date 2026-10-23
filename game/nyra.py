@@ -47,6 +47,7 @@ class Nyra(Fighter):
         self.attack_runtime: AttackRuntime | None = None
         self.attack_id: str | None = None
         self.attack_recovery_start = 0.0
+        self.armor_applied = False
         self.queued_action: str | None = None
         self.reset()
 
@@ -65,6 +66,19 @@ class Nyra(Fighter):
         direction: int,
         launch: float = 0.0,
     ) -> bool:
+        if self.statuses.has("super_armor") and not self.invincible and self.hp > 0.0:
+            self.hp = max(0.0, self.hp - damage)
+            self.flash = 0.12
+            if self.hp <= 0.0:
+                self.state = FighterState.KO
+                self.hitstun = 0.0
+                self.kb_vx = 0.0
+                self.kb_time = 0.0
+                self.attack_runtime = None
+                self.attack_id = None
+                if self.anim is not None:
+                    self.anim.set_clip("ko", reset=True)
+            return True
         self.queued_action = None
         return super().take_hit(damage, knockback, hitstun, direction, launch=launch)
 
@@ -125,6 +139,19 @@ class Nyra(Fighter):
             self.queued_action = action
 
         runtime.update(dt)
+        armor_from = float(runtime.data.get("armor_from", 0.0))
+        armor_until = float(runtime.data.get("armor_until", 0.0))
+        if (
+            not self.armor_applied
+            and armor_until > 0.0
+            and runtime.time >= armor_from
+        ):
+            self.statuses.add(
+                "super_armor",
+                max(0.0, armor_until - armor_from),
+                source=self.attack_id,
+            )
+            self.armor_applied = True
         self.anim.update(dt)
 
         if runtime.finished:
@@ -154,7 +181,7 @@ class Nyra(Fighter):
         elif right and not left:
             self.facing = 1
         if action == "punch":
-            return self._start_slash(scene, target)
+            return self._start_wave(scene, target)
         if action == "kick":
             return self._start_thrust(scene, target)
         if action == "q":
@@ -165,10 +192,10 @@ class Nyra(Fighter):
             return self._start_jump()
         return False
 
-    def _start_slash(self, scene, target) -> bool:
+    def _start_wave(self, scene, target) -> bool:
         if not self.on_ground:
             return False
-        self.start_attack("nyra_slash", scene, target)
+        self.start_attack("nyra_wave", scene, target)
         return True
 
     def _start_thrust(self, scene, target) -> bool:
@@ -181,7 +208,7 @@ class Nyra(Fighter):
         if not self.on_ground or self.q_cd > 0.0:
             return False
         self.q_cd = self.q_cd_max
-        self.start_attack("nyra_wave", scene, target)
+        self.start_attack("nyra_slash", scene, target)
         return True
 
     def _start_e(self, scene, target) -> bool:
@@ -224,7 +251,7 @@ class Nyra(Fighter):
             input_state.buffer.consume("q")
             return
 
-        if input_state.buffer.has("punch") and self._start_slash(scene, target):
+        if input_state.buffer.has("punch") and self._start_wave(scene, target):
             input_state.buffer.consume("punch")
             return
 
@@ -278,6 +305,12 @@ class Nyra(Fighter):
         self.anim.set_clip(attack_id, reset=True)
 
         data = self.store.attacks[attack_id]
+        armor_from = float(data.get("armor_from", 0.0))
+        armor_until = float(data.get("armor_until", 0.0))
+        self.armor_applied = False
+        if armor_until > 0.0 and armor_from <= 0.0:
+            self.statuses.add("super_armor", armor_until, source=attack_id)
+            self.armor_applied = True
         self.attack_runtime = AttackRuntime(self, attack_id, data, target, scene)
         last_event = 0.0
         for event in data.get("events", []):
@@ -332,6 +365,7 @@ class Nyra(Fighter):
         self.attack_runtime = None
         self.attack_id = None
         self.attack_recovery_start = 0.0
+        self.armor_applied = False
         self.queued_action = None
         if self.anim is not None:
             self.anim.set_clip("idle", reset=True)

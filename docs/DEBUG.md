@@ -17,8 +17,10 @@ approach + block jump, body separation/facing stability (`overlap_ok`), capped s
 enemy flip across a block (`separation_block_ok`), interrupted-transform
 visibility (`transform_hit_ok`), flame revert, flame alignment coverage (`flame_offset_ok`), roster
 switching (`roster_ok`), and the data-driven V/C/X/Z slots (`slots_ok`). Phase C switches to Nyra
-against the Dummy and checks slash/thrust damage, 4-hit mark detonation (`nyra_burst_ok`,
-`nyra_burst_damage_ok`), Q hitbox/FX plus the extended-range window (`nyra_q_range_ok`), E dash
+against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wave_burst_ok`,
+`nyra_wave_burst_damage_ok`), Q slash hitbox/FX plus the extended-range window
+(`nyra_q_slash_range_ok`), Q/E super armor (`nyra_q_armor_ok`, `nyra_e_armor_ok`), E dash distance
+(`nyra_dash_distance_ok`), the six-frame slash FX existence (`nyra_slash_fx_missing`), E dash
 damage/cooldowns, mark reset/death clearing, lock-on and
 the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs Veno-Spider and checks bite,
 poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots, win and `veno_missing_frames`.
@@ -75,8 +77,8 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    middle mouse toggles attack lock-on and the HUD shows `LOCK-ON` while it is active.
 3. Use F3/F4 to freeze a frame; F6 to slow the simulation for timing checks.
 4. Use F7 to cycle the enemy roster and `[` / `]` for the character roster; a switch performs a full
-   reset and leaves AI off. F8 isolates damage (AI off) or toggles dummy invincibility; F9 resets a
-   scenario.
+   reset and leaves AI off. Startup and every reset (F5/F9/R) also leave AI off. F8 isolates damage
+   (AI off) or toggles dummy invincibility; F9 resets a scenario with AI off.
 5. Use F10 to test the full flame-form animation set and flame bonus tiers.
 6. Use F11 to inspect status visuals and timers; F12 to test Lina's hurt/KO frames.
 7. Warrior checks: V/C/X start axe slash/dash/throw and Z is a safe no-op; F1 shows the active
@@ -85,11 +87,17 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    hitstun; `combat.knock_up_gravity` keeps her airborne for that window, so landing and control
    return together) and the cyan vortex at her feet shrinks/fades with the remaining time; PgDn to 0
    shows the KO and VICTORY banner; F12 at low Lina HP shows DEFEATED; R restarts.
-8. Nyra checks: use `[` to switch to Nyra; LMB/RMB add marks (watch the 3 pips above the enemy),
-   the 4th melee hit detonates for `1.8×atk + 10% max HP` and leaves 1 mark; Q/E do not add marks.
-   Q uses the RMB thrust box on the blank effect frames and the extended box during effect frames
-   02-04, so a target just outside thrust range is hit only after the extended window opens; use F1
-   to see the box change. E passes through the enemy but stops at blocks/walls; at the end the bodies
+8. Nyra checks: use `[` to switch to Nyra; LMB/RMB/Q add marks (watch the 3 pips above the enemy),
+   the 4th LMB/RMB/Q hit detonates for `1.8×atk + 10% max HP` and leaves 1 mark; E does not add marks.
+   LMB plays the 5-frame wave animation (0.06s each, 0.30s) and has no FX; RMB plays the 5-frame
+   thrust animation (0.08s each, 0.40s) with a single hitbox active t=0.16-0.24; Q plays the 6-frame
+   slash animation and the blue `nyra_slash_fx` effect (visible frames 02-04 align with the
+   character's 02-04 frames) and adds 1 mark. Q and E have super armor: Q for its 0.40s, E during the
+   0.06-0.36s dash; damage still applies but hitstun/knockback/launch/freeze/stun/slow are ignored.
+   LMB uses the RMB thrust box outside t=0.06-0.24 and the extended
+   `[28,-212,162,123]` box during t=0.06-0.24; Q uses the thrust box outside t=0.12-0.30 and the
+   extended box during t=0.12-0.30. Use F1 to see the box changes. E dashes at 1100px/s for
+   t=0.06-0.36s (~330px), passes through the enemy but stops at blocks/walls; at the end the bodies
    are pushed apart. F2 shows `Q/E` cooldowns and `MARKS n/3`; lock-on (middle mouse) turns Nyra at
    attack start.
 9. Veno checks: F7 to Veno; F8 toggles its AI. On the ground it chases and bites with a wide-open

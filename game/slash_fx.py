@@ -1,4 +1,4 @@
-"""Cast-anchored sprite effect for Nyra's Q sword wave."""
+"""Cast-anchored sprite effect for Nyra's Q slash."""
 
 from __future__ import annotations
 
@@ -9,13 +9,21 @@ import pygame
 from .config import ASSETS_DIR
 
 
-FX_DIR = ASSETS_DIR / "frames" / "nyra" / "nyra_wave_fx"
-FRAME_DURATIONS = (0.04, 0.04, 0.05, 0.08, 0.05, 0.05)
+FX_DIR = ASSETS_DIR / "frames" / "nyra" / "nyra_slash_fx"
+FRAME_DURATIONS = (0.02, 0.02, 0.05, 0.14, 0.07, 0.05)
+FRAME_NAMES = tuple(
+    f"nyra_slash_fx_{index:02d}.png" for index in range(len(FRAME_DURATIONS))
+)
 FRAME_SIZE = (384, 384)
 PIVOT = (192, 372)
 
 
-class WaveEffect:
+def missing_frames() -> list[str]:
+    """FX frame filenames that are absent from disk."""
+    return [name for name in FRAME_NAMES if not (FX_DIR / name).exists()]
+
+
+class SlashEffect:
     _right_frames: tuple[pygame.Surface, ...] | None = None
     _left_frames: tuple[pygame.Surface, ...] | None = None
     _stamp: tuple[float, ...] | None = None
@@ -30,21 +38,18 @@ class WaveEffect:
 
     @classmethod
     def _current_stamp(cls) -> tuple[float, ...]:
-        return tuple(
-            os.path.getmtime(FX_DIR / f"nyra_wave_fx_{index:02d}.png")
-            for index in range(len(FRAME_DURATIONS))
-        )
+        return tuple(os.path.getmtime(FX_DIR / name) for name in FRAME_NAMES)
 
     @classmethod
     def _frames(cls, facing: int) -> tuple[pygame.Surface, ...]:
         stamp = cls._current_stamp()
         if cls._right_frames is None or cls._stamp != stamp:
             frames = tuple(
-                pygame.image.load(str(FX_DIR / f"nyra_wave_fx_{index:02d}.png")).convert_alpha()
-                for index in range(len(FRAME_DURATIONS))
+                pygame.image.load(str(FX_DIR / name)).convert_alpha()
+                for name in FRAME_NAMES
             )
             if any(frame.get_size() != FRAME_SIZE for frame in frames):
-                raise ValueError("Nyra Q effect frames must be 384x384")
+                raise ValueError("Nyra Q slash effect frames must be 384x384")
             cls._right_frames = frames
             cls._left_frames = tuple(
                 pygame.transform.flip(frame, True, False) for frame in frames

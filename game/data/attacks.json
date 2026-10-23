@@ -111,17 +111,24 @@
     ]
   },
   "nyra_slash": {
-    "basic_mult": 1.0,
-    "extra_mult": 1.0,
-    "duration": 0.31,
-    "lunge": 24,
-    "lunge_time": 0.08,
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.4,
+    "lunge": 0,
+    "lunge_time": 0.0,
     "energy_gain": 0,
-    "hitstun": 0.2,
+    "hitstun": 0.25,
     "hitstop": 0.06,
     "marks_on_hit": 1,
+    "armor_until": 0.4,
     "events": [
-      {"t": 0.13, "until": 0.21, "type": "hitbox", "box": [34, -170, 120, 60], "knockback": 80}
+      {"t": 0.0, "until": 0.12, "type": "hitbox", "anchor": "cast",
+       "box": [28, -165, 130, 48], "knockback": 160},
+      {"t": 0.12, "until": 0.3, "type": "hitbox", "anchor": "cast",
+       "box": [28, -212, 162, 123], "knockback": 160},
+      {"t": 0.3, "until": 0.4, "type": "hitbox", "anchor": "cast",
+       "box": [28, -165, 130, 48], "knockback": 160},
+      {"t": 0.04, "type": "fx", "fx": "nyra_slash"}
     ]
   },
   "nyra_thrust": {
@@ -135,26 +142,26 @@
     "hitstop": 0.07,
     "marks_on_hit": 1,
     "events": [
-      {"t": 0.12, "until": 0.22, "type": "hitbox", "box": [28, -165, 130, 48], "knockback": 220}
+      {"t": 0.16, "until": 0.24, "type": "hitbox", "box": [28, -165, 130, 48], "knockback": 220}
     ]
   },
   "nyra_wave": {
-    "basic_mult": 1.5,
-    "extra_mult": 1.5,
-    "duration": 0.4,
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.3,
     "lunge": 0,
     "lunge_time": 0.0,
     "energy_gain": 0,
     "hitstun": 0.25,
     "hitstop": 0.06,
+    "marks_on_hit": 1,
     "events": [
-      {"t": 0.0, "until": 0.12, "type": "hitbox", "anchor": "cast",
+      {"t": 0.0, "until": 0.06, "type": "hitbox", "anchor": "cast",
        "box": [28, -165, 130, 48], "knockback": 160},
-      {"t": 0.12, "until": 0.3, "type": "hitbox", "anchor": "cast",
+      {"t": 0.06, "until": 0.24, "type": "hitbox", "anchor": "cast",
        "box": [28, -212, 162, 123], "knockback": 160},
-      {"t": 0.3, "until": 0.4, "type": "hitbox", "anchor": "cast",
-       "box": [28, -165, 130, 48], "knockback": 160},
-      {"t": 0.04, "type": "fx", "fx": "nyra_wave"}
+      {"t": 0.24, "until": 0.3, "type": "hitbox", "anchor": "cast",
+       "box": [28, -165, 130, 48], "knockback": 160}
     ]
   },
   "nyra_dash": {
@@ -166,10 +173,12 @@
     "energy_gain": 0,
     "hitstun": 0.3,
     "hitstop": 0.08,
+    "armor_from": 0.06,
+    "armor_until": 0.36,
     "pass_through_enemy": true,
     "events": [
-      {"t": 0.06, "until": 0.34, "type": "dash", "speed": 900},
-      {"t": 0.06, "until": 0.30, "type": "hitbox", "box": [0, -180, 90, 180], "knockback": 250}
+      {"t": 0.06, "until": 0.36, "type": "dash", "speed": 1100},
+      {"t": 0.06, "until": 0.36, "type": "hitbox", "box": [0, -180, 90, 180], "knockback": 250}
     ]
   },
   "veno_bite": {

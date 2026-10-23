@@ -16,7 +16,7 @@ from .particles import ParticleSystem, draw_knock_up_vortex
 from .projectile import AimedProjectile, AxeThrow, QWave, SwordWave
 from .roster import create_fighter
 from .stage import Stage
-from .wave_fx import WaveEffect
+from .slash_fx import SlashEffect
 
 DEBUG_KEYS = {
     pygame.K_F1,
@@ -66,7 +66,7 @@ class ArenaScene:
         self.last_hit: dict | None = None
         self.debug_hitboxes: list[pygame.Rect] = []
         self.projectiles: list = []
-        self.wave_effects: list[WaveEffect] = []
+        self.slash_effects: list[SlashEffect] = []
         self.status_demo_index = 0
         self.time_scales = [0.25, 0.5, 1.0, 2.0]
         self.time_scale_index = 2
@@ -110,7 +110,7 @@ class ArenaScene:
         self.enemy = create_fighter(self.enemy_spec, self.store, self.stage)
         self.stage.blocks_enabled = blocks_enabled
         self.projectiles = []
-        self.wave_effects = []
+        self.slash_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -121,6 +121,7 @@ class ArenaScene:
         self.status_demo_index = 0
         self.lock_on = False
         self.input.clear()
+        self._force_ai_off()
 
     def _force_ai_off(self) -> None:
         if hasattr(self.enemy, "ai_enabled"):
@@ -153,7 +154,6 @@ class ArenaScene:
         self.character_id = character_id
         self.character_spec = characters[character_id]
         self._rebuild_fighters()
-        self._force_ai_off()
         return True
 
     def set_enemy(self, enemy_id: str) -> bool:
@@ -163,7 +163,6 @@ class ArenaScene:
         self.enemy_id = enemy_id
         self.enemy_spec = enemies[enemy_id]
         self._rebuild_fighters()
-        self._force_ai_off()
         return True
 
     def cycle_character(self, step: int = 1) -> bool:
@@ -214,8 +213,9 @@ class ArenaScene:
     def reset(self) -> None:
         self.player.reset()
         self.enemy.reset()
+        self._force_ai_off()
         self.projectiles = []
-        self.wave_effects = []
+        self.slash_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -236,7 +236,7 @@ class ArenaScene:
 
         self.debug_hitboxes.clear()
         self.input.update(dt)
-        self._update_wave_effects(dt)
+        self._update_slash_effects(dt)
         self.player.update(dt, self.input, self.enemy, self)
         self.enemy.update(dt, self)
         self._separate_fighters(dt)
@@ -352,12 +352,12 @@ class ArenaScene:
         if self._can_stand(a, a.x) and self._can_stand(a, a_target):
             self.stage.move_x(a, a_target - a.x)
 
-    def _update_wave_effects(self, dt: float) -> None:
-        for effect in self.wave_effects:
+    def _update_slash_effects(self, dt: float) -> None:
+        for effect in self.slash_effects:
             effect.update(dt)
-        self.wave_effects = [effect for effect in self.wave_effects if effect.alive]
+        self.slash_effects = [effect for effect in self.slash_effects if effect.alive]
 
-    def spawn_wave_effect(
+    def spawn_slash_effect(
         self,
         attacker,
         event: dict,
@@ -368,7 +368,7 @@ class ArenaScene:
         x = float(cast_x if cast_x is not None else attacker.x)
         y = float(cast_y if cast_y is not None else attacker.y)
         facing = int(cast_facing if cast_facing is not None else attacker.facing)
-        self.wave_effects.append(WaveEffect(x, y, facing, event))
+        self.slash_effects.append(SlashEffect(x, y, facing, event))
 
     def _check_match_end(self) -> None:
         if not self.enemy_spec.get("decides_match", False) or self.match_over is not None:
@@ -630,7 +630,7 @@ class ArenaScene:
             projectile.draw(surface)
         self.particles.draw(surface)
         self.player.draw(surface)
-        for effect in self.wave_effects:
+        for effect in self.slash_effects:
             effect.draw(surface)
         self._draw_status_fx(surface, self.player)
         self._draw_mark_fx(surface)

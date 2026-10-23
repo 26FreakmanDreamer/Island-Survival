@@ -1,5 +1,7 @@
 # Project asset memory
 
+- If you are Codex, read `CODEX-README.md` before taking action at the start of every new session working on or running this project. Other agents may ignore its rules.
+
 - Use the pictures in `Image/` as the default visual source for this project.
 - `Image/Character/` contains the current character pictures; `Image/Enemy/` contains the current enemy pictures. Preserve the categories and character names reflected by their filenames when referring to or using them.
 - For character and enemy artwork, prefer these files over the older pictures in `assets/characters/` and `assets/enemies/` unless the user specifies otherwise.

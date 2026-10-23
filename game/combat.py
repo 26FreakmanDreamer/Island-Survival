@@ -115,7 +115,7 @@ class AttackRuntime:
             elif event["type"] == "fx":
                 if self.time >= event_time and index not in self.spawned_events:
                     self.spawned_events.add(index)
-                    self.scene.spawn_wave_effect(
+                    self.scene.spawn_slash_effect(
                         self.attacker,
                         event,
                         cast_x=self.cast_x,

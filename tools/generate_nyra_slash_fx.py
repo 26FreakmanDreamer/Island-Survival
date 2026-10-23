@@ -122,11 +122,12 @@ def main() -> None:
     FX_DIR.mkdir(parents=True, exist_ok=True)
     COMBINED_DIR.mkdir(parents=True, exist_ok=True)
     for index in range(6):
-        name = f"nyra_slash_{index:02d}.png"
-        frame = Image.open(FRAMES / name).convert("RGBA")
+        source_name = f"nyra_slash_{index:02d}.png"
+        output_name = f"nyra_slash_fx_{index:02d}.png"
+        frame = Image.open(FRAMES / source_name).convert("RGBA")
         effect = draw_frame(index)
-        effect.save(FX_DIR / name)
-        Image.alpha_composite(frame, effect).save(COMBINED_DIR / name)
+        effect.save(FX_DIR / output_name)
+        Image.alpha_composite(frame, effect).save(COMBINED_DIR / output_name)
     print(FX_DIR)
     print(COMBINED_DIR)
 

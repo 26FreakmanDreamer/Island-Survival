@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 CONTROL_EFFECTS = ("knockback", "knock_up", "freeze", "stun")
+IMMUNE_EFFECTS = CONTROL_EFFECTS + ("slow",)
 ALL_EFFECTS = (
     "knockback", "burn", "poison", "slow", "knock_up",
     "freeze", "stun", "super_armor", "damage_reduction",
@@ -45,6 +46,8 @@ class StatusSet:
     ) -> None:
         if kind == "poison":
             self.add_poison(source or "unknown", duration, dps)
+            return
+        if kind in IMMUNE_EFFECTS and self.has("super_armor"):
             return
         # Burn and other timed effects refresh; damage reduction keeps its value.
         self.effects[kind] = Effect(duration, source, value, dps, total=duration)
@@ -108,6 +111,8 @@ class StatusSet:
         return effect.value if effect is not None else 0.0
 
     def slow_factor(self) -> float:
+        if self.has("super_armor"):
+            return 1.0
         effect = self.effects.get("slow")
         return effect.value if effect is not None else 1.0
 

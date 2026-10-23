@@ -12,6 +12,7 @@ from game.config import FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.particles import knock_up_vortex_intensity
 from game.scene import DEBUG_KEYS, ArenaScene
+from game.slash_fx import missing_frames as missing_slash_fx_frames
 
 
 def _font(size: int, bold: bool = False) -> pygame.font.Font:
@@ -46,6 +47,10 @@ def _draw_pause(surface: pygame.Surface, big: pygame.font.Font, text: pygame.fon
 
 
 def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
+    startup_ai_off_ok = (
+        hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
+    )
+
     # --- Phase A: Lina regression checks against the training dummy ---
     scene.set_enemy("dummy")
     scene.reset()
@@ -147,6 +152,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # --- Phase B: Warrior target, attacks, armor and match flow ---
     scene.set_enemy("warrior")
     scene.reset()
+    reset_ai_off_ok = (
+        hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
+    )
+    ai_default_off_ok = startup_ai_off_ok and reset_ai_off_ok
     warrior = scene.enemy
     warrior_present = (
         warrior.name == "Warrior"
@@ -369,6 +378,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # AI must approach, cross a block and land a hit.
     scene.reset()
     warrior = scene.enemy
+    warrior.ai_enabled = True
     scene.player.x = 300.0
     warrior.x = 600.0
     warrior.y = scene.stage.ground_y
@@ -610,6 +620,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # AI should throw over a block when the target is in throw range.
     scene.reset()
     warrior = scene.enemy
+    warrior.ai_enabled = True
     scene.player.x = 300.0
     # Stand just right of the 400..490 block so the throw must cross it.
     warrior.x = 555.0
@@ -656,28 +667,35 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     dummy.x = nyra.x + 80.0
     nyra.facing = 1
     scene.input.buffer.press("punch")
+    lmb_fx_seen = False
     for _ in range(30):
         scene.tick(FIXED_DT)
-    nyra_slash_ok = abs(dummy.hp - 980.0) < 0.01 and nyra.marks == 1
+        if scene.slash_effects:
+            lmb_fx_seen = True
+    nyra_wave_lmb_ok = (
+        abs(dummy.hp - 980.0) < 0.01
+        and nyra.marks == 1
+        and not lmb_fx_seen
+    )
 
     scene.reset()
     nyra = scene.player
     dummy = scene.enemy
     dummy.x = nyra.x + 80.0
     nyra.facing = 1
-    burst_seen = False
+    wave_burst_seen = False
     for _ in range(4):
         scene.input.buffer.press("punch")
         for _ in range(30):
             scene.tick(FIXED_DT)
-            if nyra.mark_detonations > 0 and not burst_seen:
-                burst_seen = nyra.mark_burst_time > 0.0
-    nyra_burst_ok = (
-        burst_seen
+            if nyra.mark_detonations > 0 and not wave_burst_seen:
+                wave_burst_seen = nyra.mark_burst_time > 0.0
+    nyra_wave_burst_ok = (
+        wave_burst_seen
         and nyra.mark_detonations == 1
         and nyra.marks == 1
     )
-    nyra_burst_damage_ok = abs(dummy.hp - 784.0) < 0.01
+    nyra_wave_burst_damage_ok = abs(dummy.hp - 784.0) < 0.01
 
     scene.reset()
     nyra = scene.player
@@ -695,21 +713,21 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     dummy.x = nyra.x + 120.0
     nyra.facing = 1
     scene.input.buffer.press("q")
-    q_fx_seen = False
-    q_no_projectile = True
+    q_slash_fx_seen = False
+    q_slash_no_projectile = True
     for _ in range(60):
         scene.tick(FIXED_DT)
-        if scene.wave_effects:
-            q_fx_seen = True
+        if scene.slash_effects:
+            q_slash_fx_seen = True
         if scene.projectiles:
-            q_no_projectile = False
-    nyra_q_ok = (
+            q_slash_no_projectile = False
+    nyra_q_slash_ok = (
         abs(dummy.hp - 970.0) < 0.01
-        and nyra.marks == 0
-        and q_fx_seen
-        and q_no_projectile
+        and nyra.marks == 1
+        and q_slash_fx_seen
+        and q_slash_no_projectile
     )
-    nyra_q_cd_ok = nyra.q_cd > 6.0
+    nyra_q_slash_cd_ok = nyra.q_cd > 6.0
 
     scene.reset()
     nyra = scene.player
@@ -726,15 +744,49 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         scene.tick(FIXED_DT)
         if nyra.attack_runtime is not None:
             break
-    q_out_of_thrust_ok = abs(dummy.hp - 1000.0) < 0.01
+    q_slash_out_of_thrust_ok = abs(dummy.hp - 1000.0) < 0.01
     for _ in range(20):
         scene.tick(FIXED_DT)
         if nyra.attack_runtime is None or nyra.attack_runtime.time >= 0.13:
             break
-    nyra_q_range_ok = (
-        q_out_of_thrust_ok
+    nyra_q_slash_range_ok = (
+        q_slash_out_of_thrust_ok
         and abs(dummy.hp - 970.0) < 0.01
-        and nyra.marks == 0
+        and nyra.marks == 1
+    )
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra.x = 100.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    dummy.x = 900.0
+    dummy.y = scene.stage.ground_y
+    dummy.on_ground = True
+    nyra.facing = 1
+    scene.input.buffer.press("q")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    q_armor_started = nyra.attack_id == "nyra_slash" and nyra.statuses.has("super_armor")
+    q_armor_hp_before = nyra.hp
+    nyra.take_hit(10.0, 300.0, 0.4, -1, launch=200.0)
+    for kind in ("knockback", "knock_up", "freeze", "stun"):
+        nyra.statuses.add(kind, 1.0)
+    nyra.statuses.add("slow", 1.0, value=0.5)
+    q_armor_immune = not any(
+        nyra.statuses.has(kind)
+        for kind in ("knockback", "knock_up", "freeze", "stun", "slow")
+    )
+    nyra_q_armor_ok = (
+        q_armor_started
+        and nyra.attack_id == "nyra_slash"
+        and nyra.state == FighterState.ATTACK
+        and abs(nyra.hp - (q_armor_hp_before - 10.0)) < 0.01
+        and nyra.hitstun == 0.0
+        and nyra.kb_vx == 0.0
+        and nyra.vy == 0.0
+        and q_armor_immune
     )
 
     scene.reset()
@@ -752,6 +804,60 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         scene.tick(FIXED_DT)
     nyra_dash_ok = abs(dummy.hp - 970.0) < 0.01 and nyra.marks == 0
     nyra_dash_cd_ok = nyra.e_cd > 13.0
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra.x = 300.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    dummy.x = 1000.0
+    dummy.y = scene.stage.ground_y
+    dummy.on_ground = True
+    nyra.facing = 1
+    scene.input.buffer.press("e")
+    for _ in range(6):
+        scene.tick(FIXED_DT)
+    e_armor_started = nyra.attack_id == "nyra_dash" and nyra.statuses.has("super_armor")
+    e_armor_hp_before = nyra.hp
+    nyra.take_hit(10.0, 300.0, 0.4, -1, launch=200.0)
+    for kind in ("knockback", "knock_up", "freeze", "stun"):
+        nyra.statuses.add(kind, 1.0)
+    nyra.statuses.add("slow", 1.0, value=0.5)
+    e_armor_immune = not any(
+        nyra.statuses.has(kind)
+        for kind in ("knockback", "knock_up", "freeze", "stun", "slow")
+    )
+    nyra_e_armor_ok = (
+        e_armor_started
+        and nyra.attack_id == "nyra_dash"
+        and nyra.state == FighterState.ATTACK
+        and abs(nyra.hp - (e_armor_hp_before - 10.0)) < 0.01
+        and nyra.hitstun == 0.0
+        and nyra.kb_vx == 0.0
+        and nyra.vy == 0.0
+        and e_armor_immune
+    )
+
+    scene.reset()
+    nyra = scene.player
+    dummy = scene.enemy
+    nyra.x = 200.0
+    nyra.y = scene.stage.ground_y
+    nyra.on_ground = True
+    dummy.x = 1000.0
+    dummy.y = scene.stage.ground_y
+    dummy.on_ground = True
+    nyra.facing = 1
+    blocks_enabled = scene.stage.blocks_enabled
+    scene.stage.blocks_enabled = False
+    dash_start_x = nyra.x
+    scene.input.buffer.press("e")
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+    dash_distance = nyra.x - dash_start_x
+    scene.stage.blocks_enabled = blocks_enabled
+    nyra_dash_distance_ok = dash_distance >= 300.0
 
     scene.reset()
     nyra = scene.player
@@ -803,6 +909,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         nyra.x > veno.x and abs(veno.x - nyra.x) >= 119.5
     )
     nyra_missing = len(nyra.anim.missing_paths())
+    nyra_slash_fx_missing = len(missing_slash_fx_frames())
 
     # --- Phase D: Veno-Spider skills, statuses, hover AI and match flow ---
     scene.set_character("lina")
@@ -1111,15 +1218,18 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"block_lunge_ok={block_lunge_ok} q_block_ok={q_block_ok} "
         f"lock_on_ok={lock_on_ok} lock_off_ok={lock_off_ok} "
         f"flame_ok={flame_ok} missing_frames={missing_frames} "
-        f"nyra_present={nyra_present} nyra_slash_ok={nyra_slash_ok} "
-        f"nyra_burst_ok={nyra_burst_ok} nyra_burst_damage_ok={nyra_burst_damage_ok} "
-        f"nyra_thrust_ok={nyra_thrust_ok} nyra_q_ok={nyra_q_ok} "
-        f"nyra_q_cd_ok={nyra_q_cd_ok} nyra_q_range_ok={nyra_q_range_ok} "
+        f"nyra_present={nyra_present} nyra_wave_lmb_ok={nyra_wave_lmb_ok} "
+        f"nyra_wave_burst_ok={nyra_wave_burst_ok} nyra_wave_burst_damage_ok={nyra_wave_burst_damage_ok} "
+        f"nyra_thrust_ok={nyra_thrust_ok} nyra_q_slash_ok={nyra_q_slash_ok} "
+        f"nyra_q_slash_cd_ok={nyra_q_slash_cd_ok} nyra_q_slash_range_ok={nyra_q_slash_range_ok} "
+        f"nyra_q_armor_ok={nyra_q_armor_ok} nyra_e_armor_ok={nyra_e_armor_ok} "
+        f"nyra_dash_distance_ok={nyra_dash_distance_ok} "
         f"nyra_dash_ok={nyra_dash_ok} "
         f"nyra_dash_cd_ok={nyra_dash_cd_ok} nyra_marks_reset_ok={nyra_marks_reset_ok} "
         f"nyra_death_clear_ok={nyra_death_clear_ok} nyra_lock_ok={nyra_lock_ok} "
         f"nyra_dash_pass_ok={nyra_dash_pass_ok} "
         f"nyra_missing_frames={nyra_missing} "
+        f"nyra_slash_fx_missing={nyra_slash_fx_missing} "
         f"veno_present={veno_present} veno_bite_ok={veno_bite_ok} "
         f"veno_bite_cd_ok={veno_bite_cd_ok} veno_poison_ok={veno_poison_ok} "
         f"veno_poison_stack_ok={veno_poison_stack_ok} veno_web_ok={veno_web_ok} "
@@ -1132,6 +1242,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"warrior_attack_ok={warrior_attack_ok} "
         f"axe_slash_damage_ok={axe_slash_damage_ok} "
         f"lose_ok={lose_ok} win_ok={win_ok} "
+        f"ai_default_off_ok={ai_default_off_ok} "
         f"ai_ok={ai_ok} switch_ok={switch_ok} reset_ok={reset_ok} "
         f"overlap_ok={overlap_ok} separation_block_ok={separation_block_ok} "
         f"transform_hit_ok={transform_hit_ok} "
@@ -1161,13 +1272,16 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and flame_ok
         and missing_frames == 0
         and nyra_present
-        and nyra_slash_ok
-        and nyra_burst_ok
-        and nyra_burst_damage_ok
+        and nyra_wave_lmb_ok
+        and nyra_wave_burst_ok
+        and nyra_wave_burst_damage_ok
         and nyra_thrust_ok
-        and nyra_q_ok
-        and nyra_q_cd_ok
-        and nyra_q_range_ok
+        and nyra_q_slash_ok
+        and nyra_q_slash_cd_ok
+        and nyra_q_slash_range_ok
+        and nyra_q_armor_ok
+        and nyra_e_armor_ok
+        and nyra_dash_distance_ok
         and nyra_dash_ok
         and nyra_dash_cd_ok
         and nyra_marks_reset_ok
@@ -1175,6 +1289,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and nyra_lock_ok
         and nyra_dash_pass_ok
         and nyra_missing == 0
+        and nyra_slash_fx_missing == 0
         and veno_present
         and veno_bite_ok
         and veno_bite_cd_ok
@@ -1194,6 +1309,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and axe_slash_damage_ok
         and lose_ok
         and win_ok
+        and ai_default_off_ok
         and ai_ok
         and switch_ok
         and roster_ok
