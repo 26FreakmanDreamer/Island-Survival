@@ -40,9 +40,6 @@ class Nyra(Fighter):
 
         self.q_cd = 0.0
         self.e_cd = 0.0
-        self.marks = 0
-        self.mark_burst_time = 0.0
-        self.mark_burst_damage = 0.0
         self.mark_detonations = 0
         self.attack_runtime: AttackRuntime | None = None
         self.attack_id: str | None = None
@@ -91,9 +88,6 @@ class Nyra(Fighter):
         self.update_common(dt)
         self.q_cd = max(0.0, self.q_cd - dt)
         self.e_cd = max(0.0, self.e_cd - dt)
-        self.mark_burst_time = max(0.0, self.mark_burst_time - dt)
-        if target is None or target.hp <= 0.0:
-            self.marks = 0
 
         if self.state == FighterState.KO:
             self.vx = 0.0
@@ -325,10 +319,10 @@ class Nyra(Fighter):
         if float(attack.get("marks_on_hit", 0.0)) <= 0.0:
             return
         if target.hp <= 0.0:
-            self.marks = 0
+            target.marks = 0
             return
-        self.marks += 1
-        if self.marks < 4:
+        target.marks += 1
+        if target.marks < 4:
             return
         if target.invincible:
             return
@@ -337,10 +331,10 @@ class Nyra(Fighter):
         amount *= 1.0 - target.statuses.damage_reduction()
         target.take_hit(amount, 0.0, 0.0, self.facing)
 
-        self.mark_burst_time = 0.4
-        self.mark_burst_damage = amount
+        target.mark_burst_time = 0.4
+        target.mark_burst_damage = amount
         self.mark_detonations += 1
-        self.marks = 1 if target.hp > 0.0 else 0
+        target.marks = 1 if target.hp > 0.0 else 0
 
         runtime = self.attack_runtime
         scene = runtime.scene if runtime is not None else None
@@ -358,9 +352,6 @@ class Nyra(Fighter):
         self.reset_common(x, y, 1)
         self.q_cd = 0.0
         self.e_cd = 0.0
-        self.marks = 0
-        self.mark_burst_time = 0.0
-        self.mark_burst_damage = 0.0
         self.mark_detonations = 0
         self.attack_runtime = None
         self.attack_id = None

@@ -19,6 +19,7 @@ class Particle:
     max_life: float
     radius: float
     color: tuple[int, int, int]
+    gravity: float = 260.0
 
 
 class ParticleSystem:
@@ -56,7 +57,7 @@ class ParticleSystem:
                 life=life,
                 max_life=life,
                 radius=random.uniform(2.0, 4.5),
-                color=random.choice(((70, 190, 90), (120, 230, 120), (40, 140, 60))),
+                color=random.choice(((55, 170, 75), (100, 210, 110), (35, 120, 50))),
             )
         )
 
@@ -76,12 +77,87 @@ class ParticleSystem:
                 )
             )
 
+    def emit_burst(
+        self,
+        x: float,
+        y: float,
+        color: tuple[int, int, int],
+        count: int = 12,
+        *,
+        speed: float = 190.0,
+        life: tuple[float, float] = (0.12, 0.28),
+        gravity: float = 260.0,
+        radius: tuple[float, float] = (2.0, 4.5),
+    ) -> None:
+        """Element-coloured outward burst for projectile impacts."""
+        for _ in range(max(0, int(count))):
+            angle = random.uniform(0.0, math.tau)
+            magnitude = random.uniform(speed * 0.35, speed)
+            particle_life = random.uniform(*life)
+            self._add(
+                Particle(
+                    x=x + random.uniform(-6, 6),
+                    y=y + random.uniform(-6, 6),
+                    vx=math.cos(angle) * magnitude,
+                    vy=math.sin(angle) * magnitude - speed * 0.2,
+                    life=particle_life,
+                    max_life=particle_life,
+                    radius=random.uniform(*radius),
+                    color=color,
+                    gravity=gravity,
+                )
+            )
+
+    def emit_mist(
+        self,
+        x: float,
+        y: float,
+        color: tuple[int, int, int] = (110, 220, 100),
+        count: int = 4,
+    ) -> None:
+        """Slow upward drift used for the poison cast and residue."""
+        for _ in range(max(0, int(count))):
+            particle_life = random.uniform(0.24, 0.45)
+            self._add(
+                Particle(
+                    x=x + random.uniform(-12, 12),
+                    y=y + random.uniform(-10, 10),
+                    vx=random.uniform(-22, 22),
+                    vy=random.uniform(-42, -12),
+                    life=particle_life,
+                    max_life=particle_life,
+                    radius=random.uniform(3.0, 6.0),
+                    color=color,
+                    gravity=-28.0,
+                )
+            )
+
+    def emit_embers(self, x: float, y: float, count: int = 3) -> None:
+        """Small slow fire sparks for flame Q cast/impact."""
+        for _ in range(max(0, int(count))):
+            particle_life = random.uniform(0.18, 0.34)
+            self._add(
+                Particle(
+                    x=x + random.uniform(-10, 10),
+                    y=y + random.uniform(-10, 10),
+                    vx=random.uniform(-55, 55),
+                    vy=random.uniform(-105, -35),
+                    life=particle_life,
+                    max_life=particle_life,
+                    radius=random.uniform(1.5, 3.0),
+                    color=random.choice(
+                        ((255, 180, 80), (255, 110, 50), (255, 230, 150))
+                    ),
+                    gravity=120.0,
+                )
+            )
+
     def update(self, dt: float) -> None:
         for particle in self.items:
             particle.life -= dt
             particle.x += particle.vx * dt
             particle.y += particle.vy * dt
-            particle.vy += 260.0 * dt
+            particle.vy += particle.gravity * dt
         self.items = [particle for particle in self.items if particle.life > 0.0]
 
     def draw(self, surface: pygame.Surface) -> None:

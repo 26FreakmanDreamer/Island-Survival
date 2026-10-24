@@ -56,6 +56,7 @@ class AttackRuntime:
         self.attack_id = attack_id
         self.data = data
         self.target = target
+        self.targets = tuple(scene.targets_for(attacker))
         self.scene = scene
         self.time = 0.0
         self.finished = False
@@ -95,10 +96,16 @@ class AttackRuntime:
                     else:
                         rect = local_box_to_rect(self.attacker, event["box"])
                     self.scene.debug_hitboxes.append(rect)
-                    if self.target is not None and id(self.target) not in self.hit_targets:
-                        if self.target.hurtbox().colliderect(rect):
-                            self.hit_targets.add(id(self.target))
-                            resolve_hit(self.scene, self.attacker, self.target, self.data, event)
+                    for target in self.targets:
+                        if target.invincible or target.hp <= 0.0:
+                            continue
+                        if id(target) in self.hit_targets:
+                            continue
+                        if target.hurtbox().colliderect(rect):
+                            self.hit_targets.add(id(target))
+                            resolve_hit(
+                                self.scene, self.attacker, target, self.data, event
+                            )
             elif event["type"] == "dash":
                 until = float(event.get("until", event_time + FIXED_DT))
                 if event_time <= self.time < until:
@@ -158,6 +165,9 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
             )
         if target.hp <= 0.0 or target.flash > 0.0:
             scene.particles.emit_hit(target.x, target.y - 120, (255, 210, 120))
+        hit_fx = event.get("hit_fx")
+        if hit_fx:
+            scene.spawn_hit_fx(hit_fx, attacker, target, event)
         attacker.on_hit_success(attack, target, bonus)
         scene.hitstop = max(scene.hitstop, hitstop)
 
@@ -179,8 +189,10 @@ def resolve_projectile_hit(scene, projectile) -> None:
     damage = projectile.damage * (1.0 - target.statuses.damage_reduction())
     if damage > 0.0:
         target.take_hit(damage, projectile.knockback, projectile.hitstun, projectile.direction)
-        scene.particles.emit_hit(target.x, projectile.y, (120, 230, 255))
+        hit_color = getattr(projectile, "hit_color", (120, 230, 255))
+        scene.particles.emit_hit(target.x, projectile.y, hit_color)
         projectile.owner.on_projectile_hit(projectile)
+        scene.spawn_projectile_impact(projectile, target)
         scene.hitstop = max(scene.hitstop, projectile.hitstop)
 
     scene.last_hit = {

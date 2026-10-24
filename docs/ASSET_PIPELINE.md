@@ -158,7 +158,10 @@ py tools/contact_sheet.py --action nyra_<action> --frames assets/generated/stage
 ## Veno-Spider (2026-10-22)
 
 - Approved side base: `assets/generated/base/veno_side_base.png`; canonical source
-  `Image/Enemy/veno-spider-128.png`. Canvas 320x320, pivot (160,308), body height 150.
+  `Image/Enemy/veno-spider-128.png`. Source canvas 320x320, pivot (160,308), body height 150.
+  The 2026-10-24 small-body variant keeps these source PNGs but runs them at **160x160,
+  pivot (80,154), body ~75** via `animations.json`; the hitbox is 75x75 and `stage_body_width`
+  is 70. Do not regenerate the source frames just to change the runtime size.
 - Visual lock: giant black chitinous spider with a swollen high abdomen, sharp lime-green venom
   patterns, green eyes, fangs, eight jointed legs with green bands and pale tips. Head and fangs
   point right; abdomen trails left. All eight legs must remain distinct; no extra legs.
@@ -177,6 +180,57 @@ py tools/contact_sheet.py --action veno_<action> --frames assets/generated/stage
   strand; the scene draws it.
 - The generator's body-size lock is strict: reject or reuse a frame if the abdomen/head changes
   size between frames of the same clip.
+
+## Projectile / skill VFX (2026-10-24)
+
+These are visual-only assets. Damage, hitboxes, timing, cooldowns and AI are unchanged.
+
+- **Lina Q** uses one static image per form (no frame loop):
+  - Normal: `assets/frames/lina/q_fx/q_wave_00.png` — the supplied teal glass-ball texture,
+    pixelated to the character's 2px grid (glossy teal body, white rim, upper-left highlight,
+    darker lower-right) plus a short teal pixel trail; ~26px visible (fist-sized), 96×96
+    canvas, anchor `(64, 48)`. No procedural ball; `QWave` has no procedural fallback, so the
+    PNG must exist. The sprite is drawn 7px above the collision lane
+    (`Q_WAVE_DRAW_OFFSET_Y` in `game/fx.py`) to line up with the punching fist; the cast flash
+    uses the same offset, while the hit/impact effects stay on the collision point.
+    Reference: `assets/generated/raw/lina_q_fx_teal_v1/teal_ball_reference.png`; the texture
+    used is the Seedream `image_to_image` result in
+    `assets/generated/raw/lina_q_fx_teal_v1/2026-10-24/image_to_image/`.
+  - Flame: `assets/frames/lina/flame/q_fx/q_wave_00.png` — Seedream pixel-art fire orb,
+    ~32px visible, same canvas/anchor.
+  - Runtime specs live in `game/fx.py` (`LINA_Q_SPECS`); the sprite is flipped for
+    left-facing shots and drawn at the collision center.
+- **Veno web** uses `assets/frames/veno/veno_web_fx/veno_web_05_web.png`, an exact
+  130×123 crop at `(492, 155, 622, 278)` from
+  `assets/generated/contact_sheets/veno_web_spit_v2_frames/veno_web_spit_web_05.png`.
+  The silk thread/trail is procedural; no thread, droplets or padding are baked into the
+  sprite. The projectile is drawn at 64px (collision radius 30) and the same crop is reused for
+  the impact decal at 150–170px.
+- **Veno poison** stays procedural: a dark-green layered glob, bubbles and droplet trail; dark
+  green cast mist and splash. The poisoned body uses a green/purple whole-frame tint every 0.18s
+  instead of the old hurtbox rectangle; green poison particles remain.
+- Do **not** use `veno_web_spit_v2_frames/combined_*` or `spider_*` at runtime; they contain
+  Veno's body and would double the character.
+
+Build/review tools:
+
+```text
+py tools/generate_lina_q_fx.py --normal <teal-ball.png> --flame <seedream-flame.png>
+py tools/generate_veno_web_bolt.py
+py tools/preview_fx.py
+```
+
+`generate_lina_q_fx.py` composes the supplied teal-ball texture (normal) and the Seedream flame
+texture into the 96×96 runtime frames; it writes candidates and contact sheets to
+`assets/generated/contact_sheets/lina_q_fx_v1/`. It no longer generates a procedural orb.
+`generate_veno_web_bolt.py` writes the crop and preview to
+`assets/generated/contact_sheets/veno_web_fx_v1/`. `preview_fx.py` renders in-game cast/flight/
+impact snapshots to `assets/generated/contact_sheets/fx_ingame_preview_v1/`.
+
+Approval gate: review the contact sheet and in-game previews first; only then copy the approved
+PNG into `assets/frames/`. `game/fx.py` caches by path + mtime, so replacing a runtime PNG and
+pressing F5 refreshes it; changing frame count/size/anchor or effect durations is a Python
+constant change and requires restarting the process.
 
 ## Commands
 

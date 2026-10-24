@@ -162,6 +162,11 @@ Q 的 0.12–0.30 延长窗口落在 `nyra_slash_fx` 的**特效帧 02–04** �
 
 ## 3. Veno-Spider 当前实现（可调整点）
 
+> **2026-10-24 注**：本节 §3.1–§3.3 是半体型／3 只编组之前的快照。当前数值以
+> `docs/DESIGN_DECISIONS.md`、`docs/DEBUG.md` 和 `docs/NEXT_SESSION_VENO_LINA_Q_VFX.md` 为准：
+> 半体型（`stage_body_width` 70、hurtbox 75×75）、bite hitbox `[12,-60,55,45]`、毒/网
+> `origin_height` 50、默认 3 只、冷却 bite 1.0s / poison 5.0s / web 8.0s（每只独立）。
+
 ### 3.1 数值（`game/data/stats.json` → `veno`）
 
 | 项 | 当前值 |

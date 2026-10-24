@@ -1,0 +1,23 @@
+{
+  "tool": "generate_veno_web_bolt.py",
+  "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\veno_web_spit_v2_frames\\veno_web_spit_web_05.png",
+  "source_name": "veno_web_spit_web_05.png",
+  "crop_box": [
+    492,
+    155,
+    622,
+    278
+  ],
+  "crop_size": [
+    130,
+    123
+  ],
+  "alpha_bbox": [
+    0,
+    0,
+    130,
+    122
+  ],
+  "notes": "No thread, droplets, padding or recolor baked in.",
+  "runtime_path": "assets/frames/veno/veno_web_fx/veno_web_05_web.png"
+}

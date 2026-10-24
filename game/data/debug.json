@@ -20,7 +20,7 @@
   },
   "roster": {
     "default_character": "lina",
-    "default_enemy": "warrior"
+    "default_enemy": "veno"
   },
   "overlay": {
     "hit": [255, 70, 70],

@@ -45,13 +45,20 @@ class Dummy(Fighter):
         if self.state != FighterState.KO:
             self.stage.move_fighter(self, dt)
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(
+        self,
+        surface: pygame.Surface,
+        tint: tuple[int, int, int] | None = None,
+    ) -> None:
         body_color = (112, 74, 46)
         if self.statuses.has("burn"):
             body_color = (156, 74, 36)
         elif self.statuses.has("poison"):
-            phase = (pygame.time.get_ticks() // 150) % 2
-            body_color = (120, 62, 152) if phase else (70, 150, 70)
+            if tint is not None:
+                body_color = tint
+            else:
+                phase = (pygame.time.get_ticks() // 150) % 2
+                body_color = (120, 62, 152) if phase else (70, 150, 70)
 
         post = pygame.Rect(round(self.x - 28), round(self.y - 175), 56, 175)
         pygame.draw.rect(surface, body_color, post)

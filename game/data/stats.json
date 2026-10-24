@@ -81,20 +81,20 @@
     "hp": 50,
     "basic_atk": 10,
     "extra_atk": 0,
-    "stage_body_width": 140,
+    "stage_body_width": 70,
     "move": {
       "walk": 320,
       "jump_v": 700,
       "gravity": 2200
     },
     "cooldowns": {
-      "bite": 1.8,
-      "poison": 3.5,
-      "web": 5.0
+      "bite": 1.0,
+      "poison": 5.0,
+      "web": 8.0
     },
     "hurtbox": {
-      "standing": [150, 150],
-      "crouching": [150, 150]
+      "standing": [75, 75],
+      "crouching": [75, 75]
     },
     "hover": {
       "base": 220,
@@ -106,8 +106,8 @@
       "oscillation_rate": 1.2
     },
     "ai": {
-      "bite_range": 150,
-      "close_range": 140,
+      "bite_range": 75,
+      "close_range": 70,
       "ranged_range": 700,
       "decision_interval": 0.1,
       "hover_min_time": 0.3

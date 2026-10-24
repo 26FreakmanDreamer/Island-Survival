@@ -64,6 +64,9 @@ class Veno(Fighter):
         self.bite_cd = 0.0
         self.poison_cd = 0.0
         self.web_cd = 0.0
+        # Each spider is a distinct poison source: its own reapplications
+        # extend, while poisons from other Venos stay independent.
+        self.poison_source = f"veno_poison:{id(self)}"
         self.mode = "ground"
         self.ai_enabled = True
         self.hover_time = 0.0
@@ -367,7 +370,7 @@ class Veno(Fighter):
             target.statuses.add(
                 "poison",
                 float(projectile.status_duration),
-                source="veno_poison",
+                source=self.poison_source,
                 dps=dps,
             )
         elif status == "stun":
@@ -378,16 +381,50 @@ class Veno(Fighter):
             )
 
     # --- rendering ----------------------------------------------------------
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(
+        self,
+        surface: pygame.Surface,
+        tint: tuple[int, int, int] | None = None,
+    ) -> None:
         if self.hp > 0.0 and not self.on_ground and self.mode in ("ascend", "hover"):
-            pygame.draw.line(
-                surface,
-                (215, 225, 235),
-                (round(self.x), 0),
-                (round(self.x), round(self.y - 75.0)),
-                2,
+            self._draw_hover_silk(surface)
+        super().draw(surface, tint=tint)
+
+    def _draw_hover_silk(self, surface: pygame.Surface) -> None:
+        """Draw-only strand; sway uses the hover clock, never state/AI."""
+        bottom_y = self.y - 37.5
+        if bottom_y <= 1.0:
+            return
+        sway = math.sin(self.hover_phase * 2.0) * 4.0
+        width = max(24, round(abs(sway) + 28))
+        height = max(2, round(bottom_y))
+        layer = pygame.Surface((width, height), pygame.SRCALPHA)
+        center = width * 0.5
+
+        points: list[tuple[int, int]] = []
+        for step in range(13):
+            t = step / 12.0
+            u = 1.0 - t
+            px = (
+                u * u * (center + sway)
+                + 2.0 * u * t * (center - sway * 0.5)
+                + t * t * center
             )
-        super().draw(surface)
+            py = 2.0 * u * t * (bottom_y * 0.55) + t * t * bottom_y
+            points.append((round(px), round(py)))
+
+        pygame.draw.lines(layer, (60, 90, 60, 120), False, points, 3)
+        pygame.draw.lines(layer, (170, 200, 170, 190), False, points, 2)
+        pygame.draw.lines(layer, (245, 255, 245, 220), False, points, 1)
+        pygame.draw.circle(
+            layer, (210, 235, 210, 160),
+            (round(center + sway), 2), 4,
+        )
+        pygame.draw.circle(
+            layer, (220, 245, 220, 180),
+            (round(center), round(bottom_y) - 4), 4, 1,
+        )
+        surface.blit(layer, (round(self.x - center), 0))
 
     # --- reset --------------------------------------------------------------
     def reset(self) -> None:

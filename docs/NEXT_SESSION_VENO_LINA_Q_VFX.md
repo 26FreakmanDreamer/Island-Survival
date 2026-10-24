@@ -6,6 +6,28 @@
 > 生成任何图片前先读 `docs/IMAGE_GENERATION_RULES.md`；素材流程见 `docs/ASSET_PIPELINE.md`。
 > 更完整的 Nyra / Veno / Lina Q 上下文见 `docs/NEXT_SESSION_NYRA_VENO_LINA_Q.md`；本文件只聚焦 Veno-Spider 与 Lina Q 的特效改造。
 
+> **2026-10-24 实施状态（视觉层已完成，smoke exit 0）**
+> - **Veno 半体型（后续请求）**：运行时帧 160×160 / pivot (80,154)；hurtbox 75×75；`stage_body_width` 70；
+>   bite hitbox `[12,-60,55,45]`；毒/网 `origin_height` 50；AI `bite_range` 75 / `close_range` 70；
+>   hover 蛛丝挂点 37.5。Lina 的 punch（y 455–503）与 Q 道（y 461–495）会越过地面小 Veno 的
+>   75px hurtbox（y 545–620），kick（y 495–557）仍可命中；smoke 的 Veno 击杀测试改用 kick。
+> - Lina Q：改为**单张静态贴图**，不再用 6 帧循环。普通形态使用参考图的**青绿色玻璃球**（白边、左上高光、右下暗部），像素化到 2px 网格并保留短像素拖尾，约 26px（拳头大小）；flame 形态是 Seedream 像素风火球，约 32px。运行时：
+>   `assets/frames/lina/q_fx/q_wave_00.png`、`assets/frames/lina/flame/q_fx/q_wave_00.png`；
+>   96×96、anchor `(64,48)`；普通形态**不再有代码生成球**，`QWave` 无程序化 fallback，必须存在贴图；精灵绘制上移 `Q_WAVE_DRAW_OFFSET_Y=-7px` 对齐出拳手部（施法特效同步上移，命中/impact 仍在碰撞点）；普通命中/施法为青绿色，flame 保持橙红。
+> - Veno 蛛网：最终**不使用 web_master**，改为 `veno_web_spit_v2_frames/veno_web_spit_web_05.png` 的精确裁切
+>   `(492,155,622,278)` → 130×123；弹体 **64px**、命中贴花 **150–170px**；碰撞半径从 14 提升到 **30**；
+>   吐丝、拖尾、施法丝束全部程序化。运行时 `assets/frames/veno/veno_web_fx/veno_web_05_web.png`。
+>   `combined_*`/`spider_*` 不接入。
+> - **Veno 3 只编组（后续请求）**：选择 Veno 时按 `roster.json` 的 `count: 3` / `spawn_offsets` / `spawn_modes` 生成
+>   3 只（默认 1 地面 + 2 悬垂）；`scene.enemies` 多敌人，玩家攻击/弹体可命中任意存活 Veno，全部击杀才 WIN；
+>   毒伤叠加按 instruction.docx：同源“剩余 + 新时长”（2s+3s=5s），异源各自独立；smoke 的 `veno_group_ok`、
+>   `poison_stack_rules_ok` 覆盖。
+> - 毒：毒液改为**深绿色**（外圈深绿、主体中绿、浅绿高光），施法雾/命中飞溅同步压深；**毒伤每 0.5s 结算一次**（`POISON_TICK`，总 dps/持续时间不变）；中毒状态改为**全身精灵染色**，深绿/紫每 **0.18s** 交替闪烁，移除整块绿色矩形，保留每 2 tick 的绿色毒粒子；蛛网施法为程序化丝束；hover 蛛丝改为弯曲细丝；bite 命中加绿色小弧光。
+> - 代码：新增 `game/fx.py` 与 `fx_effects` 层；`QWave`/`AimedProjectile` 增加 `age`/`visual_kind`/`hit_color`；`resolve_projectile_hit` 使用弹体 `hit_color`；`veno_bite` 的 hitbox 事件加 `hit_fx`；`emit_hit()` 全局行为未改。
+> - smoke 新增并通过：`lina_q_fx_missing=0`、`veno_vfx_missing=0`、`q_cast_fx_ok`、`q_impact_fx_ok`、`q_normal_color_ok`、`q_flame_color_ok`、`q_flame_cast_ok`、`veno_bite_hit_fx_ok`、`veno_poison_cast_ok`、`veno_poison_impact_ok`、`veno_web_cast_ok`、`veno_web_impact_ok`、`poison_interval_ok`、`poison_tint_ok`、`poison_stack_rules_ok`、`veno_web_radius_ok`、`veno_group_ok`、`fx_cleanup_ok`。
+> - **Veno 冷却 / 独立印记（后续请求）**：按更新后的 instruction.docx，Veno 冷却改为 bite **1.0s** / poison **5.0s** / web **8.0s**（蛛网随后单独调为 8s），每只 Veno 实例独立计时（smoke `veno_group_cooldowns_ok`）；Nyra 的印记移到每个目标身上（`Fighter.marks` / `mark_burst_time` / `mark_burst_damage`），多敌人各自叠层、各自引爆，目标死亡或 reset 清除，`mark_detonations` 仅保留为 Nyra 的累计引爆数（smoke `nyra_marks_per_target_ok`；F2 显示主目标层数 + 总引爆数；每个存活敌人头顶各画自己的 3 个 pips）。
+> - VFX 层未改伤害、判定、时序、AI、默认阵容；Veno 冷却随后按更新后的 instruction.docx 单独调整（见上）；`Image/`、`instruction.docx`、`UI Resources/` 未动；未 commit。
+
 ---
 
 ## 0. 可直接复制的开场 prompt
@@ -102,7 +124,7 @@ t=0.26     生成 QWave（60Hz 下实际约 0.267 生效）
 |---|---:|---:|---|---|
 | `veno_bite` | 15 | 0.50 | hitbox `[24,-120,110,90]`，t 0.18–0.30 | 无 |
 | `veno_poison` | 8 | 0.60 | `t=0.25` 生成 `venom_glob`；origin_height 100；speed 520；range 800；knockback 40；radius 18 | poison 3.0s，dps = 3% 目标最大生命 |
-| `veno_web` | 10 | 0.65 | `t=0.30` 生成 `web_bolt`；origin_height 100；speed 480；range 800；knockback 60；radius 14 | stun 1.0s |
+| `veno_web` | 10 | 0.65 | `t=0.30` 生成 `web_bolt`；origin_height 100；speed 480；range 800；knockback 60；radius 30 | stun 1.0s |
 
 - 两个远程弹道都是**发射瞬间瞄准玩家位置**的直线弹，不追踪；跳跃/位移可以躲。
 - 生成位置：`attacker.x + facing*24`，y = `attacker.y - 100`；目标是玩家 hurtbox 中心。
@@ -112,11 +134,11 @@ t=0.26     生成 QWave（60Hz 下实际约 0.267 生效）
   - **施法帧没有烘弹体**；这是正确的，特效应继续保持独立层。
 - 当前弹体外观：
   - 毒：深绿/亮绿叠层圆 + 高光，radius 18，带一点气泡感，但没有年龄/旋转/滴落。
-  - 网：淡蓝白圆 + 6 根辐条 + 一条横线，radius 14；更像“圆形网图标”，没有旋转或丝线拖尾。
+  - 网：淡蓝白圆 + 6 根辐条 + 一条横线，radius 30（视觉 64px）；更像“圆形网图标”，没有旋转或丝线拖尾。
   - 两者共用 `AimedProjectile.draw()`，没有 `age`/`spin` 字段。
   - 命中都走通用 hit particles，颜色同样是硬编码青色；毒没有绿色飞溅，网没有网状爆裂。
 - 状态视觉：
-  - poison：目标 hurtbox 上叠一层绿色矩形 pulse + 每 2 tick 的绿色毒粒子。
+  - poison：全身精灵染色，深绿/紫每 0.18s 交替闪烁 + 每 2 tick 的深绿色毒粒子；不再画整块矩形。
   - stun：头顶 3 个黄色光点绕圈。
 - hover 时场景画一条 2px 灰白蛛丝，从屏幕顶部到蜘蛛上方；蛛丝不在角色帧里。
 
@@ -145,9 +167,9 @@ stage
 - `slash_effects` 在玩家之上；适合做“命中爆点/网状爆裂”这类需要盖住角色的短特效，但不要长时间遮挡角色。
 - 新增 FX 层时，先决定它属于 `projectiles`、`particles` 还是 `slash_effects`，不要默认全塞进 `slash_effects`。
 
-### 2.4 已有但未接入的 Veno 蛛网素材
+### 2.4 已有 Veno 蛛网素材（最终只使用 web_05）
 
-这些文件已经存在，但**没有接入游戏**：
+最终实现只使用 `veno_web_spit_web_05.png` 的裁切；`web_master` 不再使用，`combined_*`/`spider_*` 不接入。以下文件仍然存在：
 
 ```text
 assets/generated/contact_sheets/veno_web_spit_v2_web_master.png      1147×1182 RGBA
@@ -161,18 +183,18 @@ tools/generate_veno_web_spit.py
 要点：
 
 - 预览：`veno_web_spit_v2_web_sheet.png`、`veno_web_spit_v2_web_preview.png`、`veno_web_spit_v2_combined_preview.png`。
-- `web_master.png` 是一张干净的、青柠绿/白高光的蛛网图标，适合作为**弹体或命中贴花**的裁切来源。
-- `veno_web_spit_v2_frames/veno_web_spit_web_00..05.png` 是 6 帧“施法 + 蛛网飞行”层，画布是 640×320，蛛丝起点按 640×320 里的口部坐标烘死；它不是独立弹体，不能直接塞进 `AimedProjectile`。
+- 最终采用 `veno_web_spit_web_05.png` 的连通蛛网区域：裁切 `(492,155,622,278)` → 130×123；小液滴在 x 426–470，不属于蛛网。
+- 运行时文件：`assets/frames/veno/veno_web_fx/veno_web_05_web.png`；弹体 64px、命中贴花 150–170px，均复用同一裁切。
+- 吐丝/拖尾/施法丝束全部由代码绘制，不烘进贴图；不能直接使用 640×320 的施法帧当弹体。
 - `veno_web_spit_v2_frames/veno_web_spit_combined_00..05.png` 包含蜘蛛本体；**不要**把 combined 帧直接拷进运行时，否则会出现“角色帧里的蜘蛛 + 场景里的 Veno”双本体。
 - `veno_web_spit_v2_frames/veno_web_spit_spider_00..05.png` 只是现有 `veno_web_00..02` 三张姿势的重复排列，不是新角色动画。
-- 如果复用，只取 `web_master` 的裁切/缩放版本，或把 `veno_web_spit_web_00..05` 当作“施法特效参考”，重新按 Veno 的实际口部坐标和朝向放置。
 
 ### 2.5 当前视觉问题 / 可改进点
 
 - Lina Q：弹体小、静态、拖尾弱；flame 命中仍是青色粒子；普通 Q 角色帧里有一颗旧小球，换弹体外观时容易割裂。
 - Veno 毒/网：都是简单圆形；没有施法特效、没有命中特效、没有元素色；毒和网在飞行中几乎只靠颜色区分。
 - 现有 `veno_web_spit_v2` 的蛛网素材没有被利用。
-- poison 状态是整块绿色矩形 overlay；stun 只有黄点，没有“被网住”的视觉联系。
+- poison 状态已改为全身绿/紫闪烁；stun 只有黄点，没有“被网住”的视觉联系。
 - hover 蛛丝是单一灰线，存在感很弱。
 - `resolve_projectile_hit()` 对所有投射物使用同一套青色 hit particles；改特效时不要直接改 `emit_hit()` 的全局颜色，否则拳/腿/斧的命中反馈也会被改掉。
 - `AttackRuntime` 的 `fx` 事件目前只会调用 `scene.spawn_slash_effect()`，而 `SlashEffect` 是 Nyra 专用（384×384 / pivot 192,372）。**在给 Lina/Veno 加 `fx` 事件前，必须先泛化 FX 播放器**，否则会加载错误的帧尺寸。
@@ -210,8 +232,8 @@ tools/generate_veno_web_spit.py
 
 - 弹体：淡绿白核心 + 4–6 根放射丝 + 一条向后拖的丝线；随 `age` 缓慢旋转。视觉直径约 28–40px，碰撞 radius 仍 14。
 - 施法：`t=0.30` 口部出现 0.10–0.15s 的丝束/白绿闪光；可参考 `veno_web_spit_v2_frames/veno_web_spit_web_00..05.png` 的节奏，但按 Veno 实际口部坐标重新放置。
-- 命中：短促的网状爆裂（可把 `veno_web_spit_v2_web_master.png` 缩到约 80–120px，life 0.15–0.25s）+ 白色闪光 + 2–3 个黄色眩晕火星；不要长时间盖住目标。
-- 如果复用 `web_master`：先裁切/缩放成独立 impact sprite，新文件名，不要覆盖原图；contact sheet 通过后再接入。
+- 命中：短促的网状爆裂（复用 web_05 裁切，缩到约 150–170px，life 0.18–0.20s）+ 白色闪光 + 2–3 个黄色眩晕火星；不要长时间盖住目标。
+- 最终使用 web_05 裁切（见 §2.4）；不要使用 web_master，也不要把丝线烘进贴图。
 
 ### 3.4 可选低优先级
 
@@ -244,8 +266,10 @@ tools/generate_veno_web_spit.py
 **Q2 — Lina Q 素材**：保留现有角色 Q 帧，只升级 QWave；还是重做普通/flame 的 `q_02/q_03`？
 → 推荐：第一轮保留角色帧，新 QWave 与旧小球同量级；只有用户明确要“大球/新形态”时才重做帧并重算火焰 offset。
 
-**Q3 — Veno 蛛网来源**：复用 `veno_web_spit_v2_web_master.png`，还是重新生成一张？
-→ 推荐：先复用 web_master 做弹体/命中贴花；风格不匹配再生成新版本。不要直接接入 combined 6 帧。
+**Q3 — Veno 蛛网来源**：复用已有素材，还是重新生成一张？
+→ 最终决定：使用 `veno_web_spit_v2_frames/veno_web_spit_web_05.png` 的精确裁切
+`(492,155,622,278)` → 130×123 作为弹体/命中贴花；吐丝由代码绘制。不要使用 web_master，
+也不要直接接入 combined/spider 6 帧。
 
 **Q4 — 特效层**：只改弹体外观，还是同时加施法与命中特效？
 → 推荐：同时加施法（0.10–0.15s）和命中（0.15–0.25s）；先程序化，必要时再 sprite 化。
@@ -308,7 +332,7 @@ tools/generate_veno_web_spit.py
 2. 网：
    - `web_bolt` 画放射丝 + 旋转 + 后拖丝线；
    - 口部加丝束/白绿闪光；
-   - 命中加网状爆裂（可复用 `web_master` 的裁切版）+ 黄色眩晕火星。
+   - 命中加网状爆裂（复用 web_05 裁切，约 150–170px）+ 黄色眩晕火星。
 3. 可选：bite 命中小弧光、hover 蛛丝升级。
 4. 不改 `veno_poison` / `veno_web` 的 attack 数据、status 时长、AI 逻辑。
 
@@ -373,10 +397,11 @@ assets/frames/veno/veno_web_fx/
 - 普通 Q 的 `q_02` 有一颗已烘的小球；flame Q 的 `q_02` 是拳部火焰。重做这些帧时要保持 handoff 在 `t=0.26`。
 - flame Q 的 `q_01/q_02` alpha bbox 已经顶到画布右边（x=256）；重绘时留出余量，并重算 `flame_offsets`。
 
-### 6.4 复用 `veno_web_spit_v2`
+### 6.4 使用 `veno_web_spit_v2`（最终方案）
 
-- `web_master.png`：可裁切/缩放到约 28–40px 做弹体，或 80–120px 做命中贴花；保留 alpha，不要覆盖原图。
-- `veno_web_spit_v2_frames/veno_web_spit_web_00..05.png`：只作为施法节奏/丝线形态参考；它绑定 640×320 的口部坐标，不能直接用于 320×320 的 Veno。
+- 使用 `veno_web_spit_v2_frames/veno_web_spit_web_05.png` 的精确裁切 `(492,155,622,278)` → 130×123；不裁入 x 426–470 的液滴。
+- 运行时：`assets/frames/veno/veno_web_fx/veno_web_05_web.png`；弹体 64px（可旋转），命中贴花约 150–170px；吐丝由 `AimedProjectile` 程序化绘制。
+- `web_master.png` 不再作为运行时来源；保留原图做历史参考。
 - `combined_*`、`spider_*`：不要接入运行时；会与场景里的 Veno 本体重复。
 - 如果最终决定重新生成，按 `docs/ASSET_PIPELINE.md` 的流程走；新素材先 contact sheet。
 
@@ -402,18 +427,21 @@ assets/frames/veno/veno_web_fx/
 - `q_damage_ok=True`、`q_block_ok=True`、`flame_ok=True`；
 - `veno_bite_ok=True`、`veno_poison_ok=True`、`veno_poison_stack_ok=True`、`veno_web_ok=True`；
 - `veno_ai_ascent_ok=True`、`veno_ai_descend_ok=True`、`veno_win_ok=True`；
-- `roster_ok=True`、`missing_frames=0`、`veno_missing_frames=0`。
+- `roster_ok=True`、`missing_frames=0`、`veno_missing_frames=0`；
+- `lina_q_fx_missing=0`、`veno_vfx_missing=0`；
+- `q_cast_fx_ok`、`q_impact_fx_ok`、`q_flame_color_ok`、`q_flame_cast_ok`；
+- `veno_bite_hit_fx_ok`、`veno_poison_cast_ok`、`veno_poison_impact_ok`、`veno_web_cast_ok`、`veno_web_impact_ok`、`poison_interval_ok`、`poison_tint_ok`、`poison_stack_rules_ok`、`veno_web_radius_ok`、`veno_group_ok`、`fx_cleanup_ok`。
 
 如果只改视觉，以上数值应全部保持不变。若改了 projectile 碰撞盒、速度、生成时刻，必须同步更新 smoke。
 
 ### 7.2 手动
 
-- **Lina Q 普通**：地面 Q、站 block Q；看手部小球 → 前方 QWave 的交接；命中 Dummy 的青色爆点；无旧球残留。
+- **Lina Q 普通**：地面 Q、站 block Q；看手部小球 → 前方拳头大小像素风青绿色玻璃球（带上移 7px 与拖尾）的交接；命中 Dummy 的青绿色爆点/粒子；无旧球残留。
 - **Lina Q flame**：E 变身后 Q；橙红弹体/拖尾/命中；命中不是青色粒子；火焰 Q 帧没有明显横移。
 - **Veno 毒**：地面/悬空各放一次；看口部绿雾、绿色弹体、气泡/滴落、命中绿色飞溅；poison 状态正常。
-- **Veno 网**：地面/悬空各放一次；看口部丝束、旋转网团/拖尾、命中网状爆裂 + 黄点；stun 正常。
+- **Veno 网**：地面/悬空各放一次；看口部程序化丝束、旋转网团/拖尾、命中网状爆裂 + 黄点；stun 正常。
 - **边界**：弹体撞 block、飞出 wall、落到地面、超过 range 后消失；不要出现“命中后特效还跟着飞”。
-- **绘制层级**：大弹体不遮玩家；命中爆点不长时间盖住角色；Veno 悬空蛛丝仍在蜘蛛身后。
+- **绘制层级**：拳头大小弹体不遮玩家；命中爆点不长时间盖住角色；Veno 悬空蛛丝仍在蜘蛛身后。
 - **F5/重启**：替换 PNG 后 F5 能看到变化；改 Python 后重启才生效。
 
 ### 7.3 可选离屏预览
@@ -443,12 +471,13 @@ pygame.image.save(screen, "preview.png")
 - 不要给 Lina/Veno 的 `fx` 事件直接接 `spawn_slash_effect()`；`SlashEffect` 是 Nyra 专用 384×384 / pivot 192,372，必须先泛化。
 - 不要把 `veno_web_spit_v2_frames/veno_web_spit_combined_*` 或 `veno_web_spit_spider_*` 直接拷进运行时；会双本体。
 - 不要给 Veno 角色帧烘弹体/蛛网；hover 蛛丝由场景绘制。
-- 不要把 Veno 的 150×150 hurtbox 缩小；它是故意大于视觉高度的，缩小会让 Lina Q / axe throw 打空。
+- Veno 的 hurtbox 已按用户要求从 150×150 缩小到 75×75（半体型）；不要再按旧的“必须保持 150×150”规则处理。代价是 Lina 的 punch / 地面 Q 在拳/胸高度会打空，kick 仍可命中；若之后再调 hurtbox 高度或攻击 lane，需要重新检查 Veno 的受击与 AI。
+- Veno 现在是 **3 只编组**：不要只遍历 `scene.enemy`（它只是最近的存活主目标）；玩家近战/弹体用 `scene.targets_for()` 命中任意存活敌人，`scene.enemies` 为全组，全部死亡才 WIN。smoke 用 `enemy_count_override=1` 做单只隔离检查，不要把该 override 当成游戏默认。
 - 不要为了特效延长 hitstop；hitstop 会冻结整个场景，特效自然暂停。
 - 不要默认所有 FX 都画在玩家上面；先看 §2.3 的绘制顺序。
 - F5 只刷新 PNG/JSON，不刷新 Python。
 - 不要 `git reset` / `git checkout -- .` / `git stash`；不要覆盖未提交的 Nyra 帧和文档。
-- 默认阵容保持 **Lina vs Warrior**；不要改 `debug.json` 的默认值。
+- 默认阵容已按用户要求改为 **Lina vs 3 只 Veno**（`debug.json` `default_enemy: "veno"`）；不要再按旧的“保持 Lina vs Warrior”规则处理。
 - 除非用户明确要求，不要 commit。
 
 ---

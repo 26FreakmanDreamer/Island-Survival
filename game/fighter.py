@@ -72,6 +72,10 @@ class Fighter:
         self.hitstun = 0.0
         self.flash = 0.0
         self.invincible = False
+        # Nyra's marks live on the target so every enemy has its own stack.
+        self.marks = 0
+        self.mark_burst_time = 0.0
+        self.mark_burst_damage = 0.0
         self.statuses = StatusSet()
         self.attack_runtime = None
         self.attack_id = None
@@ -107,6 +111,7 @@ class Fighter:
         self.state_time += dt
         self.statuses.update(dt, self)
         self.flash = max(0.0, self.flash - dt)
+        self.mark_burst_time = max(0.0, self.mark_burst_time - dt)
         if self.hitstun > 0.0:
             self.hitstun = max(0.0, self.hitstun - dt)
         if self.kb_time > 0.0:
@@ -138,6 +143,9 @@ class Fighter:
             self.kb_vx = 0.0
             self.kb_time = 0.0
             self.vy = 0.0
+            self.marks = 0
+            self.mark_burst_time = 0.0
+            self.mark_burst_damage = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
             return True
@@ -164,6 +172,9 @@ class Fighter:
             self.kb_vx = 0.0
             self.kb_time = 0.0
             self.vy = 0.0
+            self.marks = 0
+            self.mark_burst_time = 0.0
+            self.mark_burst_damage = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
 
@@ -224,6 +235,9 @@ class Fighter:
         self.state_time = 0.0
         self.hitstun = 0.0
         self.flash = 0.0
+        self.marks = 0
+        self.mark_burst_time = 0.0
+        self.mark_burst_damage = 0.0
         self.on_ground = True
         self.statuses.clear()
         self.attack_runtime = None
@@ -257,7 +271,11 @@ class Fighter:
         if self.invincible:
             pygame.draw.rect(surface, (120, 220, 255), (bar_x, bar_y, width, height), 1)
 
-    def draw(self, surface: pygame.Surface) -> None:
+    def draw(
+        self,
+        surface: pygame.Surface,
+        tint: tuple[int, int, int] | None = None,
+    ) -> None:
         if self.anim is not None:
             flame = bool(getattr(self, "flame_time", 0.0) > 0.0)
             # In flame form, only dedicated flame art may be drawn. A normal
@@ -270,7 +288,7 @@ class Fighter:
                 or self.anim.clip_name == "transform"
                 or self.anim.current_is_flame_frame
             ):
-                self.anim.draw(surface, self.x, self.y, self.facing)
+                self.anim.draw(surface, self.x, self.y, self.facing, tint=tint)
         if self.flash > 0.0:
             pygame.draw.rect(surface, (255, 255, 255), self.hurtbox(), 2)
         if self.show_health_bar:

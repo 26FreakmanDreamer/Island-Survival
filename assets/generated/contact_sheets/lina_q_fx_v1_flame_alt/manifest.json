@@ -1,0 +1,75 @@
+{
+  "tool": "generate_lina_q_fx.py",
+  "frame_count": 6,
+  "frame_size": [
+    96,
+    96
+  ],
+  "anchor": [
+    64,
+    48
+  ],
+  "orb_diameter": 56,
+  "variants": [
+    {
+      "source": "assets\\generated\\raw\\lina_q_fx\\2026-10-24\\text_to_image\\lina_q_orb_cyan_v1_2_20261024_140831_585_c929d1f4.png",
+      "variant": "normal",
+      "frames_dir": "assets\\generated\\contact_sheets\\lina_q_fx_v1_flame_alt\\normal",
+      "frames": [
+        "q_wave_00.png",
+        "q_wave_01.png",
+        "q_wave_02.png",
+        "q_wave_03.png",
+        "q_wave_04.png",
+        "q_wave_05.png"
+      ],
+      "durations": [
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06
+      ],
+      "frame_size": [
+        96,
+        96
+      ],
+      "anchor": [
+        64,
+        48
+      ],
+      "orb_diameter": 56
+    },
+    {
+      "source": "assets\\generated\\raw\\lina_q_fx\\2026-10-24\\text_to_image\\lina_q_orb_flame_v1_1_20261024_140847_304_7b56a5f3.png",
+      "variant": "flame",
+      "frames_dir": "assets\\generated\\contact_sheets\\lina_q_fx_v1_flame_alt\\flame",
+      "frames": [
+        "q_wave_00.png",
+        "q_wave_01.png",
+        "q_wave_02.png",
+        "q_wave_03.png",
+        "q_wave_04.png",
+        "q_wave_05.png"
+      ],
+      "durations": [
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06,
+        0.06
+      ],
+      "frame_size": [
+        96,
+        96
+      ],
+      "anchor": [
+        64,
+        48
+      ],
+      "orb_diameter": 56
+    }
+  ]
+}

@@ -8,6 +8,12 @@ import pygame
 
 from .combat import resolve_projectile_hit
 from .config import AXE_SPRITE_PATH
+from .fx import (
+    LINA_Q_SPECS,
+    Q_WAVE_DRAW_OFFSET_Y,
+    strip_frame,
+    web_sprite,
+)
 
 
 class QWave:
@@ -45,6 +51,9 @@ class QWave:
         self.flame = flame
         self.flame_bonus = float(flame_bonus)
         self.grant_energy = grant_energy
+        self.age = 0.0
+        self.visual_kind = "lina_q_flame" if flame else "lina_q"
+        self.hit_color = (255, 150, 90) if flame else (80, 230, 225)
         self.alive = True
         self.hit = False
         self.rect = pygame.Rect(0, 0, 44, 34)
@@ -53,6 +62,7 @@ class QWave:
     def update(self, dt: float, scene) -> None:
         if not self.alive:
             return
+        self.age += dt
         step = self.speed * dt
         self.x += step * self.direction
         self.traveled += step
@@ -67,32 +77,32 @@ class QWave:
                 self.alive = False
                 return
 
-        if not self.hit and self.target is not None and self.rect.colliderect(self.target.hurtbox()):
-            self.hit = True
-            resolve_projectile_hit(scene, self)
-            self.alive = False
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
 
     def draw(self, surface: pygame.Surface) -> None:
-        size = 64
-        orb = pygame.Surface((size, size), pygame.SRCALPHA)
-        center = size // 2
-        color = (120, 230, 255) if not self.flame else (255, 150, 90)
-        trail_direction = -self.direction
-
-        for index in range(3):
-            offset = (index + 1) * 7
-            alpha = max(0, 120 - index * 30)
-            pygame.draw.circle(
-                orb,
-                (*color, alpha),
-                (center + trail_direction * offset, center),
-                max(2, 8 - index * 2),
-            )
-
-        pygame.draw.circle(orb, (*color, 225), (center, center), 15)
-        pygame.draw.circle(orb, (240, 255, 255, 255), (center - 4, center - 4), 6)
-        pygame.draw.circle(orb, (255, 255, 255, 180), (center, center), 15, 2)
-        surface.blit(orb, (round(self.x - size * 0.5), round(self.y - size * 0.5)))
+        spec = LINA_Q_SPECS["flame" if self.flame else "normal"]
+        frame = strip_frame(spec, self.age, self.direction)
+        if frame is None:
+            return
+        anchor_x = (
+            spec.anchor[0]
+            if self.direction >= 0
+            else spec.frame_size[0] - spec.anchor[0]
+        )
+        surface.blit(
+            frame,
+            (
+                round(self.x - anchor_x),
+                round(self.y + Q_WAVE_DRAW_OFFSET_Y - spec.anchor[1]),
+            ),
+        )
 
 
 class AxeThrow:
@@ -280,15 +290,14 @@ class SwordWave:
                     self.alive = False
                     return
 
-        if (
-            not self.hit
-            and self.target is not None
-            and self.target.hp > 0.0
-            and self.rect.colliderect(self.target.hurtbox())
-        ):
-            self.hit = True
-            resolve_projectile_hit(scene, self)
-            self.alive = False
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
 
     def draw(self, surface: pygame.Surface) -> None:
         size = 104
@@ -360,6 +369,11 @@ class AimedProjectile:
         self.flame_bonus = 0.0
         self.kind = kind
         self.radius = float(radius)
+        self.age = 0.0
+        self.visual_kind = "veno_poison" if kind == "venom_glob" else "veno_web"
+        self.hit_color = (
+            (65, 170, 75) if kind == "venom_glob" else (200, 240, 170)
+        )
         self.status = status
         self.status_duration = float(status_duration)
         self.status_dps_pct = float(status_dps_pct)
@@ -371,6 +385,7 @@ class AimedProjectile:
     def update(self, dt: float, scene) -> None:
         if not self.alive:
             return
+        self.age += dt
         step = self.speed * dt
         self.x += self.ux * step
         self.y += self.uy * step
@@ -395,42 +410,117 @@ class AimedProjectile:
                     self.alive = False
                     return
 
-        if (
-            not self.hit
-            and self.target is not None
-            and self.target.hp > 0.0
-            and self.rect.colliderect(self.target.hurtbox())
-        ):
-            self.hit = True
-            resolve_projectile_hit(scene, self)
-            self.alive = False
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
 
     def draw(self, surface: pygame.Surface) -> None:
+        if self.kind == "web_bolt":
+            self._draw_web(surface)
+        else:
+            self._draw_venom(surface)
+
+    def _draw_venom(self, surface: pygame.Surface) -> None:
+        radius = max(4, round(self.radius))
+        size = radius * 4 + 24
+        image = pygame.Surface((size, size), pygame.SRCALPHA)
+        center = size // 2
+
+        # Droplets trail in the direction opposite to travel.
+        for index in range(4):
+            distance = 10.0 + index * 8.0
+            tx = center - self.ux * distance
+            ty = center - self.uy * distance
+            alpha = max(20, 150 - index * 32)
+            pygame.draw.circle(
+                image, (50, 140, 65, alpha),
+                (round(tx), round(ty)), max(1, 6 - index),
+            )
+
+        pygame.draw.circle(image, (16, 72, 34, 220), (center, center), radius)
+        pygame.draw.circle(image, (42, 138, 60, 225), (center, center), radius - 3)
+        pygame.draw.circle(
+            image, (75, 170, 85, 130), (center, center), radius, 1
+        )
+        pygame.draw.circle(
+            image, (120, 210, 120, 235),
+            (center - 4, center - 5), max(2, radius // 3),
+        )
+        for index in range(4):
+            angle = self.age * 3.0 + index * math.tau / 4.0
+            bx = center + math.cos(angle) * radius * 0.45
+            by = center + math.sin(angle) * radius * 0.35
+            pygame.draw.circle(
+                image, (90, 185, 95, 200),
+                (round(bx), round(by)), max(1, radius // 5),
+            )
+        surface.blit(
+            image, (round(self.x - center), round(self.y - center))
+        )
+
+    def _draw_web(self, surface: pygame.Surface) -> None:
+        pad = 64
+        trail = pygame.Surface((pad * 2, pad * 2), pygame.SRCALPHA)
+        center = pad
+        perp_x, perp_y = -self.uy, self.ux
+        for index in range(2):
+            width = 2 if index == 0 else 1
+            color = (
+                (100, 165, 90, 185) if index == 0 else (235, 255, 215, 225)
+            )
+            points: list[tuple[int, int]] = []
+            for step in range(5):
+                t = step / 4.0
+                distance = 8.0 + 44.0 * t
+                offset = (
+                    math.sin(self.age * 8.0 + t * 3.0 + index * 1.7)
+                    * 2.5 * t
+                )
+                points.append(
+                    (
+                        round(center - self.ux * distance + perp_x * offset),
+                        round(center - self.uy * distance + perp_y * offset),
+                    )
+                )
+            pygame.draw.lines(trail, color, False, points, width)
+        surface.blit(trail, (round(self.x - center), round(self.y - center)))
+
+        sprite = web_sprite(
+            64, self.age * 55.0 * (1 if self.direction > 0 else -1)
+        )
+        if sprite is not None:
+            glow = pygame.Surface((112, 112), pygame.SRCALPHA)
+            pygame.draw.circle(glow, (200, 255, 170, 35), (56, 56), 50)
+            pygame.draw.circle(glow, (235, 255, 210, 55), (56, 56), 30)
+            surface.blit(glow, (round(self.x - 56), round(self.y - 56)))
+            surface.blit(
+                sprite, sprite.get_rect(center=(round(self.x), round(self.y)))
+            )
+            return
+        self._draw_web_fallback(surface)
+
+    def _draw_web_fallback(self, surface: pygame.Surface) -> None:
         radius = max(4, round(self.radius))
         size = radius * 4
         image = pygame.Surface((size, size), pygame.SRCALPHA)
         center = size // 2
-        if self.kind == "web_bolt":
-            pygame.draw.circle(image, (225, 232, 240, 70), (center, center), radius)
-            pygame.draw.circle(image, (235, 242, 250, 220), (center, center), radius, 2)
-            for index in range(6):
-                angle = index * math.pi / 3.0
-                end_x = center + math.cos(angle) * radius
-                end_y = center + math.sin(angle) * radius
-                pygame.draw.line(
-                    image, (210, 220, 235, 190),
-                    (center, center), (end_x, end_y), 1,
-                )
+        pygame.draw.circle(image, (225, 232, 240, 70), (center, center), radius)
+        pygame.draw.circle(image, (235, 242, 250, 220), (center, center), radius, 2)
+        for index in range(6):
+            angle = index * math.pi / 3.0
+            end_x = center + math.cos(angle) * radius
+            end_y = center + math.sin(angle) * radius
             pygame.draw.line(
-                image, (245, 250, 255, 200),
-                (center - radius * 0.7, center), (center + radius * 0.7, center), 1,
+                image, (210, 220, 235, 190),
+                (center, center), (end_x, end_y), 1,
             )
-        else:
-            pygame.draw.circle(image, (50, 150, 60, 210), (center, center), radius)
-            pygame.draw.circle(image, (110, 220, 100, 220), (center, center), radius - 3)
-            pygame.draw.circle(image, (205, 255, 170, 235), (center - 3, center - 4), max(2, radius // 3))
-            pygame.draw.circle(
-                image, (185, 245, 150, 180),
-                (center + radius // 2, center + radius // 3), max(1, radius // 4),
-            )
+        pygame.draw.line(
+            image, (245, 250, 255, 200),
+            (center - radius * 0.7, center), (center + radius * 0.7, center), 1,
+        )
         surface.blit(image, (round(self.x - size * 0.5), round(self.y - size * 0.5)))

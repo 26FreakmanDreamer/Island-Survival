@@ -10,7 +10,9 @@ import pygame
 from game.combat import resolve_hit
 from game.config import FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
+from game.fx import missing_lina_q_assets, missing_veno_web_asset
 from game.particles import knock_up_vortex_intensity
+from game.status import StatusSet
 from game.scene import DEBUG_KEYS, ArenaScene
 from game.slash_fx import missing_frames as missing_slash_fx_frames
 
@@ -47,6 +49,9 @@ def _draw_pause(surface: pygame.Surface, big: pygame.font.Font, text: pygame.fon
 
 
 def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
+    # Isolate the existing single-enemy checks; the group spawn is verified
+    # separately at the end of the Veno phase.
+    scene.enemy_count_override = 1
     startup_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
     )
@@ -139,6 +144,52 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     for _ in range(45):
         scene.tick(FIXED_DT)
     q_damage_ok = abs(scene.enemy.hp - (scene.enemy.max_hp - 20.0)) < 0.01
+
+    # Q visual dispatch: sprite colors and cast/impact effects.
+    scene.reset()
+    scene.enemy.x = scene.player.x + 200.0
+    scene.player.facing = 1
+    scene.player.start_attack("q", scene, scene.enemy)
+    q_cast_fx_ok = False
+    q_impact_fx_ok = False
+    q_normal_color_ok = False
+    for _ in range(90):
+        scene.tick(FIXED_DT)
+        if scene.projectiles:
+            projectile = scene.projectiles[0]
+            q_normal_color_ok = (
+                not projectile.flame
+                and projectile.visual_kind == "lina_q"
+                and projectile.hit_color == (80, 230, 225)
+            )
+        if any(effect.kind == "lina_q_cast" for effect in scene.fx_effects):
+            q_cast_fx_ok = True
+        if any(effect.kind == "lina_q_impact" for effect in scene.fx_effects):
+            q_impact_fx_ok = True
+            break
+
+    scene.reset()
+    scene.player.flame_time = 5.0
+    scene.player.anim.set_variant("flame")
+    scene.enemy.x = scene.player.x + 200.0
+    scene.player.facing = 1
+    scene.player.start_attack("q", scene, scene.enemy)
+    q_flame_color_ok = False
+    q_flame_cast_ok = False
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+        if scene.projectiles:
+            projectile = scene.projectiles[0]
+            q_flame_color_ok = (
+                projectile.flame
+                and projectile.visual_kind == "lina_q_flame"
+                and projectile.hit_color == (255, 150, 90)
+            )
+            q_flame_cast_ok = any(
+                effect.kind == "lina_q_flame_cast"
+                for effect in scene.fx_effects
+            )
+            break
 
     scene.reset()
     scene.player.energy = scene.player.max_energy
@@ -674,7 +725,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
             lmb_fx_seen = True
     nyra_wave_lmb_ok = (
         abs(dummy.hp - 980.0) < 0.01
-        and nyra.marks == 1
+        and dummy.marks == 1
         and not lmb_fx_seen
     )
 
@@ -689,11 +740,11 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         for _ in range(30):
             scene.tick(FIXED_DT)
             if nyra.mark_detonations > 0 and not wave_burst_seen:
-                wave_burst_seen = nyra.mark_burst_time > 0.0
+                wave_burst_seen = dummy.mark_burst_time > 0.0
     nyra_wave_burst_ok = (
         wave_burst_seen
         and nyra.mark_detonations == 1
-        and nyra.marks == 1
+        and dummy.marks == 1
     )
     nyra_wave_burst_damage_ok = abs(dummy.hp - 784.0) < 0.01
 
@@ -705,7 +756,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.input.buffer.press("kick")
     for _ in range(40):
         scene.tick(FIXED_DT)
-    nyra_thrust_ok = abs(dummy.hp - 976.0) < 0.01 and nyra.marks == 1
+    nyra_thrust_ok = abs(dummy.hp - 976.0) < 0.01 and dummy.marks == 1
 
     scene.reset()
     nyra = scene.player
@@ -723,7 +774,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
             q_slash_no_projectile = False
     nyra_q_slash_ok = (
         abs(dummy.hp - 970.0) < 0.01
-        and nyra.marks == 1
+        and dummy.marks == 1
         and q_slash_fx_seen
         and q_slash_no_projectile
     )
@@ -752,7 +803,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     nyra_q_slash_range_ok = (
         q_slash_out_of_thrust_ok
         and abs(dummy.hp - 970.0) < 0.01
-        and nyra.marks == 1
+        and dummy.marks == 1
     )
 
     scene.reset()
@@ -802,7 +853,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.input.buffer.press("e")
     for _ in range(50):
         scene.tick(FIXED_DT)
-    nyra_dash_ok = abs(dummy.hp - 970.0) < 0.01 and nyra.marks == 0
+    nyra_dash_ok = abs(dummy.hp - 970.0) < 0.01 and dummy.marks == 0
     nyra_dash_cd_ok = nyra.e_cd > 13.0
 
     scene.reset()
@@ -861,10 +912,18 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
 
     scene.reset()
     nyra = scene.player
-    nyra.marks = 2
+    dummy = scene.enemy
+    dummy.marks = 2
+    dummy.mark_burst_time = 0.3
+    dummy.mark_burst_damage = 12.0
     scene.reset()
     nyra = scene.player
-    nyra_marks_reset_ok = nyra.marks == 0
+    dummy = scene.enemy
+    nyra_marks_reset_ok = (
+        dummy.marks == 0
+        and dummy.mark_burst_time == 0.0
+        and dummy.mark_burst_damage == 0.0
+    )
 
     scene.reset()
     nyra = scene.player
@@ -875,7 +934,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.input.buffer.press("punch")
     for _ in range(30):
         scene.tick(FIXED_DT)
-    nyra_death_clear_ok = dummy.hp <= 0.0 and nyra.marks == 0
+    nyra_death_clear_ok = dummy.hp <= 0.0 and dummy.marks == 0
 
     scene.reset()
     nyra = scene.player
@@ -890,11 +949,32 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     if scene.lock_on:
         scene.toggle_lock_on()
 
+    # Marks are per target: one Veno's stack never fills another's.
+    scene.enemy_count_override = None
+    scene.set_enemy("veno")
+    scene.reset()
+    nyra = scene.player
+    venos = list(scene.enemies)
+    for target in venos:
+        target.ai_enabled = False
+    nyra.on_hit_success({"marks_on_hit": 1.0}, venos[0], 0.0)
+    nyra.on_hit_success({"marks_on_hit": 1.0}, venos[1], 0.0)
+    nyra.on_hit_success({"marks_on_hit": 1.0}, venos[1], 0.0)
+    nyra_marks_per_target_ok = (
+        len(venos) == 3
+        and venos[0].marks == 1
+        and venos[1].marks == 2
+        and venos[2].marks == 0
+    )
+    scene.enemy_count_override = 1
+    scene._rebuild_fighters()
+
     scene.set_enemy("veno")
     scene.reset()
     nyra = scene.player
     veno = scene.enemy
     veno.ai_enabled = False
+    scene.stage.blocks_enabled = False
     nyra.x = 600.0
     nyra.y = scene.stage.ground_y
     nyra.on_ground = True
@@ -905,9 +985,12 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.input.buffer.press("e")
     for _ in range(50):
         scene.tick(FIXED_DT)
+    min_dash_distance = nyra.stage_half_width + veno.stage_half_width
     nyra_dash_pass_ok = (
-        nyra.x > veno.x and abs(veno.x - nyra.x) >= 119.5
+        nyra.x > veno.x
+        and abs(veno.x - nyra.x) >= min_dash_distance - 0.5
     )
+    scene.stage.blocks_enabled = True
     nyra_missing = len(nyra.anim.missing_paths())
     nyra_slash_fx_missing = len(missing_slash_fx_frames())
 
@@ -935,25 +1018,42 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     player.on_ground = True
     veno.facing = -1
     veno.force_attack(scene, player, "veno_bite")
+    veno_bite_hit_fx_ok = False
     for _ in range(40):
         scene.tick(FIXED_DT)
+        if any(effect.kind == "veno_bite_hit" for effect in scene.fx_effects):
+            veno_bite_hit_fx_ok = True
     veno_bite_ok = abs(player.hp - 85.0) < 0.01
-    veno_bite_cd_ok = veno.skill_remaining("veno_bite") > 1.0
+    veno_bite_cd_ok = (
+        abs(veno.bite_cd_max - 1.0) < 1e-6
+        and veno.skill_remaining("veno_bite") > 0.2
+    )
 
     scene.reset()
     veno = scene.enemy
     player = scene.player
     veno.ai_enabled = False
+    # The half-size Veno spits from a lower mouth; keep the block lane clear
+    # for the damage/status test.
+    scene.stage.blocks_enabled = False
     player.x = veno.x - 300.0
     player.y = scene.stage.ground_y
     player.on_ground = True
     veno.facing = -1
     veno.force_attack(scene, player, "veno_poison")
     poison_hit = False
+    veno_poison_cast_ok = False
+    veno_poison_impact_ok = False
     for _ in range(90):
         scene.tick(FIXED_DT)
+        if any(effect.kind == "veno_poison_cast" for effect in scene.fx_effects):
+            veno_poison_cast_ok = True
         if player.hp < player.max_hp:
             poison_hit = True
+            veno_poison_impact_ok = any(
+                effect.kind == "veno_poison_impact"
+                for effect in scene.fx_effects
+            )
             break
     poison = player.statuses.poisons[0] if player.statuses.poisons else None
     veno_poison_ok = (
@@ -979,20 +1079,98 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
             break
     veno_poison_stack_ok = stack_seen and len(player.statuses.poisons) == 1
 
+    # Poison settles once per 0.5s (not on the old 0.2s dot tick).
+    class _DotTarget:
+        def __init__(self) -> None:
+            self.hp = 100.0
+            self.invincible = False
+
+        def apply_dot(self, amount: float) -> None:
+            self.hp -= amount
+
+    dot_target = _DotTarget()
+    dot_statuses = StatusSet()
+    dot_statuses.add("poison", 3.0, source="smoke", dps=10.0)
+    for _ in range(30):
+        dot_statuses.update(FIXED_DT, dot_target)
+    first_tick_ok = abs(dot_target.hp - 95.0) < 1e-6
+    for _ in range(30):
+        dot_statuses.update(FIXED_DT, dot_target)
+    second_tick_ok = abs(dot_target.hp - 90.0) < 1e-6
+    poison_interval_ok = first_tick_ok and second_tick_ok
+
+    # instruction.docx poison stacking: same source extends (2s + 3s = 5s),
+    # different sources remain independent.
+    stack_target = _DotTarget()
+    stack_statuses = StatusSet()
+    stack_statuses.add("poison", 3.0, source="A", dps=1.0)
+    for _ in range(60):
+        stack_statuses.update(FIXED_DT, stack_target)
+    stack_statuses.add("poison", 3.0, source="A", dps=1.0)
+    same_source_ok = (
+        len(stack_statuses.poisons) == 1
+        and abs(stack_statuses.poisons[0].remaining - 5.0) < 0.06
+    )
+    stack_statuses.add("poison", 3.0, source="B", dps=2.0)
+    cross_source_ok = (
+        len(stack_statuses.poisons) == 2
+        and any(abs(p.remaining - 5.0) < 0.06 for p in stack_statuses.poisons)
+        and any(abs(p.remaining - 3.0) < 0.06 for p in stack_statuses.poisons)
+    )
+    poison_stack_rules_ok = same_source_ok and cross_source_ok
+
+    # Whole-body poison tint alternates green/purple every 0.18s.
+    scene.reset()
+    smoke_player = scene.player
+    smoke_player.statuses.add("poison", 3.0, source="smoke", dps=1.0)
+    scene.sim_time = 0.0
+    green_tint = scene._poison_tint(smoke_player)
+    scene.sim_time = 0.18
+    purple_tint = scene._poison_tint(smoke_player)
+    poison_tint_ok = (
+        green_tint == (70, 255, 110)
+        and purple_tint == (220, 100, 255)
+    )
+    smoke_player.statuses.clear()
+    scene.sim_time = 0.0
+
     scene.reset()
     veno = scene.enemy
     player = scene.player
     veno.ai_enabled = False
+    scene.stage.blocks_enabled = False
     player.x = veno.x - 300.0
     player.y = scene.stage.ground_y
     player.on_ground = True
     veno.facing = -1
     veno.force_attack(scene, player, "veno_web")
+    veno_web_cast_ok = False
+    veno_web_impact_ok = False
+    veno_web_radius_ok = False
     for _ in range(90):
         scene.tick(FIXED_DT)
+        if scene.projectiles:
+            web = scene.projectiles[0]
+            veno_web_radius_ok = (
+                web.kind == "web_bolt" and abs(web.radius - 30.0) < 1e-6
+            )
+        if any(effect.kind == "veno_web_cast" for effect in scene.fx_effects):
+            veno_web_cast_ok = True
         if player.hp < player.max_hp:
+            veno_web_impact_ok = any(
+                effect.kind == "veno_web_impact"
+                for effect in scene.fx_effects
+            )
             break
     veno_web_ok = abs(player.hp - 90.0) < 0.01 and player.statuses.has("stun")
+
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+    fx_cleanup_ok = not scene.fx_effects
+    scene.stage.blocks_enabled = True
+
+    lina_q_fx_missing = len(missing_lina_q_assets())
+    veno_vfx_missing = len(missing_veno_web_asset())
 
     scene.reset()
     veno = scene.enemy
@@ -1024,9 +1202,9 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     veno.y = scene.stage.ground_y - 220.0
     veno.vy = 0.0
     veno.hover_time = 0.6
-    veno.poison_cd = 5.0
-    veno.web_cd = 5.0
-    veno.bite_cd = 5.0
+    veno.poison_cd = veno.poison_cd_max
+    veno.web_cd = veno.web_cd_max
+    veno.bite_cd = veno.bite_cd_max
     player.x = veno.x - 400.0
     landed = False
     for _ in range(120):
@@ -1061,11 +1239,46 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     veno.hp = 20.0
     player.x = veno.x - 80.0
     player.facing = 1
-    player.start_attack("punch_r", scene, veno)
+    player.start_attack("kick_r", scene, veno)
     for _ in range(30):
         scene.tick(FIXED_DT)
     veno_win_ok = veno.hp <= 0.0 and scene.match_over == "WIN"
     veno_missing = len(veno.anim.missing_paths())
+
+    # Veno group spawn: the roster count is 3 and the group mixes ground/hover.
+    scene.enemy_count_override = None
+    scene.set_enemy("warrior")
+    scene.set_enemy("veno")
+    scene.reset()
+    group_spawn_ok = (
+        len(scene.enemies) == 3
+        and any(not enemy.on_ground for enemy in scene.enemies)
+        and any(enemy.on_ground for enemy in scene.enemies)
+    )
+    # Each Veno keeps its own skill cooldowns (bite 1s, poison 5s, web 8s).
+    venos = list(scene.enemies)
+    venos[0].force_attack(scene, scene.player, "veno_bite")
+    veno_group_cooldowns_ok = (
+        venos[0].skill_remaining("veno_bite") > 0.5
+        and venos[1].skill_remaining("veno_bite") == 0.0
+        and venos[2].skill_remaining("veno_bite") == 0.0
+        and abs(venos[0].bite_cd_max - 1.0) < 1e-6
+        and abs(venos[1].bite_cd_max - 1.0) < 1e-6
+        and abs(venos[2].bite_cd_max - 1.0) < 1e-6
+        and abs(venos[0].poison_cd_max - 5.0) < 1e-6
+        and abs(venos[1].poison_cd_max - 5.0) < 1e-6
+        and abs(venos[2].poison_cd_max - 5.0) < 1e-6
+        and abs(venos[0].web_cd_max - 8.0) < 1e-6
+        and abs(venos[1].web_cd_max - 8.0) < 1e-6
+        and abs(venos[2].web_cd_max - 8.0) < 1e-6
+    )
+    for enemy in scene.enemies:
+        enemy.hp = 0.0
+    scene.tick(FIXED_DT)
+    veno_group_ok = group_spawn_ok and scene.match_over == "WIN"
+    scene.enemy_count_override = 1
+    scene.set_enemy("warrior")
+    scene.reset()
 
     scene.set_character("lina")
     scene.set_enemy("warrior")
@@ -1200,6 +1413,11 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and veno_switch_ai_toggle_ok
     )
     warrior_missing = len(scene.enemy.anim.missing_paths())
+    # Render the Nyra mark layer and panel with a populated target stack.
+    scene.set_character("nyra")
+    scene.enemy.marks = 2
+    scene.enemy.mark_burst_time = 0.2
+    scene.enemy.mark_burst_damage = 40.0
     scene.show_overlay = True
     scene.show_panel = True
     scene.draw(screen)
@@ -1218,6 +1436,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"block_lunge_ok={block_lunge_ok} q_block_ok={q_block_ok} "
         f"lock_on_ok={lock_on_ok} lock_off_ok={lock_off_ok} "
         f"flame_ok={flame_ok} missing_frames={missing_frames} "
+        f"q_cast_fx_ok={q_cast_fx_ok} q_impact_fx_ok={q_impact_fx_ok} "
+        f"q_normal_color_ok={q_normal_color_ok} "
+        f"q_flame_color_ok={q_flame_color_ok} q_flame_cast_ok={q_flame_cast_ok} "
+        f"lina_q_fx_missing={lina_q_fx_missing} "
         f"nyra_present={nyra_present} nyra_wave_lmb_ok={nyra_wave_lmb_ok} "
         f"nyra_wave_burst_ok={nyra_wave_burst_ok} nyra_wave_burst_damage_ok={nyra_wave_burst_damage_ok} "
         f"nyra_thrust_ok={nyra_thrust_ok} nyra_q_slash_ok={nyra_q_slash_ok} "
@@ -1226,15 +1448,29 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"nyra_dash_distance_ok={nyra_dash_distance_ok} "
         f"nyra_dash_ok={nyra_dash_ok} "
         f"nyra_dash_cd_ok={nyra_dash_cd_ok} nyra_marks_reset_ok={nyra_marks_reset_ok} "
+        f"nyra_marks_per_target_ok={nyra_marks_per_target_ok} "
         f"nyra_death_clear_ok={nyra_death_clear_ok} nyra_lock_ok={nyra_lock_ok} "
         f"nyra_dash_pass_ok={nyra_dash_pass_ok} "
         f"nyra_missing_frames={nyra_missing} "
         f"nyra_slash_fx_missing={nyra_slash_fx_missing} "
         f"veno_present={veno_present} veno_bite_ok={veno_bite_ok} "
         f"veno_bite_cd_ok={veno_bite_cd_ok} veno_poison_ok={veno_poison_ok} "
-        f"veno_poison_stack_ok={veno_poison_stack_ok} veno_web_ok={veno_web_ok} "
+        f"veno_poison_stack_ok={veno_poison_stack_ok} "
+        f"poison_interval_ok={poison_interval_ok} "
+        f"poison_tint_ok={poison_tint_ok} "
+        f"poison_stack_rules_ok={poison_stack_rules_ok} "
+        f"veno_web_ok={veno_web_ok} "
+        f"veno_web_radius_ok={veno_web_radius_ok} "
+        f"veno_bite_hit_fx_ok={veno_bite_hit_fx_ok} "
+        f"veno_poison_cast_ok={veno_poison_cast_ok} "
+        f"veno_poison_impact_ok={veno_poison_impact_ok} "
+        f"veno_web_cast_ok={veno_web_cast_ok} "
+        f"veno_web_impact_ok={veno_web_impact_ok} "
+        f"veno_vfx_missing={veno_vfx_missing} fx_cleanup_ok={fx_cleanup_ok} "
         f"veno_ai_ascent_ok={veno_ai_ascent_ok} veno_ai_descend_ok={veno_ai_descend_ok} "
         f"veno_slots_ok={veno_slots_ok} veno_win_ok={veno_win_ok} "
+        f"veno_group_ok={veno_group_ok} "
+        f"veno_group_cooldowns_ok={veno_group_cooldowns_ok} "
         f"veno_missing_frames={veno_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
@@ -1271,6 +1507,12 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and q_block_ok
         and flame_ok
         and missing_frames == 0
+        and q_cast_fx_ok
+        and q_impact_fx_ok
+        and q_normal_color_ok
+        and q_flame_color_ok
+        and q_flame_cast_ok
+        and lina_q_fx_missing == 0
         and nyra_present
         and nyra_wave_lmb_ok
         and nyra_wave_burst_ok
@@ -1285,6 +1527,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and nyra_dash_ok
         and nyra_dash_cd_ok
         and nyra_marks_reset_ok
+        and nyra_marks_per_target_ok
         and nyra_death_clear_ok
         and nyra_lock_ok
         and nyra_dash_pass_ok
@@ -1295,11 +1538,24 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and veno_bite_cd_ok
         and veno_poison_ok
         and veno_poison_stack_ok
+        and poison_interval_ok
+        and poison_tint_ok
+        and poison_stack_rules_ok
         and veno_web_ok
+        and veno_web_radius_ok
+        and veno_bite_hit_fx_ok
+        and veno_poison_cast_ok
+        and veno_poison_impact_ok
+        and veno_web_cast_ok
+        and veno_web_impact_ok
+        and veno_vfx_missing == 0
+        and fx_cleanup_ok
         and veno_ai_ascent_ok
         and veno_ai_descend_ok
         and veno_slots_ok
         and veno_win_ok
+        and veno_group_ok
+        and veno_group_cooldowns_ok
         and veno_missing == 0
         and warrior_present
         and warrior_hurt_ok

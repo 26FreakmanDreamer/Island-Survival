@@ -5,8 +5,8 @@
   "warrior_pivot": [192, 372],
   "nyra_frame_size": [384, 384],
   "nyra_pivot": [192, 372],
-  "veno_frame_size": [320, 320],
-  "veno_pivot": [160, 308],
+  "veno_frame_size": [160, 160],
+  "veno_pivot": [80, 154],
   "clips": {
     "idle": {
       "loop": true,

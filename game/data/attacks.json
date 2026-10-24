@@ -191,7 +191,7 @@
     "hitstun": 0.25,
     "hitstop": 0.05,
     "events": [
-      {"t": 0.18, "until": 0.30, "type": "hitbox", "box": [24, -120, 110, 90], "knockback": 120}
+      {"t": 0.18, "until": 0.30, "type": "hitbox", "box": [12, -60, 55, 45], "knockback": 120, "hit_fx": "veno_bite_hit"}
     ]
   },
   "veno_poison": {
@@ -205,7 +205,7 @@
     "hitstop": 0.04,
     "events": [
       {"t": 0.25, "type": "projectile", "id": "veno_poison", "projectile": "venom_glob",
-       "origin_height": 100, "speed": 520, "range": 800, "knockback": 40,
+       "origin_height": 50, "speed": 520, "range": 800, "knockback": 40,
        "status": "poison", "status_duration": 3.0, "status_dps_pct": 0.03}
     ]
   },
@@ -220,7 +220,7 @@
     "hitstop": 0.04,
     "events": [
       {"t": 0.30, "type": "projectile", "id": "veno_web", "projectile": "web_bolt",
-       "origin_height": 100, "speed": 480, "range": 800, "knockback": 60,
+       "origin_height": 50, "speed": 480, "range": 800, "knockback": 60,
        "status": "stun", "status_duration": 1.0}
     ]
   }

@@ -166,8 +166,15 @@ class AnimationPlayer:
         x: float,
         y: float,
         facing: int = 1,
+        tint: tuple[int, int, int] | None = None,
     ) -> None:
         surface = self.surface(facing=facing)
+        image = surface
+        if tint is not None:
+            # Multiply the whole frame so the body flashes without covering
+            # the background (unlike a filled hurtbox rectangle).
+            image = surface.copy()
+            image.fill((*tint, 255), special_flags=pygame.BLEND_RGBA_MULT)
         # The flame sprites were generated with slightly different horizontal
         # framing per frame. Apply the baked alignment offset so the body stays
         # at the same world position as the normal form; mirror it when flipped.
@@ -178,5 +185,5 @@ class AnimationPlayer:
                 offset = -offset
         pivot_x, pivot_y = self.pivot
         if facing < 0:
-            pivot_x = surface.get_width() - pivot_x
-        target.blit(surface, (round(x - pivot_x + offset), round(y - pivot_y)))
+            pivot_x = image.get_width() - pivot_x
+        target.blit(image, (round(x - pivot_x + offset), round(y - pivot_y)))

@@ -1,0 +1,60 @@
+{
+  "tool": "generate_lina_q_fx.py",
+  "frame_count": 1,
+  "frame_size": [
+    96,
+    96
+  ],
+  "anchor": [
+    64,
+    48
+  ],
+  "orb_diameters": {
+    "normal": 26,
+    "flame": 32
+  },
+  "variants": [
+    {
+      "source": "assets\\generated\\raw\\lina_q_fx_teal_v1\\2026-10-24\\image_to_image\\lina_q_teal_ball_v1_1_20261024_155613_269_eb44ecdf.png",
+      "variant": "normal",
+      "frames_dir": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\lina_q_fx_v1\\normal",
+      "frames": [
+        "q_wave_00.png"
+      ],
+      "durations": [
+        0.06
+      ],
+      "frame_size": [
+        96,
+        96
+      ],
+      "anchor": [
+        64,
+        48
+      ],
+      "orb_diameter": 26,
+      "trail": true
+    },
+    {
+      "source": "assets\\generated\\raw\\lina_q_fx_pixel_v1\\2026-10-24\\text_to_image\\lina_q_orb_flame_pixel_v1_2_20261024_141943_520_1e9e100e.png",
+      "variant": "flame",
+      "frames_dir": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\lina_q_fx_v1\\flame",
+      "frames": [
+        "q_wave_00.png"
+      ],
+      "durations": [
+        0.06
+      ],
+      "frame_size": [
+        96,
+        96
+      ],
+      "anchor": [
+        64,
+        48
+      ],
+      "orb_diameter": 32,
+      "trail": true
+    }
+  ]
+}

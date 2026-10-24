@@ -10,6 +10,15 @@ from .combat import attack_damage
 from .config import FIXED_DT
 from .debug import DebugOverlay, DebugPanel
 from .fighter import Fighter, FighterState
+from .fx import (
+    BiteArcFx,
+    FxEffect,
+    PoisonSplashFx,
+    Q_WAVE_DRAW_OFFSET_Y,
+    RingBurstFx,
+    SilkCastFx,
+    WebImpactFx,
+)
 from .hud import HUD
 from .input import InputState
 from .particles import ParticleSystem, draw_knock_up_vortex
@@ -67,6 +76,7 @@ class ArenaScene:
         self.debug_hitboxes: list[pygame.Rect] = []
         self.projectiles: list = []
         self.slash_effects: list[SlashEffect] = []
+        self.fx_effects: list[FxEffect] = []
         self.status_demo_index = 0
         self.time_scales = [0.25, 0.5, 1.0, 2.0]
         self.time_scale_index = 2
@@ -85,6 +95,10 @@ class ArenaScene:
         self.stage: Stage
         self.player: Fighter
         self.enemy: Fighter
+        self.enemies: list[Fighter] = []
+        # Smoke tests force a single Veno for isolated checks; the game uses
+        # the roster's count (3 for Veno).
+        self.enemy_count_override: int | None = None
         self.particles = ParticleSystem()
         self.rebuild()
 
@@ -104,13 +118,75 @@ class ArenaScene:
         self.character_spec = characters[self.character_id]
         self.enemy_spec = enemies[self.enemy_id]
 
+    def _enemy_count(self) -> int:
+        if self.enemy_count_override is not None:
+            return max(1, int(self.enemy_count_override))
+        return max(1, int(self.enemy_spec.get("count", 1)))
+
+    def _place_enemies(self) -> None:
+        """Apply per-index spawn offsets and ground/hover modes."""
+        if not self.enemies:
+            return
+        spawn_key = str(self.enemy_spec.get("spawn", "veno_spawn"))
+        base_x, base_y = self.stage.spawn(spawn_key)
+        if self.enemy_count_override is not None:
+            # Isolated smoke checks use the base spawn and stay on the ground.
+            offsets: list = []
+            modes: list = []
+        else:
+            offsets = list(self.enemy_spec.get("spawn_offsets", []))
+            modes = list(self.enemy_spec.get("spawn_modes", []))
+        low, high = self.stage.walls
+        for index, enemy in enumerate(self.enemies):
+            offset = float(offsets[index]) if index < len(offsets) else 0.0
+            x = base_x + offset
+            enemy.x = max(
+                low + enemy.stage_half_width,
+                min(high - enemy.stage_half_width, x),
+            )
+            enemy.y = base_y
+            enemy.vx = 0.0
+            enemy.vy = 0.0
+            enemy.on_ground = True
+            if hasattr(enemy, "mode"):
+                enemy.mode = "ground"
+            enemy.state = FighterState.IDLE
+            if index < len(modes) and modes[index] == "hover" and hasattr(
+                enemy, "hover_base"
+            ):
+                enemy.mode = "hover"
+                enemy.on_ground = False
+                enemy.y = self.stage.ground_y - float(enemy.hover_base)
+                enemy.vy = 0.0
+                enemy.hover_time = 0.0
+                enemy.hover_phase = 0.0
+                enemy.state = FighterState.AIR
+                if enemy.anim is not None:
+                    enemy.anim.set_clip("hover")
+            elif enemy.anim is not None:
+                enemy.anim.set_clip("idle")
+
+    def _pick_primary(self) -> None:
+        living = [enemy for enemy in self.enemies if enemy.hp > 0.0]
+        if living:
+            self.enemy = min(living, key=lambda enemy: abs(enemy.x - self.player.x))
+        elif self.enemies:
+            self.enemy = self.enemies[0]
+
     def _rebuild_fighters(self) -> None:
         blocks_enabled = self.stage.blocks_enabled
         self.player = create_fighter(self.character_spec, self.store, self.stage)
-        self.enemy = create_fighter(self.enemy_spec, self.store, self.stage)
+        self.enemies = [
+            create_fighter(self.enemy_spec, self.store, self.stage)
+            for _ in range(self._enemy_count())
+        ]
+        self.enemy = self.enemies[0]
+        self._place_enemies()
+        self._pick_primary()
         self.stage.blocks_enabled = blocks_enabled
         self.projectiles = []
         self.slash_effects = []
+        self.fx_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -124,8 +200,9 @@ class ArenaScene:
         self._force_ai_off()
 
     def _force_ai_off(self) -> None:
-        if hasattr(self.enemy, "ai_enabled"):
-            self.enemy.ai_enabled = False
+        for enemy in self.enemies:
+            if hasattr(enemy, "ai_enabled"):
+                enemy.ai_enabled = False
 
     def rebuild(self) -> None:
         self.stage = Stage(self.store.debug["stage"])
@@ -194,10 +271,21 @@ class ArenaScene:
 
     def opponent_of(self, fighter):
         if fighter is self.player:
-            return self.enemy
-        if fighter is self.enemy:
+            living = [enemy for enemy in self.enemies if enemy.hp > 0.0]
+            if not living:
+                return None
+            return min(living, key=lambda enemy: abs(enemy.x - fighter.x))
+        if fighter in self.enemies:
             return self.player
         return None
+
+    def targets_for(self, attacker) -> list:
+        """Living targets for a melee hitbox or projectile."""
+        if attacker is self.player:
+            return [enemy for enemy in self.enemies if enemy.hp > 0.0]
+        if attacker in self.enemies:
+            return [self.player] if self.player.hp > 0.0 else []
+        return []
 
     def reload_data(self) -> bool:
         if not self.store.reload():
@@ -212,10 +300,14 @@ class ArenaScene:
 
     def reset(self) -> None:
         self.player.reset()
-        self.enemy.reset()
+        for enemy in self.enemies:
+            enemy.reset()
+        self._place_enemies()
+        self._pick_primary()
         self._force_ai_off()
         self.projectiles = []
         self.slash_effects = []
+        self.fx_effects = []
         self.particles = ParticleSystem()
         self.debug_hitboxes = []
         self.hitstop = 0.0
@@ -237,9 +329,13 @@ class ArenaScene:
         self.debug_hitboxes.clear()
         self.input.update(dt)
         self._update_slash_effects(dt)
+        self._update_fx_effects(dt)
+        self._pick_primary()
         self.player.update(dt, self.input, self.enemy, self)
-        self.enemy.update(dt, self)
+        for enemy in self.enemies:
+            enemy.update(dt, self)
         self._separate_fighters(dt)
+        self._separate_enemies(dt)
         self._check_match_end()
 
         if self.hitstop > 0.0:
@@ -253,13 +349,15 @@ class ArenaScene:
 
         if getattr(self.player, "flame_time", 0.0) > 0.0:
             self.particles.emit_flame(self.player.x, self.player.y)
-        if self.enemy.statuses.has("burn"):
-            self.particles.emit_flame(self.enemy.x, self.enemy.y - 90.0)
+        for enemy in self.enemies:
+            if enemy.hp > 0.0 and enemy.statuses.has("burn"):
+                self.particles.emit_flame(enemy.x, enemy.y - 90.0)
         if self.tick_count % 2 == 0:
             if self.player.statuses.has("poison") and self.player.hp > 0.0:
                 self.particles.emit_poison(self.player.x, self.player.y)
-            if self.enemy.statuses.has("poison") and self.enemy.hp > 0.0:
-                self.particles.emit_poison(self.enemy.x, self.enemy.y)
+            for enemy in self.enemies:
+                if enemy.statuses.has("poison") and enemy.hp > 0.0:
+                    self.particles.emit_poison(enemy.x, enemy.y)
 
     def _can_stand(self, fighter, x: float) -> bool:
         half = fighter.stage_half_width
@@ -280,46 +378,72 @@ class ArenaScene:
         return True
 
     def _separate_fighters(self, dt: float = FIXED_DT) -> None:
-        """Keep the enemy's center from crossing the player's center."""
-        if not self.enemy_spec.get("separates", False):
-            return
+        """Keep each enemy's center from crossing the player's center."""
         runtime = getattr(self.player, "attack_runtime", None)
         if runtime is not None and runtime.data.get("pass_through_enemy"):
             return
-        if self.player.hp <= 0.0 or self.enemy.hp <= 0.0:
+        if self.player.hp <= 0.0:
             return
-        player_body = self.stage.body_rect(self.player)
-        enemy_body = self.stage.body_rect(self.enemy)
-        if not player_body.colliderect(enemy_body):
-            return
-
-        min_dist = self.player.stage_half_width + self.enemy.stage_half_width
-        dx = self.enemy.x - self.player.x
-        if abs(dx) >= min_dist:
-            return
-        if abs(dx) < 0.01:
-            side = self.enemy.facing
-        else:
-            side = 1 if dx > 0.0 else -1
-        # The enemy yields first, but only on his current side. Flipping to
-        # the other side of the player would teleport him across the block
-        # that blocked the first target. If his side is blocked, push the
+        # The enemy yields first, but only on its current side. Flipping to
+        # the other side of the player would teleport it across the block
+        # that blocked the first target. If its side is blocked, push the
         # player away instead. Both pushes are capped so a deep overlap
         # slides apart over a few ticks instead of teleporting.
         max_step = float(
             self.store.stats["combat"].get("separation_speed", 600.0)
         ) * dt
-        target_x = self.player.x + side * min_dist
-        if self._can_stand(self.enemy, self.enemy.x) and self._can_stand(
-            self.enemy, target_x
-        ):
-            self._step_x(self.enemy, target_x, max_step)
-        if abs(self.enemy.x - self.player.x) < min_dist:
-            player_target = self.enemy.x - side * min_dist
-            if self._can_stand(self.player, self.player.x) and self._can_stand(
-                self.player, player_target
+        for enemy in self.enemies:
+            if enemy.hp <= 0.0 or not enemy.entry.get("separates", False):
+                continue
+            player_body = self.stage.body_rect(self.player)
+            enemy_body = self.stage.body_rect(enemy)
+            if not player_body.colliderect(enemy_body):
+                continue
+
+            min_dist = self.player.stage_half_width + enemy.stage_half_width
+            dx = enemy.x - self.player.x
+            if abs(dx) >= min_dist:
+                continue
+            if abs(dx) < 0.01:
+                side = enemy.facing
+            else:
+                side = 1 if dx > 0.0 else -1
+            target_x = self.player.x + side * min_dist
+            if self._can_stand(enemy, enemy.x) and self._can_stand(
+                enemy, target_x
             ):
-                self._step_x(self.player, player_target, max_step)
+                self._step_x(enemy, target_x, max_step)
+            if abs(enemy.x - self.player.x) < min_dist:
+                player_target = enemy.x - side * min_dist
+                if self._can_stand(self.player, self.player.x) and self._can_stand(
+                    self.player, player_target
+                ):
+                    self._step_x(self.player, player_target, max_step)
+
+    def _separate_enemies(self, dt: float = FIXED_DT) -> None:
+        """Keep same-altitude enemies from stacking on the same x."""
+        max_step = float(
+            self.store.stats["combat"].get("separation_speed", 600.0)
+        ) * dt
+        for index, first in enumerate(self.enemies):
+            if first.hp <= 0.0:
+                continue
+            first_body = self.stage.body_rect(first)
+            for second in self.enemies[index + 1:]:
+                if second.hp <= 0.0:
+                    continue
+                if not first_body.colliderect(self.stage.body_rect(second)):
+                    continue
+                min_dist = first.stage_half_width + second.stage_half_width
+                dx = second.x - first.x
+                if abs(dx) >= min_dist:
+                    continue
+                side = 1 if dx >= 0.0 else -1
+                target_x = first.x + side * min_dist
+                if self._can_stand(second, second.x) and self._can_stand(
+                    second, target_x
+                ):
+                    self._step_x(second, target_x, max_step)
 
     def _step_x(self, fighter, target_x: float, max_step: float) -> None:
         """Move toward a target without crossing into a block in one tick."""
@@ -357,6 +481,139 @@ class ArenaScene:
             effect.update(dt)
         self.slash_effects = [effect for effect in self.slash_effects if effect.alive]
 
+    def _update_fx_effects(self, dt: float) -> None:
+        for effect in self.fx_effects:
+            effect.update(dt)
+        self.fx_effects = [effect for effect in self.fx_effects if effect.alive]
+        if len(self.fx_effects) > 64:
+            self.fx_effects = self.fx_effects[-64:]
+
+    def spawn_projectile_cast_fx(self, projectile) -> None:
+        """Emit the short muzzle/hand effect when a projectile is created."""
+        visual_kind = getattr(projectile, "visual_kind", None)
+        if visual_kind is None:
+            return
+        x = float(projectile.x)
+        y = float(projectile.y)
+        direction = getattr(projectile, "direction", 1)
+        ux = float(getattr(projectile, "ux", float(direction)))
+        uy = float(getattr(projectile, "uy", 0.0))
+
+        if visual_kind == "lina_q":
+            cast_y = y + Q_WAVE_DRAW_OFFSET_Y
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, cast_y, (60, 220, 215), life=0.14,
+                    start_radius=6.0, end_radius=28.0, width=2,
+                    sparks=4, kind="lina_q_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x, cast_y, (150, 248, 242), 6, speed=150.0, life=(0.10, 0.20)
+            )
+        elif visual_kind == "lina_q_flame":
+            cast_y = y + Q_WAVE_DRAW_OFFSET_Y
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, cast_y, (255, 150, 70), life=0.14,
+                    start_radius=6.0, end_radius=28.0, width=2,
+                    sparks=4, spark_color=(255, 220, 140),
+                    kind="lina_q_flame_cast",
+                )
+            )
+            self.particles.emit_embers(x, cast_y, 3)
+        elif visual_kind == "veno_poison":
+            self.particles.emit_mist(
+                x + ux * 8.0, y + uy * 8.0,
+                color=(55, 160, 75), count=5,
+            )
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (60, 170, 75), life=0.12,
+                    start_radius=4.0, end_radius=18.0, width=2,
+                    kind="veno_poison_cast",
+                )
+            )
+        elif visual_kind == "veno_web":
+            self.fx_effects.append(
+                SilkCastFx(x, y, ux, uy, life=0.12)
+            )
+            self.particles.emit_burst(
+                x + ux * 10.0, y + uy * 10.0, (220, 255, 200), 3,
+                speed=90.0, life=(0.10, 0.18), gravity=90.0,
+            )
+
+    def spawn_projectile_impact(self, projectile, target) -> None:
+        """Emit the elemental hit effect at the same anchor as the hit particles."""
+        visual_kind = getattr(projectile, "visual_kind", None)
+        if visual_kind is None or target is None:
+            return
+        x = float(target.x)
+        y = float(projectile.y)
+
+        if visual_kind == "lina_q":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (60, 220, 215), life=0.18,
+                    start_radius=8.0, end_radius=44.0, width=3,
+                    sparks=6, kind="lina_q_impact",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (155, 250, 245), 12, speed=220.0
+            )
+        elif visual_kind == "lina_q_flame":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (255, 140, 70), life=0.18,
+                    start_radius=8.0, end_radius=44.0, width=3,
+                    sparks=6, spark_color=(255, 220, 140),
+                    kind="lina_q_flame_impact",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (255, 160, 80), 10, speed=200.0
+            )
+            self.particles.emit_embers(x, y, 3)
+        elif visual_kind == "veno_poison":
+            self.fx_effects.append(PoisonSplashFx(x, y))
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (60, 170, 75), life=0.20,
+                    start_radius=6.0, end_radius=34.0, width=2,
+                    kind="veno_poison_ring",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (75, 185, 90), 8, speed=170.0
+            )
+        elif visual_kind == "veno_web":
+            self.fx_effects.append(WebImpactFx(x, y))
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (235, 255, 220), life=0.16,
+                    start_radius=10.0, end_radius=42.0, width=2,
+                    sparks=3, spark_color=(255, 224, 90),
+                    kind="veno_web_ring",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (255, 224, 90), 3, speed=120.0, life=(0.10, 0.20)
+            )
+
+    def spawn_hit_fx(self, kind: str, attacker, target, event: dict | None = None) -> None:
+        """Visual-only hook for melee hit feedback; unknown kinds are ignored."""
+        if kind != "veno_bite_hit" or target is None:
+            return
+        facing = 1 if attacker.facing >= 0 else -1
+        x = float(target.x) - facing * float(target.hurtbox_width) * 0.5
+        y = float(attacker.y) - 40.0
+        self.fx_effects.append(BiteArcFx(x, y, facing, life=0.12))
+        self.particles.emit_burst(
+            x, y, (150, 240, 120), 3, speed=110.0,
+            life=(0.08, 0.16), radius=(1.5, 3.0), gravity=160.0,
+        )
+
     def spawn_slash_effect(
         self,
         attacker,
@@ -373,7 +630,7 @@ class ArenaScene:
     def _check_match_end(self) -> None:
         if not self.enemy_spec.get("decides_match", False) or self.match_over is not None:
             return
-        if self.enemy.hp <= 0.0:
+        if self.enemies and all(enemy.hp <= 0.0 for enemy in self.enemies):
             self.match_over = "WIN"
         elif self.player.hp <= 0.0:
             self.match_over = "LOSE"
@@ -432,7 +689,7 @@ class ArenaScene:
                 hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
                 hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
                 kind=projectile_kind,
-                radius=18.0 if projectile_kind == "venom_glob" else 14.0,
+                radius=18.0 if projectile_kind == "venom_glob" else 30.0,
                 status=event.get("status"),
                 status_duration=float(event.get("status_duration", 0.0)),
                 status_dps_pct=float(event.get("status_dps_pct", 0.0)),
@@ -470,6 +727,7 @@ class ArenaScene:
                 grant_energy=not flame,
             )
         self.projectiles.append(projectile)
+        self.spawn_projectile_cast_fx(projectile)
 
     # --- debug --------------------------------------------------------------
     def cycle_time_scale(self) -> None:
@@ -511,8 +769,13 @@ class ArenaScene:
         elif key == pygame.K_RIGHTBRACKET:
             self.cycle_character(1)
         elif key == pygame.K_F8:
-            if hasattr(self.enemy, "ai_enabled"):
-                self.enemy.ai_enabled = not self.enemy.ai_enabled
+            ai_enemies = [
+                enemy for enemy in self.enemies if hasattr(enemy, "ai_enabled")
+            ]
+            if ai_enemies:
+                enabled = not ai_enemies[0].ai_enabled
+                for enemy in ai_enemies:
+                    enemy.ai_enabled = enabled
             elif hasattr(self.enemy, "invincible"):
                 self.enemy.invincible = not self.enemy.invincible
         elif key == pygame.K_F9:
@@ -565,7 +828,7 @@ class ArenaScene:
     def _draw_knock_up_effects(self, surface: pygame.Surface) -> None:
         cfg = self.store.stats["combat"].get("knock_up_fx", {})
         spin = float(cfg.get("spin", 6.0))
-        for fighter in (self.enemy, self.player):
+        for fighter in [*self.enemies, self.player]:
             effect = fighter.statuses.get("knock_up")
             progress = self.knock_up_effect_progress(fighter)
             if effect is None or progress is None:
@@ -575,15 +838,16 @@ class ArenaScene:
                 surface, fighter.x, fighter.y, progress, elapsed * spin, cfg
             )
 
+    def _poison_tint(self, fighter) -> tuple[int, int, int] | None:
+        """Whole-body poison flash: green/purple every 0.18s."""
+        if fighter.hp <= 0.0 or not fighter.statuses.has("poison"):
+            return None
+        phase = int(self.sim_time / 0.18) % 2
+        return (70, 255, 110) if phase == 0 else (220, 100, 255)
+
     def _draw_status_fx(self, surface: pygame.Surface, fighter) -> None:
         if fighter.hp <= 0.0:
             return
-        rect = fighter.hurtbox()
-        if fighter.statuses.has("poison"):
-            pulse = 0.18 + 0.10 * (0.5 + 0.5 * math.sin(self.sim_time * 6.0))
-            overlay = pygame.Surface(rect.size, pygame.SRCALPHA)
-            overlay.fill((70, 210, 90, round(255 * pulse)))
-            surface.blit(overlay, rect.topleft)
         if fighter.statuses.has("stun"):
             head_y = fighter.y - fighter.hurtbox_dims[1] - 18.0
             for index in range(3):
@@ -594,43 +858,56 @@ class ArenaScene:
                 pygame.draw.circle(surface, (255, 250, 210), (round(x), round(y)), 2)
 
     def _draw_mark_fx(self, surface: pygame.Surface) -> None:
-        if not hasattr(self.player, "marks") or self.enemy.hp <= 0.0:
+        # Marks are stored per target, so each enemy shows its own stack.
+        if not hasattr(self.player, "mark_detonations"):
             return
-        marks = int(getattr(self.player, "marks", 0))
-        burst = float(getattr(self.player, "mark_burst_time", 0.0))
-        base_y = self.enemy.y - self.enemy.hurtbox_dims[1] - 70.0
-        for index in range(3):
-            x = self.enemy.x + (index - 1) * 16.0
-            filled = index < marks
-            color = (190, 225, 255) if filled else (90, 110, 135)
-            points = [
-                (round(x), round(base_y - 6)),
-                (round(x + 6), round(base_y)),
-                (round(x), round(base_y + 6)),
-                (round(x - 6), round(base_y)),
-            ]
-            pygame.draw.polygon(surface, color, points)
-            if filled:
-                pygame.draw.polygon(surface, (245, 252, 255), points, 1)
-        if burst > 0.0:
-            progress = max(0.0, min(1.0, 1.0 - burst / 0.4))
-            radius = 10 + round(38 * progress)
-            alpha = max(0, round(200 * (1.0 - progress)))
-            ring = pygame.Surface((radius * 2 + 8, radius * 2 + 8), pygame.SRCALPHA)
-            center = ring.get_width() // 2
-            pygame.draw.circle(ring, (200, 235, 255, alpha), (center, center), radius, 3)
-            surface.blit(ring, (round(self.enemy.x - center), round(base_y - center)))
+        for enemy in self.enemies:
+            if enemy.hp <= 0.0:
+                continue
+            marks = int(getattr(enemy, "marks", 0))
+            burst = float(getattr(enemy, "mark_burst_time", 0.0))
+            base_y = enemy.y - enemy.hurtbox_dims[1] - 70.0
+            for index in range(3):
+                x = enemy.x + (index - 1) * 16.0
+                filled = index < marks
+                color = (190, 225, 255) if filled else (90, 110, 135)
+                points = [
+                    (round(x), round(base_y - 6)),
+                    (round(x + 6), round(base_y)),
+                    (round(x), round(base_y + 6)),
+                    (round(x - 6), round(base_y)),
+                ]
+                pygame.draw.polygon(surface, color, points)
+                if filled:
+                    pygame.draw.polygon(surface, (245, 252, 255), points, 1)
+            if burst > 0.0:
+                progress = max(0.0, min(1.0, 1.0 - burst / 0.4))
+                radius = 10 + round(38 * progress)
+                alpha = max(0, round(200 * (1.0 - progress)))
+                ring = pygame.Surface(
+                    (radius * 2 + 8, radius * 2 + 8), pygame.SRCALPHA
+                )
+                center = ring.get_width() // 2
+                pygame.draw.circle(
+                    ring, (200, 235, 255, alpha), (center, center), radius, 3
+                )
+                surface.blit(
+                    ring, (round(enemy.x - center), round(base_y - center))
+                )
 
     def draw(self, surface: pygame.Surface) -> None:
         self.stage.draw(surface)
         self._draw_knock_up_effects(surface)
-        self.enemy.draw(surface)
-        self._draw_status_fx(surface, self.enemy)
+        for enemy in self.enemies:
+            enemy.draw(surface, tint=self._poison_tint(enemy))
+            self._draw_status_fx(surface, enemy)
         for projectile in self.projectiles:
             projectile.draw(surface)
         self.particles.draw(surface)
-        self.player.draw(surface)
+        self.player.draw(surface, tint=self._poison_tint(self.player))
         for effect in self.slash_effects:
+            effect.draw(surface)
+        for effect in self.fx_effects:
             effect.draw(surface)
         self._draw_status_fx(surface, self.player)
         self._draw_mark_fx(surface)

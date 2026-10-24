@@ -197,9 +197,13 @@ This document records the provisional rules used by the sandbox. Values live in
   once). Max 3. The 4th melee hit detonates all marks for `1.8 * atk + 10% target max HP`, applies
   damage reduction, then leaves exactly 1 mark. The burst adds 0.10s hitstop, emits particles and
   draws an expanding ring above the enemy. E neither adds nor detonates marks; Q adds and can
-  detonate. Marks clear on reset and when the target dies.
-- Mark display: 3 pips are drawn above the enemy's head, filled by current stacks; F2 shows
-  `MARKS n/3 BURST ... LAST ...`. There is no numeric mark bar in the HUD.
+  detonate. Marks live on each **target** (`Fighter.marks`, `mark_burst_time`,
+  `mark_burst_damage`), so every enemy in a multi-enemy encounter has an independent stack and
+  detonates separately; a stack clears when that target dies or the scene resets. `Nyra.mark_detonations`
+  is only a running total for smoke/F2.
+- Mark display: 3 pips are drawn above **each living enemy's** head, filled by that target's stack;
+  the burst ring is drawn on the detonated target. F2 shows the primary enemy's
+  `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`. There is no numeric mark bar in the HUD.
 - HUD: Nyra has no energy bar; the Q/E cooldown badges are shown for any player with `q_cd`/`e_cd`.
 - Lock-on: `start_attack` calls `scene.face_target_if_locked`, so middle-mouse lock-on turns Nyra
   toward the living enemy at attack start.
@@ -207,42 +211,122 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Veno-Spider
 
 - Enemy. Canonical art `Image/Enemy/veno-spider-128.png`; fallback uses the same canonical file.
-  Canvas 320x320, feet-center pivot (160,308), body about 150px.
+  Source frames are 320x320 (pivot 160,308, body ~150px), but the 2026-10-24 small-body variant
+  renders them at **160x160 / pivot (80,154) / body ~75px** — exactly half size. The source PNGs are
+  unchanged; `AnimationPlayer` downscales them at load.
 - Frames (20 minimal set): idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite 3, poison 3, web 3.
   The hover clip is a hanging pose; the visible web strand is drawn by the scene, not baked into
   the frames. Idle and jump use a shared frame where necessary to keep body size locked.
-- Stats: HP 50 (strict docx value), basic ATK 10, extra ATK 0, `stage_body_width` 140, hurtbox
-  150x150, walk 320, jump_v 700, gravity 2200. Cooldowns: bite 1.8s, poison 3.5s, web 5.0s.
+- Stats: HP 50 (strict docx value), basic ATK 10, extra ATK 0, `stage_body_width` 70, hurtbox
+  75x75, walk 320, jump_v 700, gravity 2200. Cooldowns (per updated instruction.docx, tracked
+  independently per Veno): bite 1.0s, poison 5.0s, web 8.0s.
   Hover: base 220, min 140, max 300, vertical_speed 170, descend_speed 260, oscillation 80,
-  oscillation_rate 1.2. AI: bite_range 150, close_range 140, ranged_range 700, hover_min_time 0.3.
-- Bite: `1.5 * basic + 1.5 * extra` = 15, 0.50s; hitbox `[24,-120,110,90]` active t=0.18..0.30;
-  knockback 120; hitstun 0.25; hitstop 0.05. The bite frames show the mouth wide open on frames
-  0-1 and closing on frame 2.
+  oscillation_rate 1.2. AI: bite_range 75, close_range 70, ranged_range 700, hover_min_time 0.3.
+- Bite: `1.5 * basic + 1.5 * extra` = 15, 0.50s; hitbox `[12,-60,55,45]` active t=0.18..0.30;
+  knockback 120; hitstun 0.25; hitstop 0.05. The bite arc is drawn at y-40. The bite frames show
+  the mouth wide open on frames 0-1 and closing on frame 2.
+- Consequence of the small body: Lina's punch (y 455-503) and Q lane (y 461-495) sit above the
+  ground Veno's 75px hurtbox (y 545-620); her kick (y 495-557) still clips it. The smoke win test
+  uses a kick. This is the intended trade-off of the half-size body; if the hurtbox is raised or
+  the punch/Q lanes are changed later, re-check the Veno match-up.
 - Poison spit: `0.8 * basic + 0.8 * extra` = 8, 0.60s; projectile `venom_glob` spawns at t=0.25,
-  origin 100px above the feet, speed 520, range 800, knockback 40; hitstun 0.15; hitstop 0.04.
-  On hit, applies poison at 3% of the target's max HP per second for 3s. Repeated hits from the
-  same source (`veno_poison`) extend the remaining duration; different sources keep independent
-  instances. The projectile aims at the target's position at fire time and does not home.
+  origin 50px above the feet, speed 520, range 800, knockback 40; hitstun 0.15; hitstop 0.04.
+  On hit, applies poison at 3% of the target's max HP per second for 3s. Poison damage settles in
+  0.5s chunks (`POISON_TICK`), so a full tick is 1.5 damage at Lina's 100 max HP; the total damage
+  over the duration is unchanged. Repeated hits from the same source (`veno_poison`) extend the
+  remaining duration; different sources keep independent instances. The projectile aims at the
+  target's position at fire time and does not home. The glob and its cast/impact effects use a
+  dark-green palette (deep-green shell, mid-green body, light-green highlight).
 - Web shot: `1.0 * basic + 1.0 * extra` = 10, 0.65s; projectile `web_bolt` spawns at t=0.30,
-  origin 100px above the feet, speed 480, range 800, knockback 60; hitstun 0.1; hitstop 0.04.
-  On hit, applies 1s stun. Also aimed at the fire-time target position, no homing.
-- AI: on the ground it faces the player and chases, bites when within 150px and the bite is ready,
+  origin 50px above the feet, speed 480, range 800, knockback 60; hitstun 0.1; hitstop 0.04.
+  On hit, applies 1s stun. Also aimed at the fire-time target position, no homing. Collision
+  radius 30 (visual 64px; impact decal 150–170px).
+- AI: on the ground it faces the player and chases, bites when within 75px and the bite is ready,
   and ascends when the player is outside bite range and at least one ranged skill is ready. It can
   hop over a block when both ranged skills are cooling down. While hovering it prioritizes poison,
-  then web; it descends when the player is within 140px, when both ranged skills are cooling down
+  then web; it descends when the player is within 70px, when both ranged skills are cooling down
   (after 0.5s of hover), or when hit while airborne. While descending it drifts toward the player
   if beyond bite range. An attack keeps the current mode and altitude.
+- The lower 50px projectile origins mean the smaller Veno's poison/web are more easily blocked by
+  the arena's 60px blocks; the smoke damage/status tests disable block collision to isolate the
+  projectile logic. This is a consequence of scaling the mouth to the half-size body.
 - Hover height is a sine wave around 220px, clamped to 140-300px. The low part of the cycle brings
   the spider into melee and ground-hitbox reach (including Nyra's Q); the high part needs a jump
   attack. The scene draws a pale web strand from the top of the screen to the spider while
   ascending/hovering.
-- Status visuals: poison draws a pulsing green overlay and green particles; stun draws rotating
-  yellow stars above the head. F11 can force either status on any enemy for inspection.
-- Single spawn only. `skill_slots` is `["veno_bite", "veno_poison", "veno_web", null]`;
-  `separates` and `decides_match` are true. The docx `n=3` group is future multi-enemy work.
-- Force/skill cooldowns: `force_attack` works on the ground or in the air, clears the three
-  cooldowns, starts the requested attack and returns True; an empty Z slot is a safe no-op.
-  `skill_remaining` returns the matching cooldown for F2.
+- Status visuals: poison draws no hurtbox rectangle. The fighter's whole current frame is
+  multiplied by a green tint `(70,255,110)` or a purple tint `(220,100,255)`, alternating every
+  0.18s; green poison particles are still emitted every 2 ticks. Stun draws rotating yellow stars
+  above the head. F11 can force either status on any enemy for inspection.
+- Group spawn: `roster.json` sets Veno `count` 3, `spawn_offsets` `[-100, 0, 120]` and
+  `spawn_modes` `["ground", "hover", "hover"]`. Selecting Veno creates three half-size Venos
+  (default positions 900/1000/1120; one ground + two hanging). `scene.enemies` holds the group;
+  `scene.enemy` is the nearest living primary for HUD/lock-on/player targeting. The player's melee
+  hitboxes test every living enemy (`AttackRuntime.targets`), projectiles hit the first living
+  enemy they collide with, and each Veno runs its own AI. Enemies also separate from each other.
+  Every Veno owns its own bite/poison/web cooldown timers (`bite_cd`, `poison_cd`, `web_cd`) and
+  its own poison source, so one spider's skill use or poison never affects another. Nyra's marks
+  are likewise stored per target. The match is won only when all three are dead; the smoke forces
+  `enemy_count_override=1` for the isolated single-enemy checks and verifies the 3-body group,
+  per-instance cooldowns and all-dead WIN separately.
+- Poison stacking (instruction.docx 战斗系统): reapplying poison from the **same source** adds the
+  new duration to the remaining time (2s remaining + 3s = 5s); a **different source** creates an
+  independent instance (both tick and both deal damage). Each Veno instance uses a unique
+  `poison_source` (`veno_poison:<id>`), so poisons from different spiders are independent while a
+  spider's own reapplication extends. The smoke checks this exact 2+3=5 and two-source behavior
+  (`poison_stack_rules_ok`).
+- `skill_slots` is `["veno_bite", "veno_poison", "veno_web", null]`; `separates` and
+  `decides_match` are true.
+- Force/skill cooldowns: `force_attack` works on the ground or in the air, clears the instance's
+  three cooldowns, starts the requested attack and returns True; an empty Z slot is a safe no-op.
+  `skill_remaining` returns the matching cooldown for F2. These timers are per Veno instance.
+
+## Projectile / skill VFX (2026-10-24)
+
+- Visual-only pass. `q`, `veno_poison` and `veno_web` keep their damage, hitbox, duration, speed,
+  range, status, knockback, cooldown, AI and roster data. `veno_bite` only gains a visual
+  `hit_fx` field on its existing hitbox event.
+- New `game/fx.py` owns sprite-strip loading and short-lived effects (`RingBurstFx`,
+  `PoisonSplashFx`, `WebImpactFx`, `BiteArcFx`, `SilkCastFx`). It imports only `pygame` and
+  `ASSETS_DIR`, and caches sprite frames/rotations by path + mtime so F5 refreshes PNGs.
+- `ArenaScene` gains a separate `fx_effects` list. It updates next to `slash_effects` (so effects
+  freeze during hitstop) and draws after `slash_effects`, before player status/marks/HUD. Nyra's
+  `SlashEffect` and the `fx` event path are untouched.
+- Projectiles carry visual-only `age`, `visual_kind` and `hit_color` fields:
+  - `QWave`: `lina_q` / `lina_q_flame`; hit colors teal `(80,230,225)` and orange
+    `(255,150,90)`.
+  - `AimedProjectile`: `veno_poison` / `veno_web`; hit colors dark green `(65,170,75)` and pale
+    web `(200,240,170)`.
+  `resolve_projectile_hit` uses the projectile's `hit_color` instead of the old hardcoded cyan and
+  calls `spawn_projectile_impact`; `AxeThrow`/legacy `SwordWave` have no visual kind, so their
+  behavior is unchanged. `ParticleSystem.emit_hit` is not modified.
+- Lina Q is now a single static sprite per form (not a 6-frame strip). Normal is the supplied
+  teal glass-ball texture (glossy teal body, white rim, upper-left highlight, darker lower-right),
+  pixelated to the same 2px grid as the character art and given a short teal pixel trail; it is
+  ~26px (fist-sized). Flame is a Seedream pixel-art fire orb at ~32px. Both are 96×96, anchor
+  `(64,48)`. The normal form has **no procedural ball**, and `QWave` has no procedural fallback.
+  The projectile spawns at `t=0.26` with collision 44×34 and speed/range unchanged; its sprite is
+  drawn 7px above the collision lane (`Q_WAVE_DRAW_OFFSET_Y`) so it lines up with the punching
+  fist, and the teal cast flash uses the same offset. The impact effect stays at the collision
+  point and uses the teal family.
+- Veno web uses the exact 130×123 crop of `veno_web_spit_web_05.png` at
+  `(492,155,622,278)` (`assets/frames/veno/veno_web_fx/veno_web_05_web.png`). The spit thread,
+  trail and cast strands are procedural; the projectile is drawn at 64px with collision radius 30,
+  and the same crop is reused for the impact decal at 150–170px. The `combined_*` and `spider_*`
+  frames are never loaded at runtime.
+- Veno poison stays procedural: a dark-green layered glob (deep-green outer shell, mid-green body,
+  lighter highlight), bubbles, droplet trail, dark-green cast mist and splash. The poisoned body
+  uses the whole-frame green/purple flash described above instead of the old rectangle.
+  Poison damage is applied in **0.5s** chunks (`POISON_TICK` in `game/status.py`) instead of the
+  old 0.2s dot tick; total dps and duration are unchanged. The tick is applied before the
+  remaining-time decrement so a 3.0s poison still gets its sixth full tick. Burn keeps the 0.2s
+  tick. The hover silk is a draw-only curved strand using `hover_phase`; no state/AI change.
+- Bite feedback uses `spawn_hit_fx` from `resolve_hit` (via the `hit_fx` field), not a new `fx`
+  event. It spawns a short green crescent at the target's near edge plus a few droplets.
+- Smoke covers asset presence (`lina_q_fx_missing`, `veno_vfx_missing`), dispatch
+  (`q_*_fx_ok`, `veno_*_cast/impact_ok`, `veno_bite_hit_fx_ok`, `q_flame_color_ok`), poison cadence
+  (`poison_interval_ok`) and cleanup (`fx_cleanup_ok`); appearance is reviewed with
+  `tools/preview_fx.py` or in-game.
 
 ## Roster and skill slots
 

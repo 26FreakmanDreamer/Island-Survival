@@ -21,9 +21,18 @@ against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wa
 `nyra_wave_burst_damage_ok`), Q slash hitbox/FX plus the extended-range window
 (`nyra_q_slash_range_ok`), Q/E super armor (`nyra_q_armor_ok`, `nyra_e_armor_ok`), E dash distance
 (`nyra_dash_distance_ok`), the six-frame slash FX existence (`nyra_slash_fx_missing`), E dash
-damage/cooldowns, mark reset/death clearing, lock-on and
-the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs Veno-Spider and checks bite,
-poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots, win and `veno_missing_frames`.
+damage/cooldowns, per-target mark independence (`nyra_marks_per_target_ok`) and reset/death
+clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs
+Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots,
+win and `veno_missing_frames`.
+It also checks the projectile VFX dispatch (`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`,
+`q_flame_color_ok`, `q_flame_cast_ok`, `veno_bite_hit_fx_ok`, `veno_poison_cast_ok`,
+`veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`), poison cadence/tint/stacking
+(`poison_interval_ok`, `poison_tint_ok`, `poison_stack_rules_ok`), web collision radius
+(`veno_web_radius_ok`), the 3-Veno group spawn, per-instance cooldowns and all-dead WIN
+(`veno_group_ok`, `veno_group_cooldowns_ok`), asset presence
+(`lina_q_fx_missing`, `veno_vfx_missing`) and effect cleanup (`fx_cleanup_ok`). These are
+file/effect checks only; appearance is reviewed with `tools/preview_fx.py` or in-game.
 It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dummy video driver.
 
 ## Overlay and panel
@@ -38,9 +47,11 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   clock/queued action, hitstun/knockback, positions/facing, player and current-enemy statuses, the
   enemy's four skill slots with remaining cooldowns (`S1 axe_slash 0.0s ... S4 -`), enemy AI
   flag/attack/armor, last hit, input history/buffer, missing frames, last reload status/error.
-  For Nyra the panel shows `Q ... E ...` without an energy line and adds `MARKS n/3 BURST ... LAST ...`.
+  For Nyra the panel shows `Q ... E ...` without an energy line and adds the primary enemy's
+  `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; poison and stun appear in the status
-  list. The three mark pips above the enemy, the green poison pulse and the stun stars are draw-only.
+  list. The three mark pips above each living enemy, the green poison pulse and the stun stars are
+  draw-only.
 
 ## Simulation controls
 
@@ -56,7 +67,7 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Warrior → Veno-Spider → training Dummy → …) |
+| F7 | Cycle the enemy roster (Veno-Spider ×3 → training Dummy → Warrior → …) |
 | [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
@@ -88,7 +99,9 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    return together) and the cyan vortex at her feet shrinks/fades with the remaining time; PgDn to 0
    shows the KO and VICTORY banner; F12 at low Lina HP shows DEFEATED; R restarts.
 8. Nyra checks: use `[` to switch to Nyra; LMB/RMB/Q add marks (watch the 3 pips above the enemy),
-   the 4th LMB/RMB/Q hit detonates for `1.8×atk + 10% max HP` and leaves 1 mark; E does not add marks.
+   the 4th LMB/RMB/Q hit detonates for `1.8×atk + 10% max HP` and leaves 1 mark; E does not add
+   marks. Marks are per target: with the 3-Veno group, hit different spiders and each keeps its own
+   pips/stack — detonating one never consumes another's marks.
    LMB plays the 5-frame wave animation (0.06s each, 0.30s) and has no FX; RMB plays the 5-frame
    thrust animation (0.08s each, 0.40s) with a single hitbox active t=0.16-0.24; Q plays the 6-frame
    slash animation and the blue `nyra_slash_fx` effect (visible frames 02-04 align with the
@@ -100,16 +113,36 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    t=0.06-0.36s (~330px), passes through the enemy but stops at blocks/walls; at the end the bodies
    are pushed apart. F2 shows `Q/E` cooldowns and `MARKS n/3`; lock-on (middle mouse) turns Nyra at
    attack start.
-9. Veno checks: F7 to Veno; F8 toggles its AI. On the ground it chases and bites with a wide-open
-   mouth; at range it ascends on a web strand, hovers in a 140–300px sine wave and fires aimed
-   venom/web. V/C/X start bite/poison/web and Z is a no-op. F2 shows `MODE`/`HOVER`, slots and
-   cooldowns; F11 shows poison's green pulse and stun stars. Hit it while airborne to knock it into
-   descent. The web strand is draw-only, not a frame.
+9. Veno checks: F7 to Veno spawns the **3-body group** (`roster.json` count/offsets/modes:
+   one ground + two hovering by default); F8 toggles AI for all three. Veno is a half-size body
+   (160×160 runtime frames, 75×75 hurtbox, `stage_body_width` 70, bite range 75); its mouth origin
+   is 50px above the feet, so Lina's punch and ground Q lanes sit above the ground spider — use a
+   kick or jump attack. On the ground it chases and bites with a wide-open mouth; at range it
+   ascends on a web strand, hovers in a 140–300px sine wave and fires aimed venom/web. Cooldowns
+   are per spider (bite 1s, poison 5s, web 8s), so the three can act independently. V/C/X start
+   bite/poison/web on the primary and Z is a no-op. Each Veno draws its own health bar; the HUD
+   label follows the nearest living primary. WIN requires all three dead. The smoke forces a
+   single Veno for isolated checks and verifies the group spawn/all-dead WIN separately
+   (`veno_group_ok`). F2 shows `MODE`/`HOVER`, slots and
+   cooldowns; F11 shows poison's whole-body green/purple flash and stun stars. Hit it while
+   airborne to knock it into descent. The web strand is draw-only, not a frame. Poison now has a
+   dark-green mouth mist and hit splash, and poison damage settles once per 0.5s (six full ticks
+   over the 3s duration); a poisoned fighter's whole sprite flash-tints green/purple every 0.18s,
+   with no hurtbox rectangle. Web has procedural silk at the mouth, a rotating 64px web_05
+   projectile with a silk trail and collision radius 30, and a 150–170px web impact decal plus
+   yellow stun sparks; a connected bite adds a short green arc.
+   Lina's Q projectile is a fist-sized static sprite: the supplied teal glass ball, pixelated with
+   a white rim/highlights and a short pixel trail in normal form, orange-red in flame form. It is
+   drawn 7px above the collision lane so it lines up with the punching fist; cast/impact effects
+   use the same teal/orange family. The normal form has no code-generated ball.
 10. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
     stops the AI from jumping over them. The toggle persists across F9 and resets on F5/rebuild.
 11. Edit `game/data/*.json` and press F5 to tune values without restarting.
 12. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
-    cache keys on path + mtime.
+    cache keys on path + mtime. Projectile FX sprites use the same rule:
+    `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and
+    `assets/frames/veno/veno_web_fx/`. Changing `LINA_Q_SPECS` sizes/durations or any effect
+    duration in `game/fx.py` requires restarting Python; F5 only reloads PNG/JSON.
 
 ## Input checks
 

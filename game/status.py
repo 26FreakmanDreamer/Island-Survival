@@ -11,6 +11,7 @@ ALL_EFFECTS = (
     "freeze", "stun", "super_armor", "damage_reduction",
 )
 TICK = 0.2
+POISON_TICK = 0.5
 
 
 @dataclass
@@ -84,10 +85,6 @@ class StatusSet:
             if effect.remaining <= 0.0:
                 del self.effects[kind]
 
-        for poison in self.poisons:
-            poison.remaining -= dt
-        self.poisons = [poison for poison in self.poisons if poison.remaining > 0.0]
-
         burn = self.effects.get("burn")
         if burn is not None:
             burn.tick_accum += dt
@@ -95,11 +92,18 @@ class StatusSet:
                 burn.tick_accum -= TICK
                 target.apply_dot(burn.dps * TICK)
 
+        # Poison settles in 0.5s chunks. Damage is applied before the
+        # remaining-time decrement so a 3.0s poison still gets its sixth
+        # full tick on the expiry frame.
         for poison in self.poisons:
             poison.tick_accum += dt
-            while poison.tick_accum >= TICK:
-                poison.tick_accum -= TICK
-                target.apply_dot(poison.dps * TICK)
+            while poison.tick_accum + 1e-9 >= POISON_TICK:
+                poison.tick_accum -= POISON_TICK
+                target.apply_dot(poison.dps * POISON_TICK)
+            poison.remaining -= dt
+        self.poisons = [
+            poison for poison in self.poisons if poison.remaining > 0.0
+        ]
 
     def control_locked(self) -> bool:
         if self.has("super_armor"):

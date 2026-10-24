@@ -108,10 +108,10 @@ class DebugPanel:
             )
         elif hasattr(player, "q_cd") and hasattr(player, "e_cd"):
             lines.append(f"Q {player.q_cd:4.1f}s  E {player.e_cd:4.1f}s")
-        if hasattr(player, "marks"):
+        if hasattr(player, "mark_detonations") and enemy is not None:
             lines.append(
-                f"MARKS {int(player.marks)}/3  BURST {player.mark_burst_time:4.2f}s  "
-                f"LAST {player.mark_burst_damage:5.1f}"
+                f"MARKS {int(enemy.marks)}/3 BURST {enemy.mark_burst_time:.2f} "
+                f"LAST {enemy.mark_burst_damage:.0f} BURSTS {player.mark_detonations}"
             )
         if all(
             hasattr(player, attr)

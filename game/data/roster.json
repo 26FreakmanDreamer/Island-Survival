@@ -52,7 +52,10 @@
       "fallback": "Image/Enemy/veno-spider-128.png",
       "skill_slots": ["veno_bite", "veno_poison", "veno_web", null],
       "separates": true,
-      "decides_match": true
+      "decides_match": true,
+      "count": 3,
+      "spawn_offsets": [-100, 0, 120],
+      "spawn_modes": ["ground", "hover", "hover"]
     },
     "dummy": {
       "name": "Dummy",

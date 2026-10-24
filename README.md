@@ -18,9 +18,15 @@ dash knock-up, throw out-and-back damage, the inter-skill gap, win/loss, AI appr
 body separation/facing stability (no enemy flip across a block; capped separation slide), interrupted-transform visibility, flame revert, roster switching,
 the data-driven V/C/X/Z skill slots, and the F7 plus `[` / `]` roster switches.
 It then runs Nyra against the dummy (wave/thrust damage, mark stacking and detonation, Q slash
-hitbox/FX, pass-through dash, cooldowns, lock-on) and Veno-Spider against Lina (bite, poison stacking, stun web,
-hover ascent/descent, V/C/X slots, win), and checks `missing_frames == 0` for Lina, Nyra, Veno and
-Warrior.
+hitbox/FX, pass-through dash, cooldowns, per-target marks, lock-on) and Veno-Spider against Lina
+(bite, poison stacking, stun web, hover ascent/descent, V/C/X slots, win). It also checks that each
+Veno keeps independent skill cooldowns and that the 3-body group wins only when all are dead, and
+checks `missing_frames == 0` for Lina, Nyra, Veno and Warrior. It checks the projectile VFX dispatch
+(`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`, `q_flame_color_ok`, `veno_poison_cast_ok`,
+`veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`, `veno_bite_hit_fx_ok`), poison
+settlement cadence (`poison_interval_ok`, `poison_tint_ok`), web collision radius
+(`veno_web_radius_ok`), asset presence
+(`lina_q_fx_missing`, `veno_vfx_missing`) and effect cleanup (`fx_cleanup_ok`).
 
 ## Controls
 
@@ -47,7 +53,9 @@ Lina uses the table above. Nyra Steel uses the same movement, crouch and lock-on
 
 Nyra has no energy bar. Instead, LMB/RMB/Q hits stack marks on the enemy (max 3); the 4th LMB/RMB/Q
 hit detonates them for `1.8×atk + 10% target max HP` and leaves 1 mark. E neither adds nor detonates
-marks. The 3 marks are drawn above the enemy's head; the burst ring plays on detonation.
+marks. Marks are stored on each target, so every Veno in a group keeps an independent stack and
+detonates on its own; the 3 pips are drawn above each living enemy, and the burst ring plays on the
+detonated target.
 
 Attacks pressed during an attack are queued (one slot, newest wins) and start when the attack ends;
 E cancels attack recovery. Presses made during hitstun or a control lock (including knock-up) also
@@ -62,8 +70,9 @@ Walking and attack lunges stop at block edges; jump onto a block to cross it.
 
 ## Combat modes
 
-Warrior is the default enemy. Press F7 to cycle the enemy roster (Warrior → Veno-Spider → training
-Dummy → back); `[` / `]` cycle the playable character roster (Lina ↔ Nyra). A switch performs a full
+The Veno-Spider 3-body group is the default enemy. Press F7 to cycle the enemy roster
+(Veno-Spider → training Dummy → Warrior → back); `[` / `]` cycle the playable character roster
+(Lina ↔ Nyra). A switch performs a full
 match reset and leaves the enemy AI off for manual testing. The AI also starts off on launch and after
 any reset (F5 reload, F9, R); press F8 to turn it on. The dummy has
 no AI and is useful for isolated tests; Warrior and Veno are the full 1v1 opponents. After VICTORY or
@@ -72,12 +81,13 @@ the target's feet; it follows the body, stays visible at a minimum strength thro
 then vanishes. Extended knock-up gravity keeps the target airborne for that window, so landing and
 control return together.
 
-Veno-Spider is a single 50 HP enemy (the docx `n=3` group is future work). It bites at close range,
+Veno-Spider spawns as a group of three 50 HP enemies (one ground + two hovering by default). It bites at close range,
 spits a straight-line poison glob (3% max HP/s for 3s, same-source hits extend the duration) and
 shoots a stunning web (1s). It webs itself up to a variable hover height (base 220px, 140–300px
 range) when the player is outside bite range and a ranged skill is ready; while airborne it
-prioritizes venom/web, then descends to bite. Its visual hover is a hanging pose with a draw-only
-web strand above it.
+prioritizes venom/web, then descends to bite. Each spider tracks its own bite (1s), poison (5s) and
+web (8s) cooldowns, so one Veno attacking never delays the others. Its visual hover is a hanging
+pose with a draw-only web strand above it.
 
 ## Debug controls
 
@@ -105,10 +115,10 @@ web strand above it.
 ## Current scope
 
 - Two playable characters (Lina, Nyra) vs. Warrior or Veno-Spider in a single arena; the training Dummy remains available through F7. A `roster.json` registry drives character/enemy construction.
-- Lina: 45 normal + 41 flame-form frames (86); damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Nyra: 29 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150.
+- Lina: 45 normal + 41 flame-form frames (86); damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Q launches a fist-sized static sprite projectile: a pixel-art teal glass ball (white rim/highlights, short trail) drawn slightly above the fist lane in normal form, orange/red fire in flame form, with matching teal/orange cast and impact colors. Nyra: 29 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150.
 - Nyra: HP 100, basic ATK 20; LMB wave 20 (0.30s), RMB thrust 24, Q slash 30 (8s), E dash 30 (15s). LMB uses a 5-frame wave animation (0.06s each) and cast-anchored hitboxes (no projectile): the RMB thrust box `[28,-165,130,48]` during t=0–0.06s and 0.24–0.30s, and the extended `[28,-212,162,123]` (reach 190) during t=0.06–0.24s; it adds 1 mark and has no FX. Q uses a 6-frame slash animation (0.40s) and cast-anchored hitboxes: the thrust box during t=0–0.12s and 0.30–0.40s, and the extended box during t=0.12–0.30s; it adds 1 mark, has super armor for its 0.40s, and plays the separate six-frame blue slash FX (visible frames 02–04 align with the character's 02–04 frames and overlap the extended window). RMB uses a 5-frame thrust animation (0.08s each, 0.40s) with a single hitbox `[28,-165,130,48]` active t=0.16–0.24s. Melee hits add 1 mark (max 3); the 4th melee hit detonates for `1.8×atk + 10% target max HP` and leaves 1 mark. E dashes at 1100px/s for t=0.06–0.36s (~330px) with super armor during the dash, passes through the enemy but respects walls/blocks, and pushes the enemy out at the end.
 - Warrior AI approaches, jumps blocks, attacks with a telegraphed axe slash, has startup/active super armor, and supports win/loss/restart. Its damage is `atk`-scaled: axe slash 24, dash 30 + 1.5s knock-up, axe throw 24 per pass. The dash knock-up uses a reduced knock-up gravity so the target stays airborne for the 1.5s window, and draws a procedural cyan vortex at the launched fighter's feet for the full status duration.
-- Veno-Spider: HP 50, ATK 10; bite 15, poison glob 8 + 3% max HP/s for 3s (same-source extension), web 10 + 1s stun. It hovers on a web at 140–300px (base 220), prioritizes bite on the ground and venom/web while airborne, and uses a draw-only web strand. Single spawn only; the docx `n=3` group is future work.
+- Veno-Spider: half-size body (160×160 runtime frames, 75×75 hurtbox, `stage_body_width` 70, bite range 75); HP 50, ATK 10; bite 15, poison glob 8 + 3% max HP/s for 3s, web 10 + 1s stun. Cooldowns are bite 1s, poison 5s and web 8s, tracked independently by each spider. Selecting Veno spawns a group of **3** (default 1 ground + 2 hovering; `roster.json` `count`/`spawn_offsets`/`spawn_modes`); the player's attacks and projectiles can hit any living Veno and the match is won when all 3 die. Nyra's marks stack independently on each Veno. Same-source poison reapplication adds the new duration to the remaining time (2s + 3s = 5s); different sources — including different Venos — keep independent damage instances. Poison settles every 0.5s. It hovers on a web at 140–300px (base 220), prioritizes bite on the ground and venom/web while airborne, and uses a draw-only curved web strand. Poison is dark green (layered glob, cast mist and splash) and a poisoned body flashes green/purple every 0.18s; web uses the approved web_05 crop at 64px with a 150–170px impact decal, a procedural silk trail and collision radius 30; a connected bite adds a short green arc.
 - `V/C/X/Z` read the current enemy's four skill slots from data; undefined slots are safe no-ops and show `-` in F2.
 - Frame data, hitboxes, cooldowns, damage and stage geometry are in `game/data/*.json`.
 - Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, multi-enemy encounters, other playable characters/enemies, packaging.
