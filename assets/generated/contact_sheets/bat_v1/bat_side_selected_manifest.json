@@ -1,0 +1,18 @@
+{
+  "title": "Bat side-view key poses - selected set v9 (wing 00 + transition v8 B scaled 1.15x + 01 + 02, dive B, sonic A)",
+  "columns": 7,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_keyposes_selected_v9.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/side_base_384.png", "label": "approved base C", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00_01.png", "label": "wing 00->01 transition v8 B scaled 1.15x", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_02.png", "label": "wing_02 A", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_dive_01.png", "label": "bat_dive_01 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_sonic_01.png", "label": "bat_sonic_01 A", "duration": "0.30"}
+    ]
+  ]
+}

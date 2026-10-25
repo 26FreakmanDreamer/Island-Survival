@@ -1,0 +1,16 @@
+{
+  "title": "Bat side-view base candidates - pick A / B / C / D",
+  "columns": 5,
+  "cell": 512,
+  "pivot": [-100, -100],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_base_candidates_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/canonical_512.png", "label": "canonical (front, identity only)", "duration": ""},
+      {"path": "assets/generated/base/candidates_bat/2026-10-25/image_to_image/bat_side_base_A_1_20261025_220042_602_738b0a43.png", "label": "A compact hovering", "duration": ""},
+      {"path": "assets/generated/base/candidates_bat/2026-10-25/image_to_image/bat_side_base_B_1_20261025_220100_043_26d17428.png", "label": "B small body, large wings", "duration": ""},
+      {"path": "assets/generated/base/candidates_bat/2026-10-25/image_to_image/bat_side_base_C_1_20261025_220118_928_9c377503.png", "label": "C streamlined gliding", "duration": ""},
+      {"path": "assets/generated/base/candidates_bat/2026-10-25/image_to_image/bat_side_base_D_1_20261025_220135_471_1602a2be.png", "label": "D upright, folded wings", "duration": ""}
+    ]
+  ]
+}

@@ -5,6 +5,8 @@
 > 用途：下个 session 的 Bat handoff。先读本文件 + `AGENTS.md`；若下个 session 由 Codex 执行，再读 `CODEX-README.md`；要生成图片时再读 `docs/IMAGE_GENERATION_RULES.md`。
 > 当前基线：`.venv/Scripts/python.exe main.py --smoke-test` → **exit 0**（2026-10-24 已核对）。
 > 默认范围：**先确认 §4，再实现**。未经确认不要改其他角色/敌人的数值、默认阵容或 `Image/`。
+> **2026-10-25 更新**：最终动画方案已改为 **side-view base C / 14 帧 / 源 384→运行时 192**；详见 `docs/BAT_ANIMATION_DESIGN.md`。§9 为本轮结论；正文 §3 的 128/11 帧方案已被取代。
+> **下阶段完整 handoff**：`docs/NEXT_SESSION_BAT_FULL.md`（含 docx 权威设定、2s/10s 冷却、数据/代码/smoke 计划与 Q1–Q12）。
 
 ---
 
@@ -625,20 +627,23 @@ Bat 放在 F7 的哪个位置（Veno 前/后）？是否要同时接入 `island-
 
 ---
 
-## 9. 本次 session 结论（下个 session 填写）
+## 9. 本次 session 结论（2026-10-25）
 
 ```text
-Q1 范围：
-Q2 数量：
-Q3 飞行：
-Q4 技能 1：
-Q5 技能 2 锁定：
-Q6 返回/消失：
-Q7 冷却/AI：
-Q8 画布/pivot/hurtbox：
-Q9 美术：
-Q10 F7/Cave：
-已完成：
-smoke：
-未完成/风险：
+Q1 范围：动画先行；14 帧已设计、批准并安装；游戏代码/数值/接入留待下阶段。
+Q2 数量：沙盒先 1 只；正式 n=5 在代码阶段改 count/offsets。
+Q3 飞行：自由 2D 飞行；具体高度/速度/边界在代码阶段定。
+Q4 技能 1：俯冲近战（dive 00/01/02）；命中窗约 0.12–0.34s。
+Q5 技能 2 锁定：只锁 0.65s 施法动作；声波飞出后 Bat 恢复飞行。
+Q6 返回/消失：代码阶段实现；推荐追踪 owner 当前位置、≤16px 消失。
+Q7 冷却/AI：代码阶段实现；推荐 dive 2.5s / sonic 5.0s，每实例独立。
+Q8 画布/pivot/hurtbox：源 384 / 运行时 192；pivot (230,285) 源 / (115,143) 运行时 / 镜像 x=77；
+   hurtbox 建议 100×66，代码阶段最终确认。
+Q9 美术：side base C；14 帧已安装到 assets/frames/bat/；contact sheet/GIF 已批准；
+   过渡 v8 B×1.15；stun v3 A（自然闭眼）。
+Q10 F7/Cave：代码阶段定；Cave 背景默认不接入。
+已完成：side-view base 选择、14 帧、镜像、wing 循环、dive/sonic/hurt/stun/ko、安装。
+smoke：exit 0；现有 missing_frames=0 等无回归；尚未新增 bat smoke 检查。
+未完成/风险：game/bat.py、SonicWave、data/config/roster/scene、smoke、VFX、
+   5 只平衡、cave；hurtbox 最终值；声波 handoff（t=0.24）。
 ```

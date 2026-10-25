@@ -1,0 +1,25 @@
+{
+  "title": "Bat side-view key poses - mirror check v9 (original pivot 230, mirror pivot 154)",
+  "columns": 6,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_keyposes_mirror_v9.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 original", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00_01.png", "label": "transition original", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 original", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_02.png", "label": "wing_02 original", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_dive_01.png", "label": "dive_01 original", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_sonic_01.png", "label": "sonic_01 original", "duration": ""}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_wing_00.png", "label": "wing_00 mirror", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_wing_00_01.png", "label": "transition mirror", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_wing_01.png", "label": "wing_01 mirror", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_wing_02.png", "label": "wing_02 mirror", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_dive_01.png", "label": "dive_01 mirror", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final/keyposes_mirror/side_sonic_01.png", "label": "sonic_01 mirror", "duration": "", "pivot": [154, 285]}
+    ]
+  ]
+}

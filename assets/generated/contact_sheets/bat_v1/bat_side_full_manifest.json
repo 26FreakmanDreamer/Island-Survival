@@ -1,0 +1,45 @@
+{
+  "title": "Bat side-view full animation set - 14 frames + mirrors (pivot 230 / mirror 154)",
+  "columns": 7,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_full_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/wing/wing_00.png", "label": "wing_00", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/wing/wing_00_01.png", "label": "wing transition", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/wing/wing_01.png", "label": "wing_01", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/wing/wing_02.png", "label": "wing_02", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/bat_dive/bat_dive_00.png", "label": "bat_dive_00", "duration": "0.12"},
+      {"path": "assets/generated/staged/bat/side_final/bat_dive/bat_dive_01.png", "label": "bat_dive_01", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_final/bat_dive/bat_dive_02.png", "label": "bat_dive_02", "duration": "0.41"}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_final/bat_sonic/bat_sonic_00.png", "label": "bat_sonic_00", "duration": "0.10"},
+      {"path": "assets/generated/staged/bat/side_final/bat_sonic/bat_sonic_01.png", "label": "bat_sonic_01", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_final/bat_sonic/bat_sonic_02.png", "label": "bat_sonic_02", "duration": "0.25"},
+      {"path": "assets/generated/staged/bat/side_final/hurt/hurt_00.png", "label": "hurt_00", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_final/stun/stun_00.png", "label": "stun_00", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_final/ko/ko_00.png", "label": "ko_00", "duration": "0.35"},
+      {"path": "assets/generated/staged/bat/side_final/ko/ko_01.png", "label": "ko_01", "duration": "0.35"}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_final_mirror/wing/wing_00.png", "label": "M wing_00", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/wing/wing_00_01.png", "label": "M wing transition", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/wing/wing_01.png", "label": "M wing_01", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/wing/wing_02.png", "label": "M wing_02", "duration": "", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_dive/bat_dive_00.png", "label": "M bat_dive_00", "duration": "0.12", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_dive/bat_dive_01.png", "label": "M bat_dive_01", "duration": "0.22", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_dive/bat_dive_02.png", "label": "M bat_dive_02", "duration": "0.41", "pivot": [154, 285]}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_sonic/bat_sonic_00.png", "label": "M bat_sonic_00", "duration": "0.10", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_sonic/bat_sonic_01.png", "label": "M bat_sonic_01", "duration": "0.30", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/bat_sonic/bat_sonic_02.png", "label": "M bat_sonic_02", "duration": "0.25", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/hurt/hurt_00.png", "label": "M hurt_00", "duration": "0.30", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/stun/stun_00.png", "label": "M stun_00", "duration": "0.30", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/ko/ko_00.png", "label": "M ko_00", "duration": "0.35", "pivot": [154, 285]},
+      {"path": "assets/generated/staged/bat/side_final_mirror/ko/ko_01.png", "label": "M ko_01", "duration": "0.35", "pivot": [154, 285]}
+    ]
+  ]
+}
