@@ -13,9 +13,11 @@
   Warrior's approved side-view base is `assets/generated/base/warrior_side_base.png` (body height
   about 230px, 384x384 canvas, pivot 192,372).
 - Lina frames live in `assets/frames/lina/<action>/`; flame-form frames in
-  `assets/frames/lina/flame/<action>/`; Warrior frames in `assets/frames/warrior/<action>/`.
-- `game/data/animations.json` defines Lina's `clips`/`flame_clips` and Warrior's
-  `warrior_clips`/`warrior_frame_size`/`warrior_pivot`.
+  `assets/frames/lina/flame/<action>/`; Warrior frames in `assets/frames/warrior/<action>/`;
+  Bat frames in `assets/frames/bat/<action>/`.
+- `game/data/animations.json` defines Lina's `clips`/`flame_clips`, Warrior's
+  `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, and Bat's
+  `bat_clips`/`bat_frame_size`/`bat_pivot`.
 
 ## Frame inventory
 
@@ -23,8 +25,10 @@
   transform 6, hurt 2, KO 4.
 - Flame form (41): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2.
 - Warrior (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4.
+- Bat (14): wing 4 (shared idle/fly), bat_dive 3, bat_sonic 3, hurt 1, stun 1, KO 2.
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
-  (192,372), body about 230px.
+  (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
+  150px.
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.
 
 ## Normal frame generation
@@ -180,6 +184,32 @@ py tools/contact_sheet.py --action veno_<action> --frames assets/generated/stage
   strand; the scene draws it.
 - The generator's body-size lock is strict: reject or reuse a frame if the abdomen/head changes
   size between frames of the same clip.
+
+## Bat (2026-10-25; code/values 2026-10-26)
+
+- Approved side-view base C (streamlined glide): `assets/generated/base/bat_side_base.png`;
+  canonical source `Image/Enemy/bat-128.png`. Source canvas 384x384, runtime 192x192 via
+  `animations.json` (`bat_frame_size`), pivot (115,143) runtime, mirror pivot x 77. Body about
+  150px; hurtbox 100x66. The runtime downscale is handled by `AnimationPlayer`; do not bake a
+  second scale into the frames.
+- Frame inventory (14): wing 4 (shared `idle`/`fly`), `bat_dive` 3, `bat_sonic` 3, hurt 1,
+  stun 1, KO 2. `idle` is the 6-step ping-pong slow wing loop; `fly` is the 4-frame fast loop.
+  Only right-facing frames are stored; the runtime mirrors for left. `bat_dive` and `bat_sonic`
+  are non-looping 0.75s / 0.65s clips.
+- Runtime frames: `assets/frames/bat/wing/`, `assets/frames/bat/bat_dive/`,
+  `assets/frames/bat/bat_sonic/`, `assets/frames/bat/hurt/`, `assets/frames/bat/stun/`,
+  `assets/frames/bat/ko/`. These 14 files are approved; do not re-import or regenerate them
+  without an explicit request.
+- Tools: `tools/import_bat_side_frames.py`, `tools/contact_sheet_grid.py`,
+  `tools/preview_bat_side_wing.py`, `tools/preview_bat_side_clips.py`. Approval sheets/GIFs are
+  under `assets/generated/contact_sheets/bat_v1/`.
+- Sonic VFX is procedural: `game/projectile.py::SonicWave` draws three nested Wi-Fi/signal arcs
+  opening along the travel direction, plus an emitter dot and a short trail; `RingBurstFx`
+  provides the cast/impact flashes. The gameplay hitbox is a forward circle (+8px along travel,
+  radius 24). No sonic frames are baked into `bat_sonic_01.png`.
+- The 14 frames are 384x384 RGBA; `AnimationPlayer` downscales to 192. If a future action frame
+  drifts in body size, use the same one-time body normalization as the wing transition, not
+  per-frame repainting.
 
 ## Projectile / skill VFX (2026-10-24)
 

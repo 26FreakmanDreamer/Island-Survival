@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from .animation import AnimationPlayer
+from .bat import Bat
 from .config import ASSETS_DIR, ROOT
 from .dummy import Dummy
 from .lina import Lina
@@ -16,6 +17,7 @@ FIGHTER_CLASSES = {
     "dummy": Dummy,
     "nyra": Nyra,
     "veno": Veno,
+    "bat": Bat,
 }
 
 

@@ -1,7 +1,9 @@
 # Next Session — Bat 完整设计与接入
 
 > 日期：2026-10-25
-> 状态：**动画已完成并安装；本轮从“动画之后”开始，完成 Bat 的完整设计 + 代码/数据接入。**
+> 状态：**动画已完成并安装；2026-10-26 已完成代码/数据接入（最终沙盒：atk 10、5 只、飞行 40–420、sonic-only 随机、俯冲高度门槛）。**
+>
+> **最终实现覆盖（2026-10-26）**：本文 §3–§8 中的推荐/阶段值如与以下最终值冲突，以本节和 §11 为准：`basic_atk 10`；`count 5`；`spawn_offsets [0,-160,160,-80,80]`；`spawn_heights [180,320,240,380,280]`；`flight min 40 / max 420 / preferred 240 / vertical_speed 300 / bob 24 / bob_rate 1.5`；sonic hitbox `forward 8 / radius 24`；AI 仅 sonic 随机（0–2.5s 初始冷却 + 50% 决策门），dive 确定性且 `_dive_can_reach` 高度门槛，0.55s 群体同技能错峰。
 > 基线：`.venv/Scripts/python.exe main.py --smoke-test` → **exit 0**（2026-10-25 已核对）。
 > 阅读顺序：本文 → `docs/BAT_ANIMATION_DESIGN.md` → `instruction.docx` 的 Bat 段 → `AGENTS.md`。
 > 旧的 `docs/NEXT_SESSION_BAT.md` 仅作历史参考；其中的 128/11 帧方案、front-view、`dive 2.5s / sonic 5.0s` 冷却已被本文取代。
@@ -20,7 +22,7 @@
 确认后再按 §7 分阶段实现；每完成一个阶段跑一次 smoke。
 
 不要 commit；不要 git reset / git checkout -- . / git stash；
-不要动 Image/、instruction.docx、UI Resources/；不要改其他敌人/默认阵容，除非我明确要求。
+不要动 Image/、instruction.docx、UI Resources/；不要改其他敌人；Bat 默认 5 只已按用户要求设置。
 ```
 
 ---
@@ -132,7 +134,7 @@
 ### 3.2 本轮不做 / 不重做
 
 - 不重新生成或重画 14 帧动画；动画已批准。
-- 不改其他敌人的数值、判定、冷却、AI；不改默认阵容。
+- 不改其他敌人的数值、判定、冷却、AI；Bat 默认 5 只已按用户要求设置。
 - 不动 `Image/`、`instruction.docx`、`UI Resources/`。
 - 不 commit；不要 `git reset` / `git checkout -- .` / `git stash`。
 - 不用 pytest；验证用 `--smoke-test` + F1/F2 + 预览图。
@@ -248,18 +250,18 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
 ```json
 "bat": {
   "hp": 50,
-  "basic_atk": 20,
+  "basic_atk": 10,
   "extra_atk": 0,
   "stage_body_width": 56,
-  "move": { "walk": 300, "jump_v": 0, "gravity": 0 },
+  "move": { "walk": 300, "jump_v": 0, "gravity": 2200 },
   "hurtbox": { "standing": [100, 66], "crouching": [100, 66] },
   "flight": {
-    "min_height": 60,
-    "max_height": 280,
-    "preferred_height": 150,
-    "vertical_speed": 240,
-    "bob": 14,
-    "bob_rate": 1.8
+    "min_height": 40,
+    "max_height": 420,
+    "preferred_height": 240,
+    "vertical_speed": 300,
+    "bob": 24,
+    "bob_rate": 1.5
   },
   "ai": {
     "dive_range": 420,
@@ -272,9 +274,12 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
 }
 ```
 
+- `basic_atk` **10** 是用户 2026-10-26 指定的沙盒值（docx 原文为 20）；dive 10 = 1.0×10，sonic 12 = 1.2×10。
+- `move.gravity` 2200 只用于 KO 坠落；飞行路径不调用重力，所以不用 0。
 - `cooldowns` 必须用 docx 的 **2.0 / 10.0**，不要沿用旧推荐。
 - `hurtbox` 用 side-view 的 100×66；旧 front-view 的 60×56 作废。
 - `stage_body_width` 56 只影响 wall/block 的移动 body；Bat 飞行时 `body_half` 会走 `hurtbox_width*0.5`。
+- 5 只默认出生/巡航高度见 roster `spawn_heights`；`preferred_height` 240 只作无 heights 时的回退。
 
 ### 5.2 `game/data/attacks.json`
 
@@ -288,7 +293,7 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
   "hitstun": 0.25,
   "hitstop": 0.06,
   "events": [
-    { "t": 0.12, "until": 0.34, "type": "hitbox", "box": [0, -70, 90, 70], "knockback": 160 }
+    { "t": 0.12, "until": 0.34, "type": "hitbox", "box": [0, -70, 90, 70], "knockback": 160, "hit_fx": "bat_dive_hit" }
   ]
 }
 ```
@@ -311,6 +316,8 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
       "origin_forward": 46,
       "speed": 420,
       "range": 3000,
+      "hitbox_forward": 8,
+      "hitbox_radius": 24,
       "status": "stun",
       "status_duration": 1.0
     }
@@ -320,7 +327,8 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
 
 - `box`/`origin_height`/`origin_forward` 是 side-view 的推荐起点；代码阶段按 `bat_dive_01.png` / `bat_sonic_01.png` 的嘴/爪位置校准。
 - `range: 3000` 只是防泄漏上限；实际由“回到 owner”或 `timeout 8s` 结束。
-- 声波伤害 24 = `1.2 × 20`；stun 1s 由 `Bat.on_projectile_hit` 施加（参考 `Veno.on_projectile_hit`）。
+- 声波伤害 **12** = `1.2 × 10`；stun 1s 由 `Bat.on_projectile_hit` 施加（参考 `Veno.on_projectile_hit`）。
+- `hitbox_forward 8` / `hitbox_radius 24` 是前向圆判定（圆心沿运动方向偏移 8px、半径 24），包住 Wi-Fi 最外层弧；回程方向同时驱动图样和 hitbox。
 
 ### 5.3 `game/data/animations.json`
 
@@ -379,13 +387,15 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
   "separates": true,
   "decides_match": true,
   "flying": true,
-  "count": 1,
-  "spawn_offsets": [0]
+  "count": 5,
+  "spawn_offsets": [0, -160, 160, -80, 80],
+  "spawn_heights": [180, 320, 240, 380, 280]
 }
 ```
 
 - `flying: true` 是新字段；`scene._place_enemies` 用它分支（不要只改 `bat_spawn.y`）。
-- `count: 1` 是沙盒默认；5 只时改为 5 并补 offsets/modes。
+- 默认 **5 只**：`spawn_offsets` 控制 x，`spawn_heights` 控制出生/巡航高度；`_place_enemies` 会写入每只的 `cruise_height`。
+- `enemy_count_override` 会屏蔽 offsets/heights，单只 smoke 使用 `bat_spawn` 的 y=470（alt 150）。
 - F7 顺序由 `roster.json` 的 `enemies` 顺序决定；按 Q10 放在 Veno 后、Dummy 前。
 
 ### 5.5 `game/data/debug.json`
@@ -394,7 +404,7 @@ Bat 放在 F7 的哪个位置？是否同时接入 `island-bat-cave-arena-16x9.p
 "bat_spawn": [1000, 470]
 ```
 
-- `ground_y = 620`，470 = 离地约 150px，与 `flight.preferred_height` 对齐。
+- `ground_y = 620`，470 = 离地约 150px。它是基础/单只 spawn；默认 5 只用 roster 的 `spawn_heights`。
 - side-view 的 pivot 是身体底边；`enemy.y = 470` 即身体底边在 470。
 
 ---
@@ -529,16 +539,18 @@ else:
 
 | 检查 | 预期 |
 |---|---|
-| `bat_present` | name="Bat"、HP=50、atk=20、`skill_slots=["bat_dive","bat_sonic",null,null]` |
-| `bat_dive_ok` | 一次俯冲命中造成 **20** 伤害 |
-| `bat_sonic_ok` | 声波命中造成 **24** 伤害 + `statuses.has("stun")`，stun 约 1s |
+| `bat_present` | name="Bat"、HP=50、atk=10、`skill_slots=["bat_dive","bat_sonic",null,null]` |
+| `bat_dive_ok` | 一次俯冲命中造成 **10** 伤害 |
+| `bat_dive_hit_fx_ok` | 俯冲命中派发 `bat_dive_hit` FX |
+| `bat_sonic_ok` | 声波命中造成 **12** 伤害 + `statuses.has("stun")`，stun 约 1s |
 | `bat_sonic_return_ok` | 去程命中后 phase 切到 return，最终回到发射者并 `alive=False` |
-| `bat_sonic_wall_return_ok` | 去程未命中 → 撞墙 → 回程命中玩家（24 + stun）→ 穿过 → 回到 bat 消失 |
+| `bat_sonic_wall_return_ok` | 去程未命中 → 撞墙 → 回程命中玩家（12 + stun）→ 穿过 → 回到 bat 消失 |
+| `bat_sonic_hitbox_ok` | 前向圆 +8/r24 能碰到旧 36×36 之外的弧前缘 |
 | `bat_sonic_lock_ok` | 施法 0.65s 内 bat 的 x/y 不变；之后恢复飞行 |
-| `bat_flight_ok` | 无重力：连续 tick 后仍 `on_ground=False` 且高度在 `[min,max]`；水平移动正常 |
+| `bat_flight_ok` | 无重力：连续 tick 后仍 `on_ground=False` 且高度在 `[40,420]`；水平移动正常 |
 | `bat_slots_ok` | V/C 触发俯冲/声波；X/Z no-op |
 | `bat_missing_frames` | **0**（14 帧已安装） |
-| `bat_group_ok`（若 count=5） | 5 只全部生成；全部死亡后 `match_over == "WIN"` |
+| `bat_group_ok`（count=5） | 5 只按不同 x/y 生成；独立冷却；全部死亡后 `match_over == "WIN"`（子检查 `bat_group_spawn_ok` / `cooldowns` / `win`） |
 
 ### 8.3 测试隔离
 
@@ -588,7 +600,7 @@ else:
 - 不要用 pytest；验证用 `--smoke-test` + F1/F2 + 预览图。
 - 不要写日志文件。
 - F5 只热重载 JSON/PNG；改 `game/*.py`、`config.py`、`game/fx.py` 常量需要重启 Python。
-- 不要为了 Bat 改默认阵容；默认仍是 Lina vs 3 Venos，直到用户明确要求。
+- 默认对局是 Lina vs 5 Bats（用户 2026-10-26 指定）；不要再改其他敌人或默认阵容。
 - 不要改其他敌人的伤害/判定/冷却/AI。
 
 ---
@@ -596,21 +608,35 @@ else:
 ## 11. 本次 session 结论（下个 session 填写）
 
 ```text
-Q1 数量：
-Q2 飞行：
-Q3 技能 1：
-Q4 技能 2 锁定：
-Q5 返回/消失：
-Q6 墙壁/速度/超时：
-Q7 AI/冷却：
-Q8 hurtbox/pivot：
-Q9 声波 VFX/嘴部锚点：
-Q10 F7/Cave：
-Q11 5 只编组：
-Q12 范围/文档：
+Q1 数量：默认对局 5 只（debug.roster.default_enemy="bat"、roster bat.count=5）；F7 顺序 Warrior→Veno→Bat→Dummy；spawn_offsets [0,-160,160,-80,80]，spawn_heights [180,320,240,380,280]。
+Q2 飞行：自由 2D、无重力；高度 40–420，preferred 240，bob 24 @1.5 rad/s，vertical_speed 300；x 夹 stage.walls；5 只巡航在各自出生高度。用户 override：block 不忽略（本体与声波都按真实矩形碰撞）。
+Q3 技能 1：俯冲近战，10 伤害，冷却 2s；方向在攻击开始时锁定（不追踪），hitbox 跟随本体；`_dive_can_reach` 用实际 hitbox 路径判断当前高度/距离能否命中，不能则继续飞行；dive 不使用随机。
+Q4 技能 2 锁定：只锁 0.65s 施法动作；声波飞出后 Bat 恢复飞行。
+Q5 返回/消失：追踪 owner 当前位置，≤16px 消失；owner 死亡后再飞最多 0.5s；每次声波最多一次伤害；stun source "bat_sonic"（覆盖刷新，不叠加）；回程方向同时驱动图样与 hitbox。
+Q6 墙壁/速度/超时：左右墙/顶部/地面 + **block 实际矩形**反弹；speed 420；timeout 8s；range 3000 只作泄漏上限。
+Q7 AI/冷却：dive 2.0s / sonic 10.0s，每实例独立；dive_range 420、sonic_min_range 120、sonic_range 700、standoff 220、decision_interval 0.15。**random 只控制 sonic**（0–2.5s 随机初始冷却 + 50% 决策释放）；dive 确定性且高度门槛；0.55s 群体同技能错峰。
+Q8 hurtbox/pivot：hurtbox 100×66（x 居中、底边在 y）、runtime pivot (115,143)、stage_body_width 56；preferred 240。
+Q9 声波 VFX/嘴部锚点：程序化 Wi-Fi 三层弧 + 发射点 + 拖尾；origin_forward 46、origin_height 30；hitbox 前向圆 +8/r24，随实际运动方向（含回程）。
+Q10 F7/Cave：Bat 插在 Veno 后、Dummy 前；Cave 背景本轮不接入。
+Q11 5 只编组：count=5；spawn_offsets + spawn_heights；独立冷却；`bat_group_*` smoke；群体平衡/手感待实测。sonic 只随机、dive 高度门槛已缓解同刻同技能与高空空俯冲。
+Q12 范围/文档：数据 + game/bat.py + SonicWave + scene/config/roster + smoke + 文档；不 commit；未动 Image/、instruction.docx、UI Resources/、其他敌人。
+
 已完成：
-smoke：
+- game/bat.py（飞行/高度/AI/俯冲高度门槛/施法锁定/冷却/hurt/stun/KO/reset）
+- game/projectile.py::SonicWave（去程/回程/墙+block 反弹/前向圆 hitbox/单次伤害/owner 追踪/回程方向）
+- stats/attacks/animations/roster/debug + config/roster/scene 注册
+- 5 只默认编组、spawn_heights、独立冷却、群体 smoke
+- scene 飞行生成/高度、sonic 生成/cast/impact FX、bat_dive_hit FX
+- main.py Bat smoke；F7 顺序更新；docs 更新
+
+smoke：.venv/Scripts/python.exe main.py --smoke-test → exit 0；bat_* flags 全 True（present/default/flight/dive/dive_fx/slots/hurt/stun/ko/win/sonic/cast/impact/hitbox/return/wall_return/block_return/lock/count/group_spawn/group_cooldowns/group_win/missing），现有 flags 不回归。
+
 未完成/风险：
+- 5 只实际平衡/手感（atk 10、冷却、巡航高度、sonic 随机概率仍可调）。
+- 巡航高度 180–380 时 Lina 地面拳/踢大多够不到，需要跳跃或趁俯冲窗口；若手感不对优先调 spawn_heights/flight.preferred_height，不改帧。
+- block 只有 60px 高；正常巡航在其上方，低空/俯冲/下压声波才碰到。
+- docx 原文 atk 20、n=5；沙盒按用户要求使用 atk 10、count 5（instruction.docx 未改动）。
+- Bat Cave 背景未接入。
 ```
 
 ---

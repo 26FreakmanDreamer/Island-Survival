@@ -210,6 +210,45 @@
       "durations": [0.16, 0.16, 0.33]
     }
   },
+  "bat_frame_size": [192, 192],
+  "bat_pivot": [115, 143],
+  "bat_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["wing/wing_00.png", "wing/wing_00_01.png", "wing/wing_01.png", "wing/wing_02.png", "wing/wing_01.png", "wing/wing_00_01.png"],
+      "durations": [0.22, 0.22, 0.22, 0.22, 0.22, 0.22]
+    },
+    "fly": {
+      "loop": true,
+      "frames": ["wing/wing_00.png", "wing/wing_00_01.png", "wing/wing_01.png", "wing/wing_02.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10]
+    },
+    "bat_dive": {
+      "loop": false,
+      "frames": ["bat_dive/bat_dive_00.png", "bat_dive/bat_dive_01.png", "bat_dive/bat_dive_02.png"],
+      "durations": [0.12, 0.22, 0.41]
+    },
+    "bat_sonic": {
+      "loop": false,
+      "frames": ["bat_sonic/bat_sonic_00.png", "bat_sonic/bat_sonic_01.png", "bat_sonic/bat_sonic_02.png"],
+      "durations": [0.10, 0.30, 0.25]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png"],
+      "durations": [0.30]
+    },
+    "stun": {
+      "loop": false,
+      "frames": ["stun/stun_00.png"],
+      "durations": [0.30]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png"],
+      "durations": [0.35, 0.35]
+    }
+  },
   "flame_clips": {
     "idle": {
       "loop": true,

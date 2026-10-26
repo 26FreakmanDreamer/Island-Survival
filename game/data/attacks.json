@@ -223,5 +223,35 @@
        "origin_height": 50, "speed": 480, "range": 800, "knockback": 60,
        "status": "stun", "status_duration": 1.0}
     ]
+  },
+  "bat_dive": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.75,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.25,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.12, "until": 0.34, "type": "hitbox", "box": [0, -70, 90, 70],
+       "knockback": 160, "hit_fx": "bat_dive_hit"}
+    ]
+  },
+  "bat_sonic": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.65,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.1,
+    "hitstop": 0.05,
+    "events": [
+      {"t": 0.24, "type": "projectile", "id": "bat_sonic", "projectile": "sonic_wave",
+       "origin_height": 30, "origin_forward": 46, "speed": 420, "range": 3000,
+       "hitbox_forward": 8, "hitbox_radius": 24,
+       "status": "stun", "status_duration": 1.0}
+    ]
   }
 }

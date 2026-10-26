@@ -22,7 +22,7 @@ from .fx import (
 from .hud import HUD
 from .input import InputState
 from .particles import ParticleSystem, draw_knock_up_vortex
-from .projectile import AimedProjectile, AxeThrow, QWave, SwordWave
+from .projectile import AimedProjectile, AxeThrow, QWave, SonicWave, SwordWave
 from .roster import create_fighter
 from .stage import Stage
 from .slash_fx import SlashEffect
@@ -124,7 +124,7 @@ class ArenaScene:
         return max(1, int(self.enemy_spec.get("count", 1)))
 
     def _place_enemies(self) -> None:
-        """Apply per-index spawn offsets and ground/hover modes."""
+        """Apply per-index spawn offsets, flying heights and ground/hover modes."""
         if not self.enemies:
             return
         spawn_key = str(self.enemy_spec.get("spawn", "veno_spawn"))
@@ -133,17 +133,26 @@ class ArenaScene:
             # Isolated smoke checks use the base spawn and stay on the ground.
             offsets: list = []
             modes: list = []
+            heights: list = []
         else:
             offsets = list(self.enemy_spec.get("spawn_offsets", []))
             modes = list(self.enemy_spec.get("spawn_modes", []))
+            heights = list(self.enemy_spec.get("spawn_heights", []))
+        # Flying enemies always spawn airborne. This branch deliberately sits
+        # outside the enemy_count_override suppression so isolated smoke
+        # checks still get a flier rather than a grounded Bat.
+        flying_spec = bool(self.enemy_spec.get("flying", False))
         low, high = self.stage.walls
         for index, enemy in enumerate(self.enemies):
             offset = float(offsets[index]) if index < len(offsets) else 0.0
             x = base_x + offset
-            enemy.x = max(
-                low + enemy.stage_half_width,
-                min(high - enemy.stage_half_width, x),
+            is_flying = flying_spec or bool(getattr(enemy, "flying", False))
+            half = (
+                enemy.hurtbox_width * 0.5
+                if is_flying
+                else enemy.stage_half_width
             )
+            enemy.x = max(low + half, min(high - half, x))
             enemy.y = base_y
             enemy.vx = 0.0
             enemy.vy = 0.0
@@ -151,7 +160,33 @@ class ArenaScene:
             if hasattr(enemy, "mode"):
                 enemy.mode = "ground"
             enemy.state = FighterState.IDLE
-            if index < len(modes) and modes[index] == "hover" and hasattr(
+            if is_flying:
+                enemy.on_ground = False
+                enemy.vy = 0.0
+                altitude = None
+                if index < len(heights):
+                    altitude = float(heights[index])
+                    if hasattr(enemy, "flight_min_height"):
+                        altitude = max(
+                            float(enemy.flight_min_height),
+                            min(float(enemy.flight_max_height), altitude),
+                        )
+                if altitude is not None:
+                    enemy.y = self.stage.ground_y - altitude
+                    if hasattr(enemy, "cruise_height"):
+                        enemy.cruise_height = altitude
+                elif hasattr(enemy, "cruise_height"):
+                    enemy.cruise_height = max(
+                        0.0, self.stage.ground_y - base_y
+                    )
+                if hasattr(enemy, "bob_phase"):
+                    enemy.bob_phase = index * 1.1
+                if hasattr(enemy, "mode"):
+                    enemy.mode = "fly"
+                enemy.state = FighterState.AIR
+                if enemy.anim is not None:
+                    enemy.anim.set_clip("fly")
+            elif index < len(modes) and modes[index] == "hover" and hasattr(
                 enemy, "hover_base"
             ):
                 enemy.mode = "hover"
@@ -542,6 +577,19 @@ class ArenaScene:
                 x + ux * 10.0, y + uy * 10.0, (220, 255, 200), 3,
                 speed=90.0, life=(0.10, 0.18), gravity=90.0,
             )
+        elif visual_kind == "bat_sonic":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (210, 190, 255), life=0.14,
+                    start_radius=6.0, end_radius=30.0, width=2,
+                    sparks=4, spark_color=(245, 235, 255),
+                    kind="bat_sonic_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (235, 220, 255), 4,
+                speed=120.0, life=(0.10, 0.18),
+            )
 
     def spawn_projectile_impact(self, projectile, target) -> None:
         """Emit the elemental hit effect at the same anchor as the hit particles."""
@@ -600,19 +648,46 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (255, 224, 90), 3, speed=120.0, life=(0.10, 0.20)
             )
+        elif visual_kind == "bat_sonic":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (210, 190, 255), life=0.18,
+                    start_radius=10.0, end_radius=44.0, width=3,
+                    sparks=5, spark_color=(245, 235, 255),
+                    kind="bat_sonic_impact",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (230, 215, 255), 8, speed=180.0,
+            )
 
     def spawn_hit_fx(self, kind: str, attacker, target, event: dict | None = None) -> None:
         """Visual-only hook for melee hit feedback; unknown kinds are ignored."""
-        if kind != "veno_bite_hit" or target is None:
+        if target is None:
             return
         facing = 1 if attacker.facing >= 0 else -1
         x = float(target.x) - facing * float(target.hurtbox_width) * 0.5
-        y = float(attacker.y) - 40.0
-        self.fx_effects.append(BiteArcFx(x, y, facing, life=0.12))
-        self.particles.emit_burst(
-            x, y, (150, 240, 120), 3, speed=110.0,
-            life=(0.08, 0.16), radius=(1.5, 3.0), gravity=160.0,
-        )
+        if kind == "veno_bite_hit":
+            y = float(attacker.y) - 40.0
+            self.fx_effects.append(BiteArcFx(x, y, facing, life=0.12))
+            self.particles.emit_burst(
+                x, y, (150, 240, 120), 3, speed=110.0,
+                life=(0.08, 0.16), radius=(1.5, 3.0), gravity=160.0,
+            )
+        elif kind == "bat_dive_hit":
+            y = float(attacker.y) - 50.0
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (220, 190, 255), life=0.12,
+                    start_radius=6.0, end_radius=28.0, width=2,
+                    sparks=3, spark_color=(245, 235, 255),
+                    kind="bat_dive_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (235, 220, 255), 4, speed=140.0,
+                life=(0.08, 0.16), gravity=120.0,
+            )
 
     def spawn_slash_effect(
         self,
@@ -661,7 +736,8 @@ class ArenaScene:
             )
         elif projectile_kind in ("venom_glob", "web_bolt"):
             origin_height = float(event.get("origin_height", 100.0))
-            origin_x = attacker.x + direction * 24.0
+            origin_forward = float(event.get("origin_forward", 24.0))
+            origin_x = attacker.x + direction * origin_forward
             origin_y = attacker.y - origin_height
             if target is not None:
                 aim_x = target.x
@@ -693,6 +769,47 @@ class ArenaScene:
                 status=event.get("status"),
                 status_duration=float(event.get("status_duration", 0.0)),
                 status_dps_pct=float(event.get("status_dps_pct", 0.0)),
+            )
+        elif projectile_kind == "sonic_wave":
+            origin_height = float(event.get("origin_height", 30.0))
+            origin_forward = float(event.get("origin_forward", 46.0))
+            origin_x = attacker.x + direction * origin_forward
+            origin_y = attacker.y - origin_height
+            if target is not None:
+                aim_x = target.x
+                aim_y = target.y - target.hurtbox_dims[1] * 0.5
+            else:
+                aim_x = origin_x + direction * 320.0
+                aim_y = origin_y
+            distance = math.hypot(aim_x - origin_x, aim_y - origin_y)
+            if distance < 1e-6:
+                ux, uy = float(direction), 0.0
+            else:
+                ux = (aim_x - origin_x) / distance
+                uy = (aim_y - origin_y) / distance
+            projectile = SonicWave(
+                owner=attacker,
+                target=target,
+                x=origin_x,
+                y=origin_y,
+                ux=ux,
+                uy=uy,
+                speed=float(event.get("speed", 420.0)),
+                max_range=float(event.get("range", 3000.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                status=event.get("status"),
+                status_duration=float(event.get("status_duration", 0.0)),
+                radius=18.0,
+                return_height=origin_height,
+                hitbox_forward=float(event.get("hitbox_forward", 8.0)),
+                hitbox_radius=float(event.get("hitbox_radius", 24.0)),
             )
         elif projectile_kind == "axe":
             projectile = AxeThrow(

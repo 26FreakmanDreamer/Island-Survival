@@ -12,6 +12,7 @@ from game.config import FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.fx import missing_lina_q_assets, missing_veno_web_asset
 from game.particles import knock_up_vortex_intensity
+from game.projectile import SonicWave
 from game.status import StatusSet
 from game.scene import DEBUG_KEYS, ArenaScene
 from game.slash_fx import missing_frames as missing_slash_fx_frames
@@ -52,6 +53,9 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # Isolate the existing single-enemy checks; the group spawn is verified
     # separately at the end of the Veno phase.
     scene.enemy_count_override = 1
+    bat_default_ok = (
+        scene.enemy_id == "bat" and getattr(scene.enemy, "name", "") == "Bat"
+    )
     startup_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
     )
@@ -1280,6 +1284,371 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("warrior")
     scene.reset()
 
+    # --- Phase E: Bat ---
+    scene.enemy_count_override = 1
+    scene.set_enemy("bat")
+    scene.reset()
+    bat = scene.enemy
+    bat_present = (
+        bat.name == "Bat"
+        and bat.max_hp == 50.0
+        and bat.basic_atk == 10.0
+        and bat.extra_atk == 0.0
+        and bat.skill_slots == ["bat_dive", "bat_sonic", None, None]
+    )
+    bat_missing = len(bat.anim.missing_paths())
+    bat_count_ok = (
+        scene.store.roster["enemies"]["bat"]["count"] == 5
+        and len(scene.store.roster["enemies"]["bat"]["spawn_offsets"]) >= 5
+    )
+
+    # Flight: no gravity, altitude band, and horizontal pursuit while the AI
+    # is on. Keep both skills on cooldown so this check is movement-only.
+    bat.ai_enabled = True
+    bat.sonic_cd = 999.0
+    bat.dive_cd = 999.0
+    scene.player.x = 200.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.hp = scene.player.max_hp
+    scene.player.statuses.clear()
+    bat.x = 1000.0
+    bat.y = bat.flight_max_y
+    bat.vx = 0.0
+    bat.vy = 0.0
+    bat.hp = bat.max_hp
+    bat.statuses.clear()
+    flight_start_x = bat.x
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    bat_flight_ok = (
+        not bat.on_ground
+        and bat.flight_min_y - 0.5 <= bat.y <= bat.flight_max_y + 0.5
+        and bat.x < flight_start_x - 20.0
+        and bat.flight_max_height >= 420.0
+        and bat.flight_min_height <= 40.0
+    )
+
+    # Dive: locked direction toward the player's chest, hitbox follows the body.
+    scene.stage.set_blocks_enabled(False)
+    scene.player.x = 700.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.hp = scene.player.max_hp
+    scene.player.statuses.clear()
+    bat.ai_enabled = False
+    bat.x = 900.0
+    bat.y = scene.stage.ground_y - 150.0
+    bat.vx = 0.0
+    bat.vy = 0.0
+    bat.hp = bat.max_hp
+    bat.statuses.clear()
+    bat.dive_cd = 0.0
+    bat.sonic_cd = 0.0
+    dive_hp_before = scene.player.hp
+    bat_force_ok = bat.force_attack(scene, scene.player, "bat_dive")
+    bat_dive_hit_fx_ok = False
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+        if any(effect.kind == "bat_dive_hit" for effect in scene.fx_effects):
+            bat_dive_hit_fx_ok = True
+    bat_dive_ok = (
+        bat_force_ok
+        and abs((dive_hp_before - scene.player.hp) - 10.0) < 1e-6
+        and bat.dive_cd > 0.0
+    )
+
+    # V/C/X/Z map to dive/sonic/empty/empty.
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = False
+    scene.player.x = 600.0
+    bat.x = 900.0
+    bat.y = scene.stage.ground_y - 150.0
+    bat_v_ok = bat.force_skill(scene, scene.player, 0)
+    bat_v_id = bat.attack_id
+    bat_c_ok = bat.force_skill(scene, scene.player, 1)
+    bat_c_id = bat.attack_id
+    bat_x_ok = not bat.force_skill(scene, scene.player, 2)
+    bat_z_ok = not bat.force_skill(scene, scene.player, 3)
+    bat_slots_ok = (
+        bat_v_ok
+        and bat_v_id == "bat_dive"
+        and bat_c_ok
+        and bat_c_id == "bat_sonic"
+        and bat_x_ok
+        and bat_z_ok
+    )
+
+    # Sonic: 24 damage + 1s stun, then return to the owner and die.
+    scene.stage.set_blocks_enabled(False)
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = False
+    scene.player.x = 500.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.hp = scene.player.max_hp
+    scene.player.statuses.clear()
+    bat.x = 900.0
+    bat.y = scene.stage.ground_y - 150.0
+    bat.vx = 0.0
+    bat.vy = 0.0
+    bat.hp = bat.max_hp
+    bat.statuses.clear()
+    sonic_hp_before = scene.player.hp
+    bat.force_attack(scene, scene.player, "bat_sonic")
+    sonic_stun_seen = False
+    sonic_stun_remaining = 0.0
+    sonic_return_seen = False
+    bat_sonic_cast_ok = False
+    bat_sonic_impact_ok = False
+    sonic_wave = None
+    for _ in range(240):
+        scene.tick(FIXED_DT)
+        if any(effect.kind == "bat_sonic_cast" for effect in scene.fx_effects):
+            bat_sonic_cast_ok = True
+        if scene.player.hp < sonic_hp_before:
+            bat_sonic_impact_ok = bat_sonic_impact_ok or any(
+                effect.kind == "bat_sonic_impact"
+                for effect in scene.fx_effects
+            )
+        if sonic_wave is None and scene.projectiles:
+            sonic_wave = scene.projectiles[0]
+        if sonic_wave is not None:
+            if sonic_wave.phase == "return":
+                sonic_return_seen = True
+            if scene.player.statuses.has("stun") and not sonic_stun_seen:
+                sonic_stun_seen = True
+                effect = scene.player.statuses.get("stun")
+                sonic_stun_remaining = effect.remaining if effect else 0.0
+            if not sonic_wave.alive:
+                break
+    bat_sonic_ok = (
+        abs((sonic_hp_before - scene.player.hp) - 12.0) < 1e-6
+        and sonic_stun_seen
+        and 0.5 <= sonic_stun_remaining <= 1.0
+    )
+    bat_sonic_return_ok = (
+        sonic_wave is not None
+        and sonic_return_seen
+        and not sonic_wave.alive
+    )
+
+    # Hitbox: a forward circle +8/r24 reaches the leading WiFi arc, which
+    # the old centered 36x36 square could not cover.
+    hitbox_probe = SonicWave(
+        owner=bat,
+        target=scene.player,
+        x=760.0,
+        y=440.0,
+        ux=-1.0,
+        uy=0.0,
+        speed=420.0,
+        max_range=3000.0,
+        damage=12.0,
+        knockback=0.0,
+        hitstun=0.1,
+        hitstop=0.05,
+        status="stun",
+        status_duration=1.0,
+        radius=18.0,
+        return_height=30.0,
+        hitbox_forward=8.0,
+        hitbox_radius=24.0,
+    )
+    old_hitbox = pygame.Rect(742, 422, 36, 36)
+    arc_probe = pygame.Rect(732, 438, 2, 4)
+    bat_sonic_hitbox_ok = (
+        abs(hitbox_probe.hitbox_forward - 8.0) < 1e-6
+        and abs(hitbox_probe.hitbox_radius - 24.0) < 1e-6
+        and hitbox_probe.hitbox_hits(arc_probe)
+        and not old_hitbox.colliderect(arc_probe)
+    )
+
+    # Cast lock: 0.65s of no movement, then the AI resumes flying.
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = True
+    scene.player.x = 500.0
+    bat.x = 900.0
+    bat.y = scene.stage.ground_y - 150.0
+    bat.vx = 0.0
+    bat.vy = 0.0
+    bat.force_attack(scene, scene.player, "bat_sonic")
+    lock_x, lock_y = bat.x, bat.y
+    for _ in range(36):
+        scene.tick(FIXED_DT)
+    bat_sonic_lock_ok = (
+        abs(bat.x - lock_x) < 0.01 and abs(bat.y - lock_y) < 0.01
+    )
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    bat_sonic_lock_ok = bat_sonic_lock_ok and (
+        abs(bat.x - lock_x) > 1.0 or abs(bat.y - lock_y) > 1.0
+    )
+
+    # Wall bounce: miss outbound, bounce off the right wall, hit on the way home.
+    scene.stage.set_blocks_enabled(False)
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = False
+    scene.player.x = 1100.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.hp = scene.player.max_hp
+    scene.player.statuses.clear()
+    bat.x = 1000.0
+    bat.y = scene.stage.ground_y - 150.0
+    wall_wave = SonicWave(
+        owner=bat,
+        target=scene.player,
+        x=1150.0,
+        y=470.0,
+        ux=1.0,
+        uy=0.0,
+        speed=420.0,
+        max_range=3000.0,
+        damage=12.0,
+        knockback=0.0,
+        hitstun=0.1,
+        hitstop=0.05,
+        status="stun",
+        status_duration=1.0,
+        radius=18.0,
+        return_height=30.0,
+    )
+    wall_hp_before = scene.player.hp
+    wall_return_seen = False
+    wall_hit_seen = False
+    for _ in range(60):
+        wall_wave.update(FIXED_DT, scene)
+        if wall_wave.phase == "return":
+            wall_return_seen = True
+        if scene.player.hp < wall_hp_before:
+            wall_hit_seen = True
+        if not wall_wave.alive:
+            break
+    bat_sonic_wall_return_ok = (
+        wall_return_seen
+        and wall_hit_seen
+        and abs((wall_hp_before - scene.player.hp) - 12.0) < 1e-6
+        and not wall_wave.alive
+    )
+
+    # Block bounce: real block rect, low path, then return without damaging
+    # the player who is standing behind the block.
+    scene.stage.set_blocks_enabled(True)
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = False
+    scene.player.x = 1000.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.hp = scene.player.max_hp
+    scene.player.statuses.clear()
+    bat.x = 500.0
+    bat.y = scene.stage.ground_y - 150.0
+    block_wave = SonicWave(
+        owner=bat,
+        target=scene.player,
+        x=700.0,
+        y=555.0,
+        ux=1.0,
+        uy=0.0,
+        speed=420.0,
+        max_range=3000.0,
+        damage=12.0,
+        knockback=0.0,
+        hitstun=0.1,
+        hitstop=0.05,
+        status="stun",
+        status_duration=1.0,
+        radius=18.0,
+        return_height=30.0,
+    )
+    block_hp_before = scene.player.hp
+    block_return_seen = False
+    for _ in range(90):
+        block_wave.update(FIXED_DT, scene)
+        if block_wave.phase == "return":
+            block_return_seen = True
+        if not block_wave.alive:
+            break
+    bat_sonic_block_return_ok = (
+        block_return_seen
+        and not block_wave.alive
+        and scene.player.hp == block_hp_before
+    )
+
+    # Hurt/stun stay airborne; only KO falls and switches to the landed frame.
+    scene.reset()
+    bat = scene.enemy
+    bat.ai_enabled = False
+    bat.take_hit(5.0, 100.0, 0.25, 1)
+    bat_hurt_airborne_ok = (
+        bat.state == FighterState.HURT
+        and not bat.on_ground
+        and bat.anim.clip_name == "hurt"
+    )
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    bat.statuses.add("stun", 0.5, source="debug")
+    scene.tick(FIXED_DT)
+    bat_stun_airborne_ok = (
+        bat.anim.clip_name == "stun"
+        and not bat.on_ground
+        and bat.statuses.has("stun")
+    )
+    bat.hp = 1.0
+    bat.take_hit(999.0, 0.0, 0.2, 1)
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+        if bat.on_ground:
+            break
+    bat_ko_ok = (
+        bat.state == FighterState.KO
+        and bat.on_ground
+        and bat.anim.clip_name == "ko"
+        and bat.anim.frame_index == 1
+    )
+    bat_win_ok = scene.match_over == "WIN"
+    scene.stage.set_blocks_enabled(True)
+
+    # Five-bat group: count=5, five distinct offsets, independent cooldowns,
+    # and all-dead WIN.
+    scene.enemy_count_override = None
+    scene.set_enemy("warrior")
+    scene.set_enemy("bat")
+    scene.reset()
+    bat_group = list(scene.enemies)
+    bat_group_spawn_ok = (
+        len(bat_group) == 5
+        and all(not enemy.on_ground for enemy in bat_group)
+        and len({round(enemy.x) for enemy in bat_group}) == 5
+        and len({round(enemy.y) for enemy in bat_group}) == 5
+        and max(enemy.hover_height for enemy in bat_group) >= 360.0
+        and min(enemy.hover_height for enemy in bat_group) <= 200.0
+    )
+    for enemy in bat_group:
+        enemy.sonic_cd = 0.0
+    bat_group[0].force_attack(scene, scene.player, "bat_sonic")
+    bat_group_cooldowns_ok = (
+        bat_group[0].skill_remaining("bat_sonic") > 5.0
+        and all(
+            enemy.skill_remaining("bat_sonic") == 0.0
+            for enemy in bat_group[1:]
+        )
+    )
+    for enemy in bat_group:
+        enemy.hp = 0.0
+    scene.tick(FIXED_DT)
+    bat_group_win_ok = scene.match_over == "WIN"
+    bat_group_ok = (
+        bat_group_spawn_ok
+        and bat_group_cooldowns_ok
+        and bat_group_win_ok
+    )
+
+    scene.enemy_count_override = 1
+    scene.set_enemy("warrior")
+    scene.reset()
+
     scene.set_character("lina")
     scene.set_enemy("warrior")
     scene.reset()
@@ -1362,6 +1731,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.handle_debug_key(pygame.K_F7)
     f7_cycle_ok = scene.enemy_id == "veno"
     scene.handle_debug_key(pygame.K_F7)
+    f7_bat_ok = scene.enemy_id == "bat"
+    scene.handle_debug_key(pygame.K_F7)
     f7_dummy_ok = scene.enemy_id == "dummy"
     b_before = scene.stage.blocks_enabled
     scene.handle_debug_key(pygame.K_b)
@@ -1405,6 +1776,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and b_preserved_ok
         and switch_clears_ok
         and f7_cycle_ok
+        and f7_bat_ok
         and f7_dummy_ok
         and b_key_ok
         and lock_switch_off_ok
@@ -1472,6 +1844,24 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"veno_group_ok={veno_group_ok} "
         f"veno_group_cooldowns_ok={veno_group_cooldowns_ok} "
         f"veno_missing_frames={veno_missing} "
+        f"bat_present={bat_present} bat_default_ok={bat_default_ok} "
+        f"bat_flight_ok={bat_flight_ok} bat_dive_ok={bat_dive_ok} "
+        f"bat_dive_hit_fx_ok={bat_dive_hit_fx_ok} "
+        f"bat_slots_ok={bat_slots_ok} bat_hurt_airborne_ok={bat_hurt_airborne_ok} "
+        f"bat_stun_airborne_ok={bat_stun_airborne_ok} bat_ko_ok={bat_ko_ok} "
+        f"bat_win_ok={bat_win_ok} bat_sonic_ok={bat_sonic_ok} "
+        f"bat_sonic_cast_ok={bat_sonic_cast_ok} "
+        f"bat_sonic_impact_ok={bat_sonic_impact_ok} "
+        f"bat_sonic_hitbox_ok={bat_sonic_hitbox_ok} "
+        f"bat_sonic_return_ok={bat_sonic_return_ok} "
+        f"bat_sonic_wall_return_ok={bat_sonic_wall_return_ok} "
+        f"bat_sonic_block_return_ok={bat_sonic_block_return_ok} "
+        f"bat_sonic_lock_ok={bat_sonic_lock_ok} bat_count_ok={bat_count_ok} "
+        f"bat_group_ok={bat_group_ok} "
+        f"bat_group_spawn_ok={bat_group_spawn_ok} "
+        f"bat_group_cooldowns_ok={bat_group_cooldowns_ok} "
+        f"bat_group_win_ok={bat_group_win_ok} "
+        f"bat_missing_frames={bat_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -1557,6 +1947,27 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and veno_group_ok
         and veno_group_cooldowns_ok
         and veno_missing == 0
+        and bat_present
+        and bat_default_ok
+        and bat_flight_ok
+        and bat_dive_ok
+        and bat_dive_hit_fx_ok
+        and bat_slots_ok
+        and bat_hurt_airborne_ok
+        and bat_stun_airborne_ok
+        and bat_ko_ok
+        and bat_win_ok
+        and bat_sonic_ok
+        and bat_sonic_cast_ok
+        and bat_sonic_impact_ok
+        and bat_sonic_hitbox_ok
+        and bat_sonic_return_ok
+        and bat_sonic_wall_return_ok
+        and bat_sonic_block_return_ok
+        and bat_sonic_lock_ok
+        and bat_count_ok
+        and bat_group_ok
+        and bat_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok

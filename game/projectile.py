@@ -524,3 +524,460 @@ class AimedProjectile:
             (center - radius * 0.7, center), (center + radius * 0.7, center), 1,
         )
         surface.blit(image, (round(self.x - size * 0.5), round(self.y - size * 0.5)))
+
+
+class SonicWave:
+    """Bat's sonic wave: fly out, bounce, return to the owner, hit once.
+
+    The wave is deliberately not an AimedProjectile: it must pass through
+    the player on the return trip, home on the owner's current position and
+    carry its own ``bat_sonic`` visual kind.
+    """
+
+    kind = "sonic_wave"
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        ux: float,
+        uy: float,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        status: str | None = None,
+        status_duration: float = 0.0,
+        radius: float = 18.0,
+        return_height: float = 30.0,
+        hitbox_forward: float = 8.0,
+        hitbox_radius: float = 24.0,
+    ) -> None:
+        length = math.hypot(ux, uy)
+        if length < 1e-6:
+            ux, uy, length = 1.0, 0.0, 1.0
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.ux = ux / length
+        self.uy = uy / length
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.traveled = 0.0
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.status = status
+        self.status_duration = float(status_duration)
+        self.radius = float(radius)
+        self.return_height = float(return_height)
+        self.hitbox_forward = float(hitbox_forward)
+        self.hitbox_radius = float(hitbox_radius)
+        # dir_* is the current travel direction: fixed while outbound, then
+        # re-aimed at the owner on the return leg so the arcs and hitbox both
+        # point where the wave is actually going.
+        self.dir_x = self.ux
+        self.dir_y = self.uy
+        self.direction = 1 if self.ux >= 0.0 else -1
+        self.visual_kind = "bat_sonic"
+        self.hit_color = (210, 190, 255)
+        self.flame_bonus = 0.0
+        self.phase = "out"
+        self.hit_out = False
+        self.hit_return = False
+        self.age = 0.0
+        self.timeout = 8.0
+        self.owner_dead_time = 0.0
+        self.alive = True
+        self._sync_rect()
+
+    def hitbox_center(self) -> tuple[float, float]:
+        """Circle centre, pushed forward along the current travel direction."""
+        return (
+            self.x + self.dir_x * self.hitbox_forward,
+            self.y + self.dir_y * self.hitbox_forward,
+        )
+
+    @staticmethod
+    def _circle_hits_rect(
+        cx: float,
+        cy: float,
+        radius: float,
+        rect: pygame.Rect,
+    ) -> bool:
+        nearest_x = max(float(rect.left), min(float(rect.right), cx))
+        nearest_y = max(float(rect.top), min(float(rect.bottom), cy))
+        dx = cx - nearest_x
+        dy = cy - nearest_y
+        return dx * dx + dy * dy <= radius * radius
+
+    def hitbox_hits(self, rect: pygame.Rect) -> bool:
+        cx, cy = self.hitbox_center()
+        return self._circle_hits_rect(cx, cy, self.hitbox_radius, rect)
+
+    def _sync_rect(self) -> None:
+        cx, cy = self.hitbox_center()
+        size = max(1, round(self.hitbox_radius * 2))
+        self.rect = pygame.Rect(
+            round(cx - self.hitbox_radius),
+            round(cy - self.hitbox_radius),
+            size,
+            size,
+        )
+
+    def _to_return(self) -> None:
+        self.phase = "return"
+
+    def _overlapping_target(self, scene):
+        for target in scene.targets_for(self.owner):
+            if target.hp > 0.0 and self.hitbox_hits(target.hurtbox()):
+                return target
+        return None
+
+    def _push_hitbox_out_of_block(self, block: pygame.Rect) -> None:
+        """Leave the block volume after an outbound bounce."""
+        cx, cy = self.hitbox_center()
+        radius = self.hitbox_radius
+        left = block.left - radius - cx
+        right = block.right + radius - cx
+        top = block.top - radius - cy
+        bottom = block.bottom + radius - cy
+        dx = left if abs(left) <= abs(right) else right
+        dy = top if abs(top) <= abs(bottom) else bottom
+        if abs(dx) <= abs(dy):
+            self.x += dx
+        else:
+            self.y += dy
+        self._sync_rect()
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        if self.age > self.timeout:
+            self.alive = False
+            return
+        if self.owner.hp <= 0.0:
+            self.owner_dead_time += dt
+            if self.owner_dead_time >= 0.5:
+                self.alive = False
+                return
+
+        step = self.speed * dt
+        if self.phase == "out":
+            self.dir_x, self.dir_y = self.ux, self.uy
+            self.x += self.ux * step
+            self.y += self.uy * step
+            self.traveled += step
+            self._sync_rect()
+
+            if self.traveled >= self.max_range:
+                self._to_return()
+                return
+
+            low, high = scene.stage.walls
+            hx, hy = self.hitbox_center()
+            radius = self.hitbox_radius
+            bounced = False
+            if hx - radius <= low:
+                hx = low + radius
+                bounced = True
+            elif hx + radius >= high:
+                hx = high - radius
+                bounced = True
+            if hy - radius <= 0.0:
+                hy = radius
+                bounced = True
+            elif hy + radius >= scene.stage.ground_y:
+                hy = scene.stage.ground_y - radius
+                bounced = True
+            if bounced:
+                self.x = hx - self.dir_x * self.hitbox_forward
+                self.y = hy - self.dir_y * self.hitbox_forward
+                self._sync_rect()
+                self._to_return()
+                return
+
+            if scene.stage.blocks_enabled:
+                for block in scene.stage.blocks:
+                    if self._circle_hits_rect(hx, hy, radius, block):
+                        self._push_hitbox_out_of_block(block)
+                        self._to_return()
+                        return
+
+            if not self.hit_out:
+                target = self._overlapping_target(scene)
+                if target is not None:
+                    self.target = target
+                    self.hit_out = True
+                    # The outbound hit must also latch the return guard:
+                    # otherwise the wave would settle inside the player's
+                    # hurtbox for a tick and deal 24 damage twice.
+                    self.hit_return = True
+                    resolve_projectile_hit(scene, self)
+                    self._to_return()
+            return
+
+        # Return to the owner's current position (not the launch point).
+        target_x = float(self.owner.x)
+        target_y = float(self.owner.y) - self.return_height
+        dx = target_x - self.x
+        dy = target_y - self.y
+        distance = math.hypot(dx, dy)
+        if distance > 1e-6:
+            self.dir_x = dx / distance
+            self.dir_y = dy / distance
+            self._sync_rect()
+        if distance <= max(step, 16.0):
+            self.x = target_x
+            self.y = target_y
+            self.alive = False
+            return
+        self.x += dx / distance * step
+        self.y += dy / distance * step
+        self._sync_rect()
+
+        low, high = scene.stage.walls
+        hx, hy = self.hitbox_center()
+        radius = self.hitbox_radius
+        hx = max(low + radius, min(high - radius, hx))
+        hy = max(radius, min(scene.stage.ground_y - radius, hy))
+        self.x = hx - self.dir_x * self.hitbox_forward
+        self.y = hy - self.dir_y * self.hitbox_forward
+        self._sync_rect()
+
+        if scene.stage.blocks_enabled:
+            for block in scene.stage.blocks:
+                if self._circle_hits_rect(hx, hy, radius, block):
+                    # A block on the way home absorbs the wave instead of
+                    # trapping it in a bounce loop.
+                    self.alive = False
+                    return
+
+        if not self.hit_return:
+            target = self._overlapping_target(scene)
+            if target is not None:
+                self.target = target
+                self.hit_return = True
+                resolve_projectile_hit(scene, self)
+                # Pass through the player and keep returning to the owner.
+
+    def draw(self, surface: pygame.Surface) -> None:
+        # --- old ring/arc version, kept for approval ---
+        # radius = max(8.0, self.radius)
+        # pulse = math.sin(self.age * 26.0) * 2.0
+        # pad = round(radius * 2.4 + 14)
+        # size = pad * 2
+        # image = pygame.Surface((size, size), pygame.SRCALPHA)
+        # center = pad
+        #
+        # for index in range(3):
+        #     distance = 10.0 + index * 9.0
+        #     tx = center - self.ux * distance
+        #     ty = center - self.uy * distance
+        #     alpha = max(20, 95 - index * 24)
+        #     pygame.draw.circle(
+        #         image, (210, 190, 255, alpha),
+        #         (round(tx), round(ty)), max(1, 6 - index * 2), 1,
+        #     )
+        #
+        # rings = (
+        #     (1.0, (245, 235, 255, 215), 2),
+        #     (0.72, (210, 190, 255, 180), 1),
+        #     (0.45, (245, 235, 255, 150), 1),
+        # )
+        # for index, (scale, color, width) in enumerate(rings):
+        #     rr = max(2, round(radius * scale + pulse * (index + 1) * 0.35))
+        #     pygame.draw.circle(image, color, (center, center), rr, width)
+        #
+        # angle = math.atan2(self.uy, self.ux)
+        # for offset in (-0.62, 0.0, 0.62):
+        #     arc_radius = max(3, round(radius * 1.12 + pulse))
+        #     box = pygame.Rect(
+        #         center - arc_radius,
+        #         center - arc_radius,
+        #         arc_radius * 2,
+        #         arc_radius * 2,
+        #     )
+        #     pygame.draw.arc(
+        #         image, (245, 235, 255, 190), box,
+        #         angle - 0.72 + offset, angle + 0.72 + offset, 2,
+        #     )
+        #
+        # pygame.draw.circle(
+        #     image, (245, 235, 255, 235),
+        #     (center, center), max(2, round(radius * 0.28)),
+        # )
+        # pygame.draw.circle(
+        #     image, (210, 190, 255, 120),
+        #     (center, center), max(3, round(radius * 0.55)), 1,
+        # )
+        # surface.blit(
+        #     image,
+        #     (round(self.x - center), round(self.y - center)),
+        # )
+
+        # --- ultrasonic waveform version, kept for approval ---
+        # # --- ultrasonic waveform version ---
+        # # A short oscilloscope packet aligned with the travel direction. The
+        # # wavefront bar at the head keeps the projectile readable at speed.
+        # radius = max(8.0, self.radius)
+        # length = radius * 3.0
+        # amplitude = radius * 0.52
+        # pad = round(length * 0.5 + amplitude + 18)
+        # size = pad * 2
+        # image = pygame.Surface((size, size), pygame.SRCALPHA)
+        # center = pad
+        # phase = self.age * 30.0
+        # cycles = 2.6
+        # samples = 29
+        #
+        # # forward = travel direction; side = perpendicular to it.
+        # fx, fy = self.ux, self.uy
+        # sx, sy = -self.uy, self.ux
+        #
+        # def point(
+        #     u: float,
+        #     side_offset: float,
+        #     phase_offset: float,
+        # ) -> tuple[int, int]:
+        #     along = (u - 0.5) * length
+        #     envelope = math.sin(math.pi * u) ** 0.75
+        #     wave = math.sin(math.tau * cycles * u - phase + phase_offset)
+        #     offset = side_offset + amplitude * envelope * wave
+        #     return (
+        #         round(center + fx * along + sx * offset),
+        #         round(center + fy * along + sy * offset),
+        #     )
+        #
+        # for side_offset, phase_offset, glow_color, glow_width, color, width in (
+        #     (
+        #         radius * 0.38, 1.4,
+        #         (150, 120, 235, 55), 6, (200, 180, 255, 120), 2,
+        #     ),
+        #     (
+        #         0.0, 0.0,
+        #         (180, 150, 255, 70), 7, (245, 238, 255, 235), 2,
+        #     ),
+        # ):
+        #     points = [
+        #         point(index / (samples - 1), side_offset, phase_offset)
+        #         for index in range(samples)
+        #     ]
+        #     pygame.draw.lines(image, glow_color, False, points, glow_width)
+        #     pygame.draw.lines(image, color, False, points, width)
+        #
+        # # Bright leading wavefront, perpendicular to travel.
+        # head_x = center + fx * length * 0.5
+        # head_y = center + fy * length * 0.5
+        # half = radius * 0.55
+        # pygame.draw.line(
+        #     image, (190, 165, 255, 120),
+        #     (round(head_x - sx * half), round(head_y - sy * half)),
+        #     (round(head_x + sx * half), round(head_y + sy * half)),
+        #     5,
+        # )
+        # pygame.draw.line(
+        #     image, (252, 248, 255, 235),
+        #     (round(head_x - sx * half), round(head_y - sy * half)),
+        #     (round(head_x + sx * half), round(head_y + sy * half)),
+        #     2,
+        # )
+        #
+        # # Fading droplets behind the packet.
+        # for index in range(3):
+        #     distance = length * (0.18 + index * 0.16)
+        #     tx = center - fx * distance
+        #     ty = center - fy * distance
+        #     alpha = max(20, 110 - index * 30)
+        #     pygame.draw.circle(
+        #         image, (210, 190, 255, alpha),
+        #         (round(tx), round(ty)), max(1, 4 - index), 1,
+        #     )
+        #
+        # # Bright core at the wave center.
+        # pygame.draw.circle(
+        #     image, (180, 155, 255, 90),
+        #     (center, center), max(2, round(radius * 0.22)),
+        # )
+        # pygame.draw.circle(
+        #     image, (250, 245, 255, 220),
+        #     (center, center), max(1, round(radius * 0.12)),
+        # )
+        #
+        # surface.blit(
+        #     image,
+        #     (round(self.x - center), round(self.y - center)),
+        # )
+
+        # --- wifi-signal waveform version ---
+        # Three nested arcs open toward the travel direction, with a bright
+        # emitter dot at the centre: the classic signal-wave silhouette.
+        radius = max(8.0, self.radius)
+        pad = round(radius * 2.1 + 16)
+        size = pad * 2
+        image = pygame.Surface((size, size), pygame.SRCALPHA)
+        center = pad
+        # pygame.draw.arc measures angles with screen y treated as up, so
+        # negate the vertical component to open the arc in the real travel
+        # direction. dir_* follows the return leg as well.
+        angle = math.atan2(-self.dir_y, self.dir_x)
+        spread = 0.95
+        pulse = math.sin(self.age * 18.0) * 1.5
+
+        # Soft bloom behind the emitter.
+        pygame.draw.circle(
+            image, (150, 120, 235, 55),
+            (center, center), max(4, round(radius * 0.9)),
+        )
+
+        # Near -> far arcs: white in front, lavender/purple behind.
+        arcs = (
+            (radius * 0.55, (252, 248, 255, 235), 3),
+            (radius * 1.05, (235, 225, 255, 190), 3),
+            (radius * 1.55, (200, 175, 255, 140), 2),
+        )
+        for arc_radius, color, width in arcs:
+            rr = max(2, round(arc_radius + pulse))
+            box = pygame.Rect(
+                center - rr,
+                center - rr,
+                rr * 2,
+                rr * 2,
+            )
+            pygame.draw.arc(
+                image, color, box,
+                angle - spread, angle + spread, width,
+            )
+
+        # Emitter dot at the source of the signal.
+        pygame.draw.circle(
+            image, (170, 145, 255, 170),
+            (center, center), max(3, round(radius * 0.34)),
+        )
+        pygame.draw.circle(
+            image, (252, 248, 255, 245),
+            (center, center), max(2, round(radius * 0.2)),
+        )
+
+        # Short trail behind the emitter sells the forward motion.
+        for index in range(2):
+            distance = radius * (0.7 + index * 0.55)
+            tx = center - self.dir_x * distance
+            ty = center - self.dir_y * distance
+            alpha = max(20, 85 - index * 30)
+            pygame.draw.circle(
+                image, (210, 190, 255, alpha),
+                (round(tx), round(ty)), max(1, 3 - index), 1,
+            )
+
+        surface.blit(
+            image,
+            (round(self.x - center), round(self.y - center)),
+        )

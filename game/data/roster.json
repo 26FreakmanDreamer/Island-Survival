@@ -57,6 +57,24 @@
       "spawn_offsets": [-100, 0, 120],
       "spawn_modes": ["ground", "hover", "hover"]
     },
+    "bat": {
+      "name": "Bat",
+      "class": "bat",
+      "stats": "bat",
+      "spawn": "bat_spawn",
+      "clips": "bat_clips",
+      "frame_size": "bat_frame_size",
+      "pivot": "bat_pivot",
+      "frames_dir": "bat",
+      "fallback": "Image/Enemy/bat-128.png",
+      "skill_slots": ["bat_dive", "bat_sonic", null, null],
+      "separates": true,
+      "decides_match": true,
+      "flying": true,
+      "count": 5,
+      "spawn_offsets": [0, -160, 160, -80, 80],
+      "spawn_heights": [180, 320, 240, 380, 280]
+    },
     "dummy": {
       "name": "Dummy",
       "class": "dummy",

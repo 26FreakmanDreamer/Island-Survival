@@ -24,10 +24,15 @@ against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wa
 damage/cooldowns, per-target mark independence (`nyra_marks_per_target_ok`) and reset/death
 clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs
 Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots,
-win and `veno_missing_frames`.
+win and `veno_missing_frames`. Phase E switches to Bat and checks the default five-Bat match, five
+spawn/cruise heights, free flight 40–420, dive 10 (height-gated), V/C/X/Z slots, sonic 12 + 1s
+stun, out/return/wall/block bounce, the 0.65s cast lock, hurt/stun staying airborne, KO landing,
+win, the F7 order, the five-body group spawn/independent cooldowns/WIN and the sonic-only random
+stagger.
 It also checks the projectile VFX dispatch (`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`,
 `q_flame_color_ok`, `q_flame_cast_ok`, `veno_bite_hit_fx_ok`, `veno_poison_cast_ok`,
-`veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`), poison cadence/tint/stacking
+`veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`, `bat_dive_hit_fx_ok`,
+`bat_sonic_cast_ok`, `bat_sonic_impact_ok`, `bat_sonic_hitbox_ok`), poison cadence/tint/stacking
 (`poison_interval_ok`, `poison_tint_ok`, `poison_stack_rules_ok`), web collision radius
 (`veno_web_radius_ok`), the 3-Veno group spawn, per-instance cooldowns and all-dead WIN
 (`veno_group_ok`, `veno_group_cooldowns_ok`), asset presence
@@ -49,9 +54,9 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   flag/attack/armor, last hit, input history/buffer, missing frames, last reload status/error.
   For Nyra the panel shows `Q ... E ...` without an energy line and adds the primary enemy's
   `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`.
-  For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; poison and stun appear in the status
-  list. The three mark pips above each living enemy, the green poison pulse and the stun stars are
-  draw-only.
+  For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
+  (altitude above ground). Poison and stun appear in the status list. The three mark pips above each
+  living enemy, the green poison pulse and the stun stars are draw-only.
 
 ## Simulation controls
 
@@ -67,7 +72,7 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Veno-Spider ×3 → training Dummy → Warrior → …) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → …) |
 | [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
@@ -135,10 +140,23 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    a white rim/highlights and a short pixel trail in normal form, orange-red in flame form. It is
    drawn 7px above the collision lane so it lines up with the punching fist; cast/impact effects
    use the same teal/orange family. The normal form has no code-generated ball.
-10. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
+10. Bat checks: the default match is **five Bats** (`count: 5`) spawning at x offsets
+    `[0,-160,160,-80,80]` and altitudes `180/320/240/380/280`; they keep those as cruise heights.
+    F7 selects Bat after Veno, and F8 starts the AI. V dives (locked direction, 10 damage, 2s); it
+    only fires when `_dive_can_reach` confirms the dive hitbox can reach the player from the current
+    altitude, otherwise the Bat keeps flying. C casts the sonic (0.65s lock, 12 + 1s stun, 10s); the
+    sonic is the only randomly-timed skill (random 0-2.5s opening cooldown + 50% cast gate), and a
+    0.55s group stagger prevents same-skill overlaps. X/Z are no-ops. The sonic spawns at the mouth
+    (46px forward / 30px above the feet), uses a forward circle hitbox (+8px, r24), bounces off
+    arena walls and the real 60px block rectangles, returns to the Bat's current position and hits
+    at most once. Use B to compare block on/off. F1 shows the 100×66 hurtbox and the dive hitbox
+    following the body; F2 shows `MODE fly`, `HOVER` altitude, slots and cooldowns. Flight range is
+    40–420 (preferred 240, bob 24, vertical speed 300). Hurt/stun keep it airborne; only KO falls
+    and switches to `ko_01`. All five Bats must die for WIN.
+11. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
     stops the AI from jumping over them. The toggle persists across F9 and resets on F5/rebuild.
-11. Edit `game/data/*.json` and press F5 to tune values without restarting.
-12. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
+12. Edit `game/data/*.json` and press F5 to tune values without restarting.
+13. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
     cache keys on path + mtime. Projectile FX sprites use the same rule:
     `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and
     `assets/frames/veno/veno_web_fx/`. Changing `LINA_Q_SPECS` sizes/durations or any effect

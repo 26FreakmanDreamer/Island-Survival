@@ -106,8 +106,8 @@ This document records the provisional rules used by the sandbox. Values live in
 
 ## Warrior (Phase 2)
 
-- Warrior is the default enemy; the training Dummy remains available through F7. Dummy mode is
-  training-only and does not show a win/loss banner.
+- Warrior is selectable through F7; the current sandbox default is five Bats. The training Dummy
+  remains available through F7. Dummy mode is training-only and does not show a win/loss banner.
 - Canvas: 384x384, feet-center pivot (192,372), body about 230px. Lina stays 256x256 / (128,244).
 - Frames (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4. Axe slash
   frame 01 is a mid-lift between the low rear guard and the high wind-up; frames 03/04 use a
@@ -281,6 +281,50 @@ This document records the provisional rules used by the sandbox. Values live in
   three cooldowns, starts the requested attack and returns True; an empty Z slot is a safe no-op.
   `skill_remaining` returns the matching cooldown for F2. These timers are per Veno instance.
 
+## Bat
+
+- Enemy. Canonical art `Image/Enemy/bat-128.png`; fallback uses the same file. Source frames
+  384x384, runtime 192x192 (`AnimationPlayer` downscales); pivot (115,143), body ~150px, hurtbox
+  100x66 bottom-anchored.
+- Frames (14): wing 4 (shared `idle`/`fly`), dive 3, sonic 3, hurt 1, stun 1, KO 2. `idle` is the
+  6-step ping-pong slow wing loop; `fly` is the 4-frame fast loop. Only right-facing frames are
+  stored; the runtime mirrors for left. `bat_dive`/`bat_sonic` are non-looping 0.75s/0.65s clips.
+- Stats: HP 50, basic ATK 10, extra ATK 0, `stage_body_width` 56, move walk 300, jump_v 0,
+  gravity 2200. Gravity is used only for the KO fall; flight never applies it.
+- Flight: mode `fly`; no gravity; x clamped to the arena walls; altitude 40-420 above ground
+  (y = ground_y - height), preferred 240 with a sine bob of 24 at 1.5 rad/s; vertical speed 300.
+  The five default Bats spawn and cruise at 180/320/240/380/280px, so the group occupies different
+  heights. The body respects the real block rectangles; at cruise heights it passes above them,
+  while low flight or a downward path can meet the actual block volume.
+- Cooldowns are per instance: dive 2.0s, sonic 10.0s, set at attack start. The dive is deterministic:
+  it fires when ready and `_dive_can_reach` confirms the dive hitbox can reach the target from the
+  current altitude; otherwise the Bat keeps flying. The sonic is the only randomly-timed skill: a
+  random 0-2.5s opening cooldown plus a 50% per-decision cast gate. A 0.55s group stagger prevents
+  another living Bat from opening the same skill. When the sonic is available, the random gate
+  decides whether to cast it; if skipped, the dive fires when reachable; otherwise the Bat keeps
+  flying/repositions to standoff 220. The sonic uses the [120,700] range; `decision_interval` 0.15
+  throttles attack decisions.
+- Dive: 0.75s; the direction is locked at attack start toward the target's mid-hurtbox (no homing);
+  520px/s during t=0.05-0.30; hitbox `[0,-70,90,70]` active t=0.12-0.34 follows the body; 10 damage,
+  knockback 160, hitstun 0.25, hitstop 0.06, plus a small purple dive hit FX.
+- Sonic: 0.65s cast lock; the projectile spawns at t=0.24 from 46px forward / 30px above the Bat's
+  feet, aimed at the target's mid-hurtbox at spawn (no homing); speed 420, range 3000 as a leak cap,
+  timeout 8s; 12 damage, 1s stun, knockback 0, hitstun 0.1, hitstop 0.05. Its hitbox is a forward
+  circle (+8px along travel, radius 24) matching the Wi-Fi arc silhouette; walls, top/ground and
+  block rectangles bounce it into the return phase; hitting the player deals damage and latches the
+  one-hit guard. On return it tracks the owner's current position, vanishes within 16px, passes
+  through the player and can deal the single hit on the way back; if the owner dies it survives at
+  most 0.5s; a block on the return path absorbs it. The arc direction and hitbox both follow the
+  actual return direction.
+- Sonic VFX: procedural Wi-Fi/signal arcs (three nested arcs opening along travel, an emitter dot
+  and a short trail), no baked frames; `RingBurstFx` cast and impact flashes use the same palette.
+- Default match: `debug.json` `default_enemy` is `bat`, roster `count` is 5; F7 order is
+  Warrior -> Veno -> Bat -> Dummy. Five spawn offsets and five spawn heights
+  (180/320/240/380/280) are used. Hurt/stun stay airborne; only KO falls to the ground and switches
+  to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly` and `HOVER` altitude.
+- `skill_slots` is `["bat_dive","bat_sonic",null,null]`; `separates` and `decides_match` are true;
+  `force_attack` works airborne and clears both timers.
+
 ## Projectile / skill VFX (2026-10-24)
 
 - Visual-only pass. `q`, `veno_poison` and `veno_web` keep their damage, hitbox, duration, speed,
@@ -336,7 +380,7 @@ This document records the provisional rules used by the sandbox. Values live in
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
   longer constructs Lina/Nyra/Warrior/Veno/Dummy directly. Playable classes keep Lina's
   `update(dt, input_state, target, scene)` signature; Lina and Nyra are installed.
-- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → training Dummy); `[` / `]`
+- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → training Dummy); `[` / `]`
   cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
@@ -354,5 +398,6 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Out of scope in the current sandbox
 
 Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
-Lina/Nyra, enemies beyond Warrior/Veno/Dummy and their AI, multi-enemy encounters (`n=3`),
-packaging and automated tests/logs. The training dummy is a debug tool, not a spec enemy.
+Lina/Nyra, enemies beyond Warrior/Veno/Bat/Dummy and their AI, group balancing beyond the Veno
+3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
+dummy is a debug tool, not a spec enemy.

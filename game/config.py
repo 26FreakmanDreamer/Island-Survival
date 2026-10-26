@@ -17,11 +17,11 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "combat")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "combat")
 REQUIRED_ATTACKS = (
     "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
-    "veno_bite", "veno_poison", "veno_web",
+    "veno_bite", "veno_poison", "veno_web", "bat_dive", "bat_sonic",
 )
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
@@ -39,14 +39,17 @@ REQUIRED_VENO_CLIPS = (
     "idle", "walk", "hover", "jump", "hurt", "ko",
     "veno_bite", "veno_poison", "veno_web",
 )
+REQUIRED_BAT_CLIPS = (
+    "idle", "fly", "bat_dive", "bat_sonic", "hurt", "stun", "ko",
+)
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks",
-    "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn",
+    "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno", "bat")
 PLAYABLE_CLASSES = ("lina", "nyra")
-ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno")
-PROJECTILE_KINDS = ("q_wave", "axe", "sword_wave", "venom_glob", "web_bolt")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno", "bat")
+PROJECTILE_KINDS = ("q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave")
 
 
 class JsonStore:
@@ -202,6 +205,43 @@ class JsonStore:
         ):
             if key not in veno.get("ai", {}):
                 raise ValueError(f"stats.json veno.ai missing '{key}'")
+        bat = stats.get("bat", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "flight", "ai",
+        ):
+            if key not in bat:
+                raise ValueError(f"stats.json bat missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in bat.get("move", {}):
+                raise ValueError(f"stats.json bat.move missing '{key}'")
+        for key in ("dive", "sonic"):
+            if key not in bat.get("cooldowns", {}):
+                raise ValueError(f"stats.json bat.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in bat.get("hurtbox", {}):
+                raise ValueError(f"stats.json bat.hurtbox missing '{key}'")
+        flight = bat.get("flight", {})
+        for key in (
+            "min_height", "max_height", "preferred_height",
+            "vertical_speed", "bob", "bob_rate",
+        ):
+            if key not in flight:
+                raise ValueError(f"stats.json bat.flight missing '{key}'")
+        if not (
+            float(flight["min_height"])
+            <= float(flight["preferred_height"])
+            <= float(flight["max_height"])
+        ):
+            raise ValueError(
+                "stats.json bat.flight must satisfy min_height <= preferred_height <= max_height"
+            )
+        for key in (
+            "dive_range", "sonic_min_range", "sonic_range",
+            "standoff", "decision_interval",
+        ):
+            if key not in bat.get("ai", {}):
+                raise ValueError(f"stats.json bat.ai missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -247,7 +287,17 @@ class JsonStore:
         for key, clip in veno_clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json veno clip '{key}' frame/duration count mismatch")
-        for key in ("nyra_frame_size", "nyra_pivot", "veno_frame_size", "veno_pivot"):
+        bat_clips = animations.get("bat_clips", {})
+        for key in REQUIRED_BAT_CLIPS:
+            if key not in bat_clips:
+                raise ValueError(f"animations.json missing bat clip '{key}'")
+        for key, clip in bat_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(f"animations.json bat clip '{key}' frame/duration count mismatch")
+        for key in (
+            "nyra_frame_size", "nyra_pivot", "veno_frame_size", "veno_pivot",
+            "bat_frame_size", "bat_pivot",
+        ):
             value = animations.get(key)
             if not (isinstance(value, list) and len(value) == 2):
                 raise ValueError(f"animations.json missing or invalid '{key}'")

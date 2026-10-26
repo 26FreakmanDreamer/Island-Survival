@@ -16,11 +16,12 @@
     "player_spawn": [280, 620],
     "dummy_spawn": [1000, 620],
     "warrior_spawn": [1000, 620],
-    "veno_spawn": [1000, 620]
+    "veno_spawn": [1000, 620],
+    "bat_spawn": [1000, 470]
   },
   "roster": {
     "default_character": "lina",
-    "default_enemy": "veno"
+    "default_enemy": "bat"
   },
   "overlay": {
     "hit": [255, 70, 70],
