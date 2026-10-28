@@ -1,0 +1,72 @@
+{
+  "normalItems": [
+    {
+      "name": "Power Crystal",
+      "effect": "Extra ATK +10",
+      "svg": "items/power-crystal.svg",
+      "png128": "items/png128/power-crystal.png",
+      "source": "new"
+    },
+    {
+      "name": "Heart Herb",
+      "effect": "Increase HP by 40%",
+      "svg": "items/heart-herb.svg",
+      "png128": "items/png128/heart-herb.png",
+      "source": "new"
+    }
+  ],
+  "specialItems": [
+    {
+      "name": "Might Relic",
+      "effect": "Double Basic ATK",
+      "svg": "items/might-relic.svg",
+      "png128": "items/png128/might-relic.png",
+      "source": "new"
+    },
+    {
+      "name": "Amplifier Relic",
+      "effect": "Double Extra ATK",
+      "svg": "items/amplifier-relic.svg",
+      "png128": "items/png128/amplifier-relic.png",
+      "source": "new"
+    },
+    {
+      "name": "Fortitude Relic",
+      "effect": "Double HP",
+      "svg": "items/fortitude-relic.svg",
+      "png128": "items/png128/fortitude-relic.png",
+      "source": "new"
+    }
+  ],
+  "specialSkills": [
+    {
+      "name": "Sacred Shield",
+      "effect": "Prevent damage for 2 seconds",
+      "svg": "items/sacred-shield.svg",
+      "png128": "items/png128/sacred-shield.png",
+      "source": "existing"
+    },
+    {
+      "name": "Purity Seal",
+      "effect": "Cleanse negative effects and prevent them for 3 seconds",
+      "svg": "items/purity-seal.svg",
+      "png128": "items/png128/purity-seal.png",
+      "source": "existing"
+    },
+    {
+      "name": "Fury Unbound",
+      "effect": "Double damage dealt for 5 seconds",
+      "svg": "items/fury-unbound.svg",
+      "png128": "items/png128/fury-unbound.png",
+      "source": "new"
+    },
+    {
+      "name": "Vitality Tonic",
+      "effect": "Restore Level × 50 + 35% HP",
+      "svg": "items/vitality-tonic.svg",
+      "png128": "items/png128/vitality-tonic.png",
+      "source": "existing"
+    }
+  ],
+  "retiredIconPreserved": "items/steadfast-charm.svg"
+}

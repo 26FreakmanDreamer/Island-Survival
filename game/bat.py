@@ -185,6 +185,21 @@ class Bat(Fighter):
                     self.vy = 0.0
                     break
 
+        # Full AABB: a rising flyer stops against the underside too.
+        if self.vy < 0.0 and scene.stage.blocks_enabled:
+            half = self.hurtbox_width * 0.5
+            height = self.hurtbox_dims[1]
+            previous_top = previous_y - height
+            current_top = self.y - height
+            for block in scene.stage.blocks:
+                if previous_top < block.bottom or current_top >= block.bottom:
+                    continue
+                if self.x + half <= block.left or self.x - half >= block.right:
+                    continue
+                self.y = float(block.bottom + height)
+                self.vy = 0.0
+                break
+
         self.on_ground = False
 
     # --- AI -----------------------------------------------------------------

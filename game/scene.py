@@ -233,6 +233,14 @@ class ArenaScene:
         self.lock_on = False
         self.input.clear()
         self._force_ai_off()
+        self._resolve_stage_overlaps()
+
+    def _resolve_stage_overlaps(self) -> None:
+        """Push fighters out of solids after a rebuild or B re-enable."""
+        fighters = [self.player, *self.enemies]
+        for fighter in fighters:
+            if fighter is not None:
+                self.stage.resolve_overlap(fighter)
 
     def _force_ai_off(self) -> None:
         for enemy in self.enemies:
@@ -340,6 +348,7 @@ class ArenaScene:
         self._place_enemies()
         self._pick_primary()
         self._force_ai_off()
+        self._resolve_stage_overlaps()
         self.projectiles = []
         self.slash_effects = []
         self.fx_effects = []
@@ -733,6 +742,7 @@ class ArenaScene:
                 knockback=float(event.get("knockback", 0.0)),
                 hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
                 hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
         elif projectile_kind in ("venom_glob", "web_bolt"):
             origin_height = float(event.get("origin_height", 100.0))
@@ -769,6 +779,7 @@ class ArenaScene:
                 status=event.get("status"),
                 status_duration=float(event.get("status_duration", 0.0)),
                 status_dps_pct=float(event.get("status_dps_pct", 0.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
         elif projectile_kind == "sonic_wave":
             origin_height = float(event.get("origin_height", 30.0))
@@ -810,6 +821,7 @@ class ArenaScene:
                 return_height=origin_height,
                 hitbox_forward=float(event.get("hitbox_forward", 8.0)),
                 hitbox_radius=float(event.get("hitbox_radius", 24.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
         elif projectile_kind == "axe":
             projectile = AxeThrow(
@@ -842,6 +854,7 @@ class ArenaScene:
                 flame=flame,
                 flame_bonus=bonus,
                 grant_energy=not flame,
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
         self.projectiles.append(projectile)
         self.spawn_projectile_cast_fx(projectile)
@@ -898,7 +911,9 @@ class ArenaScene:
         elif key == pygame.K_F9:
             self.reset()
         elif key == pygame.K_b:
-            self.stage.toggle_blocks()
+            enabled = self.stage.toggle_blocks()
+            if enabled:
+                self._resolve_stage_overlaps()
         elif key == pygame.K_F10:
             if hasattr(self.player, "start_transform") and hasattr(self.player, "energy"):
                 self.player.energy = self.player.max_energy

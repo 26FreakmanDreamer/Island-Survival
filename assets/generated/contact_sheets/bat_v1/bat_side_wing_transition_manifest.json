@@ -1,0 +1,16 @@
+{
+  "title": "Bat side-view wing transition - between wing_00 and wing_01",
+  "columns": 5,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_wing_transition_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_a.png", "label": "transition A", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/_flagged/side_wing_transition_b.png", "label": "transition B (FIT, full art)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/reference/side_base_384.png", "label": "approved base C", "duration": ""}
+    ]
+  ]
+}

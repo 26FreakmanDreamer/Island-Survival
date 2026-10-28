@@ -34,6 +34,7 @@ class QWave:
         flame: bool,
         flame_bonus: float,
         grant_energy: bool,
+        penetrates_blocks: bool = False,
     ) -> None:
         self.owner = owner
         self.target = target
@@ -51,6 +52,7 @@ class QWave:
         self.flame = flame
         self.flame_bonus = float(flame_bonus)
         self.grant_energy = grant_energy
+        self.penetrates_blocks = bool(penetrates_blocks)
         self.age = 0.0
         self.visual_kind = "lina_q_flame" if flame else "lina_q"
         self.hit_color = (255, 150, 90) if flame else (80, 230, 225)
@@ -72,10 +74,11 @@ class QWave:
             self.alive = False
             return
 
-        for block in scene.stage.blocks:
-            if self.rect.colliderect(block):
-                self.alive = False
-                return
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
+            for block in scene.stage.blocks:
+                if self.rect.colliderect(block):
+                    self.alive = False
+                    return
 
         if not self.hit:
             for target in scene.targets_for(self.owner):
@@ -248,12 +251,14 @@ class SwordWave:
         knockback: float,
         hitstun: float,
         hitstop: float,
+        penetrates_blocks: bool = False,
     ) -> None:
         self.owner = owner
         self.target = target
         self.x = float(x)
         self.y = float(y)
         self.direction = 1 if direction >= 0 else -1
+        self.penetrates_blocks = bool(penetrates_blocks)
         self.speed = float(speed)
         self.max_range = float(max_range)
         self.traveled = 0.0
@@ -284,7 +289,7 @@ class SwordWave:
             self.alive = False
             return
 
-        if scene.stage.blocks_enabled:
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
             for block in scene.stage.blocks:
                 if self.rect.colliderect(block):
                     self.alive = False
@@ -348,6 +353,7 @@ class AimedProjectile:
         status: str | None = None,
         status_duration: float = 0.0,
         status_dps_pct: float = 0.0,
+        penetrates_blocks: bool = False,
     ) -> None:
         self.owner = owner
         self.target = target
@@ -377,6 +383,7 @@ class AimedProjectile:
         self.status = status
         self.status_duration = float(status_duration)
         self.status_dps_pct = float(status_dps_pct)
+        self.penetrates_blocks = bool(penetrates_blocks)
         self.alive = True
         self.hit = False
         self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
@@ -404,7 +411,7 @@ class AimedProjectile:
             self.alive = False
             return
 
-        if scene.stage.blocks_enabled:
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
             for block in scene.stage.blocks:
                 if self.rect.colliderect(block):
                     self.alive = False
@@ -556,6 +563,7 @@ class SonicWave:
         return_height: float = 30.0,
         hitbox_forward: float = 8.0,
         hitbox_radius: float = 24.0,
+        penetrates_blocks: bool = False,
     ) -> None:
         length = math.hypot(ux, uy)
         if length < 1e-6:
@@ -579,6 +587,7 @@ class SonicWave:
         self.return_height = float(return_height)
         self.hitbox_forward = float(hitbox_forward)
         self.hitbox_radius = float(hitbox_radius)
+        self.penetrates_blocks = bool(penetrates_blocks)
         # dir_* is the current travel direction: fixed while outbound, then
         # re-aimed at the owner on the return leg so the arcs and hitbox both
         # point where the wave is actually going.
@@ -704,7 +713,7 @@ class SonicWave:
                 self._to_return()
                 return
 
-            if scene.stage.blocks_enabled:
+            if not self.penetrates_blocks and scene.stage.blocks_enabled:
                 for block in scene.stage.blocks:
                     if self._circle_hits_rect(hx, hy, radius, block):
                         self._push_hitbox_out_of_block(block)
@@ -752,7 +761,7 @@ class SonicWave:
         self.y = hy - self.dir_y * self.hitbox_forward
         self._sync_rect()
 
-        if scene.stage.blocks_enabled:
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
             for block in scene.stage.blocks:
                 if self._circle_hits_rect(hx, hy, radius, block):
                     # A block on the way home absorbs the wave instead of

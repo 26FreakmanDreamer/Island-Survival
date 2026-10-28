@@ -1,0 +1,23 @@
+{
+  "title": "Bat side-view dive and sonic sub-frames - candidates",
+  "columns": 5,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_dive_sonic_subframes_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_00_a.png", "label": "dive_00 A", "duration": "0.12"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_00_b.png", "label": "dive_00 B", "duration": "0.12"},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_dive_01.png", "label": "dive_01 B (selected)", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_02_a.png", "label": "dive_02 A", "duration": "0.41"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_02_b.png", "label": "dive_02 B", "duration": "0.41"}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_00_a.png", "label": "sonic_00 A", "duration": "0.10"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_00_b.png", "label": "sonic_00 B", "duration": "0.10"},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_sonic_01.png", "label": "sonic_01 A (selected)", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_02_a.png", "label": "sonic_02 A", "duration": "0.25"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_02_b.png", "label": "sonic_02 B", "duration": "0.25"}
+    ]
+  ]
+}

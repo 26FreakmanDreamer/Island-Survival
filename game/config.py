@@ -11,6 +11,7 @@ DATA_DIR = GAME_DIR / "data"
 ASSETS_DIR = ROOT / "assets"
 GENERATED_DIR = ASSETS_DIR / "generated"
 AXE_SPRITE_PATH = ASSETS_DIR / "sprites" / "axe" / "axe_throw.png"
+STAGE_SPRITE_DIR = ASSETS_DIR / "sprites" / "stage"
 BACKGROUND_PATH = ASSETS_DIR / "backgrounds" / "island-arena-16x9.png"
 
 SCREEN_W = 1280
@@ -25,15 +26,16 @@ REQUIRED_ATTACKS = (
 )
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
-    "kick_l", "kick_r", "q", "transform", "hurt", "ko",
+    "kick_l", "kick_r", "q", "transform", "hurt", "ko", "climb",
 )
 REQUIRED_FLAME_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r", "kick_l", "kick_r", "q",
+    "climb",
 )
 REQUIRED_WARRIOR_CLIPS = ("idle", "walk", "jump", "dash", "axe_throw", "axe_slash", "hurt", "ko")
 REQUIRED_NYRA_CLIPS = (
     "idle", "walk", "jump", "crouch", "hurt", "ko",
-    "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
+    "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash", "climb",
 )
 REQUIRED_VENO_CLIPS = (
     "idle", "walk", "hover", "jump", "hurt", "ko",
@@ -43,7 +45,7 @@ REQUIRED_BAT_CLIPS = (
     "idle", "fly", "bat_dive", "bat_sonic", "hurt", "stun", "ko",
 )
 REQUIRED_STAGE = (
-    "ground_y", "walls", "lane_heights", "blocks",
+    "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
 ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno", "bat")
@@ -305,6 +307,7 @@ class JsonStore:
         for key in REQUIRED_STAGE:
             if key not in stage:
                 raise ValueError(f"debug.json stage missing '{key}'")
+        JsonStore._validate_stage(stage)
         for key, clip in clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json clip '{key}' frame/duration count mismatch")
@@ -386,3 +389,93 @@ class JsonStore:
             raise ValueError("debug.json roster.default_character missing from roster.json")
         if defaults.get("default_enemy") not in enemies:
             raise ValueError("debug.json roster.default_enemy missing from roster.json")
+
+    @staticmethod
+    def _validate_stage(stage: dict) -> None:
+        """Validate the block/ladder shape introduced by the scene pass."""
+
+        def is_number(value) -> bool:
+            return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+        def is_rect(value) -> bool:
+            return (
+                isinstance(value, (list, tuple))
+                and len(value) == 4
+                and all(is_number(item) for item in value)
+            )
+
+        blocks = stage.get("blocks")
+        if not isinstance(blocks, list):
+            raise ValueError("debug.json stage.blocks must be a list")
+        for index, entry in enumerate(blocks):
+            if isinstance(entry, (list, tuple)):
+                kind = "barrier"
+                rect = entry
+            elif isinstance(entry, dict):
+                kind = entry.get("kind", "barrier")
+                rect = entry.get("rect")
+            else:
+                raise ValueError(
+                    f"debug.json stage.blocks[{index}] must be an object or rect list"
+                )
+            if kind not in ("barrier", "platform"):
+                raise ValueError(
+                    f"debug.json stage.blocks[{index}] has invalid kind '{kind}'"
+                )
+            if not is_rect(rect):
+                raise ValueError(
+                    f"debug.json stage.blocks[{index}] rect must have 4 numbers"
+                )
+            if isinstance(entry, dict) and "sprite_rect" in entry:
+                if not is_rect(entry["sprite_rect"]):
+                    raise ValueError(
+                        f"debug.json stage.blocks[{index}] sprite_rect must have 4 numbers"
+                    )
+            if kind == "platform":
+                if not isinstance(entry, dict):
+                    raise ValueError(
+                        f"debug.json stage.blocks[{index}] platform needs an object"
+                    )
+                for field in ("sprite", "sprite_rect"):
+                    if field not in entry:
+                        raise ValueError(
+                            f"debug.json stage.blocks[{index}] platform missing '{field}'"
+                        )
+                if not isinstance(entry["sprite"], str):
+                    raise ValueError(
+                        f"debug.json stage.blocks[{index}] sprite must be a string"
+                    )
+                if "surface_y" in entry and not is_number(entry["surface_y"]):
+                    raise ValueError(
+                        f"debug.json stage.blocks[{index}] surface_y must be a number"
+                    )
+        ladders = stage.get("ladders")
+        if not isinstance(ladders, list):
+            raise ValueError("debug.json stage.ladders must be a list")
+        for index, entry in enumerate(ladders):
+            if not isinstance(entry, dict):
+                raise ValueError(
+                    f"debug.json stage.ladders[{index}] must be an object"
+                )
+            for field in ("rect", "top_y", "bottom_y", "sprite", "sprite_rect"):
+                if field not in entry:
+                    raise ValueError(
+                        f"debug.json stage.ladders[{index}] missing '{field}'"
+                    )
+            for field in ("rect", "sprite_rect"):
+                if not is_rect(entry[field]):
+                    raise ValueError(
+                        f"debug.json stage.ladders[{index}] {field} must have 4 numbers"
+                    )
+            if not isinstance(entry["sprite"], str):
+                raise ValueError(
+                    f"debug.json stage.ladders[{index}] sprite must be a string"
+                )
+            if not (is_number(entry["top_y"]) and is_number(entry["bottom_y"])):
+                raise ValueError(
+                    f"debug.json stage.ladders[{index}] top_y/bottom_y must be numbers"
+                )
+            if float(entry["top_y"]) >= float(entry["bottom_y"]):
+                raise ValueError(
+                    f"debug.json stage.ladders[{index}] top_y must be above bottom_y"
+                )

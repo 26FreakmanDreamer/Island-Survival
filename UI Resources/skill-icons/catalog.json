@@ -1,0 +1,180 @@
+{
+  "characters": {
+    "lina-seabright": [
+      {
+        "slot": "passive",
+        "name": "Battle Rhythm",
+        "effect": "Energy rises with each successful hit.",
+        "svg": "lina-seabright/passive-battle-rhythm.svg",
+        "png128": "lina-seabright/png128/passive-battle-rhythm.png"
+      },
+      {
+        "slot": "left-mouse",
+        "name": "Breaker Punch",
+        "effect": "Alternating punches.",
+        "svg": "lina-seabright/left-mouse-breaker-punch.svg",
+        "png128": "lina-seabright/png128/left-mouse-breaker-punch.png"
+      },
+      {
+        "slot": "right-mouse",
+        "name": "Surge Kick",
+        "effect": "Knockback kick.",
+        "svg": "lina-seabright/right-mouse-surge-kick.svg",
+        "png128": "lina-seabright/png128/right-mouse-surge-kick.png"
+      },
+      {
+        "slot": "q",
+        "name": "Gale Fist",
+        "effect": "Air-current punch.",
+        "svg": "lina-seabright/q-gale-fist.svg",
+        "png128": "lina-seabright/png128/q-gale-fist.png"
+      },
+      {
+        "slot": "e",
+        "name": "Flamewake",
+        "effect": "Flame transformation.",
+        "svg": "lina-seabright/e-flamewake.svg",
+        "png128": "lina-seabright/png128/e-flamewake.png"
+      }
+    ],
+    "nyra-steel": [
+      {
+        "slot": "passive",
+        "name": "Steelbrand",
+        "effect": "Stack and detonate sword marks.",
+        "svg": "nyra-steel/passive-steelbrand.svg",
+        "png128": "nyra-steel/png128/passive-steelbrand.png"
+      },
+      {
+        "slot": "left-mouse",
+        "name": "Edge Slash",
+        "effect": "Forward sword slash.",
+        "svg": "nyra-steel/left-mouse-edge-slash.svg",
+        "png128": "nyra-steel/png128/left-mouse-edge-slash.png"
+      },
+      {
+        "slot": "right-mouse",
+        "name": "Piercing Thrust",
+        "effect": "Extended sword thrust.",
+        "svg": "nyra-steel/right-mouse-piercing-thrust.svg",
+        "png128": "nyra-steel/png128/right-mouse-piercing-thrust.png"
+      },
+      {
+        "slot": "q",
+        "name": "Blade Arc",
+        "effect": "Broad sword wave.",
+        "svg": "nyra-steel/q-blade-arc-v2.svg",
+        "png128": "nyra-steel/png128/q-blade-arc-v2.png",
+        "originalSvg": "nyra-steel/q-blade-arc.svg"
+      },
+      {
+        "slot": "e",
+        "name": "Steel Rush",
+        "effect": "Armored fighter dashes through enemies.",
+        "svg": "nyra-steel/e-steel-rush-v2.svg",
+        "png128": "nyra-steel/png128/e-steel-rush-v2.png",
+        "originalSvg": "nyra-steel/e-steel-rush.svg"
+      }
+    ],
+    "rhea-thorn": [
+      {
+        "slot": "passive",
+        "name": "Lingering Venom",
+        "effect": "Extend existing poison.",
+        "svg": "rhea-thorn/passive-lingering-venom.svg",
+        "png128": "rhea-thorn/png128/passive-lingering-venom.png"
+      },
+      {
+        "slot": "left-mouse",
+        "name": "Thorn Cut",
+        "effect": "Alternating hand-held shuriken slashes.",
+        "svg": "rhea-thorn/left-mouse-thorn-cut.svg",
+        "png128": "rhea-thorn/png128/left-mouse-thorn-cut.png"
+      },
+      {
+        "slot": "right-mouse",
+        "name": "Razor Throw",
+        "effect": "Throw a regular shuriken.",
+        "svg": "rhea-thorn/right-mouse-razor-throw.svg",
+        "png128": "rhea-thorn/png128/right-mouse-razor-throw.png"
+      },
+      {
+        "slot": "q",
+        "name": "Nightshade Shuriken",
+        "effect": "Throw a poisoned shuriken.",
+        "svg": "rhea-thorn/q-nightshade-shuriken.svg",
+        "png128": "rhea-thorn/png128/q-nightshade-shuriken.png"
+      },
+      {
+        "slot": "e",
+        "name": "Rebound Strike",
+        "effect": "Strike while dashing out and back.",
+        "svg": "rhea-thorn/e-rebound-strike.svg",
+        "png128": "rhea-thorn/png128/e-rebound-strike.png"
+      }
+    ],
+    "eira-frostveil": [
+      {
+        "slot": "passive",
+        "name": "Frostbind",
+        "effect": "Build freeze value.",
+        "svg": "eira-frostveil/passive-frostbind.svg",
+        "png128": "eira-frostveil/png128/passive-frostbind.png"
+      },
+      {
+        "slot": "left-mouse",
+        "name": "Snowbolt",
+        "effect": "Ranged snowball.",
+        "svg": "eira-frostveil/left-mouse-snowbolt.svg",
+        "png128": "eira-frostveil/png128/left-mouse-snowbolt.png"
+      },
+      {
+        "slot": "right-mouse",
+        "name": "Staff Strike",
+        "effect": "Close staff attack.",
+        "svg": "eira-frostveil/right-mouse-staff-strike.svg",
+        "png128": "eira-frostveil/png128/right-mouse-staff-strike.png"
+      },
+      {
+        "slot": "q",
+        "name": "Crystal Shard",
+        "effect": "Triangular ice projectile.",
+        "svg": "eira-frostveil/q-crystal-shard.svg",
+        "png128": "eira-frostveil/png128/q-crystal-shard.png"
+      },
+      {
+        "slot": "e",
+        "name": "Winterfall",
+        "effect": "Targeted falling ice sphere.",
+        "svg": "eira-frostveil/e-winterfall.svg",
+        "png128": "eira-frostveil/png128/e-winterfall.png"
+      }
+    ]
+  },
+  "items": [
+    {
+      "name": "Sacred Shield",
+      "effect": "Prevent damage for 2 seconds.",
+      "svg": "items/sacred-shield.svg",
+      "png128": "items/png128/sacred-shield.png"
+    },
+    {
+      "name": "Steadfast Charm",
+      "effect": "Prevent control effects for 3 seconds.",
+      "svg": "items/steadfast-charm.svg",
+      "png128": "items/png128/steadfast-charm.png"
+    },
+    {
+      "name": "Purity Seal",
+      "effect": "Cleanse, then prevent negative effects for 3 seconds.",
+      "svg": "items/purity-seal.svg",
+      "png128": "items/png128/purity-seal.png"
+    },
+    {
+      "name": "Vitality Tonic",
+      "effect": "Restore level-scaled HP plus 35% max HP.",
+      "svg": "items/vitality-tonic.svg",
+      "png128": "items/png128/vitality-tonic.png"
+    }
+  ]
+}

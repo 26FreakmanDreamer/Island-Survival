@@ -20,6 +20,15 @@ class FighterState(IntEnum):
     HURT = 5
     TRANSFORM = 6
     KO = 7
+    CLIMB = 8
+
+
+CLIMB_SPEED = 160.0
+# The back-view climb frames were staged at the same canvas/pivot as the
+# standing frames, but the pose reads smaller in game. Scale both climb frames
+# uniformly around the feet pivot so the head matches the standing sprite.
+CLIMB_DRAW_SCALE = 1.2  # Lina default; Nyra overrides this per character.
+
 
 
 class Fighter:
@@ -65,6 +74,14 @@ class Fighter:
         self.gravity = gravity
         self.knock_up_gravity = gravity
         self.on_ground = True
+        self.climbing = False
+        self.climb_ladder = None
+        # Suppress an immediate re-grab after a deliberate exit (jump-off,
+        # attack, hit). Cleared on landing or when the climb keys are released.
+        self.climb_suppressed = False
+        self.climb_anim_dir = None
+        self.pre_climb_facing = None
+        self.climb_draw_scale = CLIMB_DRAW_SCALE
         self.max_hp = float(max_hp)
         self.hp = float(max_hp)
         self.state = FighterState.IDLE
@@ -132,6 +149,7 @@ class Fighter:
     ) -> bool:
         if self.invincible or self.hp <= 0.0:
             return False
+        self._stop_climb()
         self.hp = max(0.0, self.hp - damage)
         self.flash = 0.12
         self.hitstun = max(self.hitstun, hitstun)
@@ -165,6 +183,7 @@ class Fighter:
     def apply_dot(self, amount: float) -> None:
         if self.invincible or self.hp <= 0.0:
             return
+        self._stop_climb()
         self.hp = max(0.0, self.hp - amount)
         self.flash = max(self.flash, 0.05)
         if self.hp <= 0.0:
@@ -220,6 +239,186 @@ class Fighter:
             self.state = FighterState.IDLE
             self.anim.set_clip("idle")
 
+    # --- climbing (player characters only) ----------------------------------
+    def _climb_clip_available(self) -> bool:
+        """True when the active variant has a climb clip."""
+        if self.anim is None:
+            return False
+        table = (
+            self.anim.flame_clips
+            if self.anim.variant == "flame"
+            else self.anim.default_clips
+        )
+        return "climb" in table
+
+    def try_start_climb(self, input_state, scene) -> bool:
+        """Grab a nearby ladder when W/S is held. Returns True while climbing."""
+        if self.climbing:
+            return True
+        up = input_state.is_held("climb_up")
+        down = input_state.is_held("climb_down")
+        if self.climb_suppressed:
+            if self.on_ground or not (up or down):
+                self.climb_suppressed = False
+            else:
+                return False
+        if up == down:
+            return False
+        ladder = scene.stage.ladder_for(self)
+        if ladder is None:
+            return False
+        if up and self.y <= ladder.top_y + 1.0:
+            # At the top W must keep its normal jump behaviour.
+            return False
+        if down and self.y >= ladder.bottom_y - 1.0:
+            return False
+        has_climb = self._climb_clip_available()
+        if has_climb:
+            # Back-view climb art is drawn unflipped; restore on exit.
+            self.pre_climb_facing = self.facing
+            self.facing = 1
+        else:
+            self.pre_climb_facing = None
+        self.climb_anim_dir = 1 if down else 0
+        self.x = float(ladder.rect.centerx)
+        self.y = min(max(self.y, ladder.top_y), ladder.bottom_y)
+        self.climbing = True
+        self.climb_ladder = ladder
+        self.vx = 0.0
+        self.vy = 0.0
+        self.on_ground = False
+        self.state = FighterState.CLIMB
+        if self.anim is not None:
+            if has_climb:
+                self.anim.set_clip("climb", reset=True)
+                self.anim.set_frame(1 if down else 0)
+            else:
+                self.anim.set_clip("idle")
+        return True
+
+    def _update_climb(self, dt: float, input_state, scene) -> None:
+        ladder = self.climb_ladder
+        if ladder is None:
+            self._stop_climb()
+            return
+        if self.statuses.control_locked() or self.hitstun > 0.0:
+            self._stop_climb()
+            self.on_ground = False
+            self.state = FighterState.AIR
+            return
+        if any(
+            input_state.buffer.has(action)
+            for action in ("punch", "kick", "q", "e")
+        ):
+            self._stop_climb()
+            self.on_ground = False
+            self.state = FighterState.AIR
+            return
+        if input_state.is_held("climb_jump"):
+            # Space is the only jump-off key; W keeps climbing.
+            self._stop_climb()
+            self.vy = -self.jump_v
+            self.on_ground = False
+            self.state = FighterState.AIR
+            if self.anim is not None:
+                self.anim.set_clip("jump")
+            return
+
+        up = input_state.is_held("climb_up")
+        down = input_state.is_held("climb_down")
+        moving = False
+        if up and not down:
+            self.y -= CLIMB_SPEED * dt
+            moving = True
+            if self.y <= ladder.top_y:
+                self.y = float(ladder.top_y)
+                self._finish_climb_top(scene)
+                return
+        elif down and not up:
+            self.y += CLIMB_SPEED * dt
+            moving = True
+            if self.y >= ladder.bottom_y:
+                self.y = float(ladder.bottom_y)
+                self._finish_climb_bottom()
+                return
+
+        self.vx = 0.0
+        self.vy = 0.0
+        self.on_ground = False
+        self.state = FighterState.CLIMB
+        if self.anim is not None:
+            if self._climb_clip_available():
+                if self.anim.clip_name != "climb":
+                    direction = 1 if down else 0
+                    self.anim.set_clip("climb", reset=True)
+                    self.anim.set_frame(direction)
+                    self.climb_anim_dir = direction
+                elif moving:
+                    direction = 1 if down else 0
+                    if self.climb_anim_dir != direction:
+                        self.anim.set_clip("climb", reset=True)
+                        self.anim.set_frame(direction)
+                        self.climb_anim_dir = direction
+                    self.anim.update(dt)
+            else:
+                # Staged fallback: Nyra/flame keep the old placeholders until
+                # their own climb clips are approved.
+                self.anim.set_clip("walk" if moving else "idle")
+                if moving:
+                    self.anim.update(dt)
+
+    def _finish_climb_top(self, scene) -> None:
+        ladder = self.climb_ladder
+        if ladder is None:
+            self._stop_climb()
+            return
+        on_platform = False
+        if scene.stage.blocks_enabled:
+            half = self.stage_half_width
+            for block in scene.stage.blocks:
+                if abs(block.top - ladder.top_y) > 1.0:
+                    continue
+                if block.left - half <= self.x <= block.right + half:
+                    on_platform = True
+                    break
+        if on_platform:
+            self._stop_climb()
+            self.on_ground = True
+            self.state = FighterState.IDLE
+            if self.anim is not None:
+                self.anim.set_clip("idle")
+        else:
+            # Blocks off or no platform at the top: hold the ladder top.
+            self.y = float(ladder.top_y)
+            self.on_ground = False
+            self.state = FighterState.CLIMB
+            if self.anim is not None:
+                self.anim.set_clip("idle")
+
+    def _finish_climb_bottom(self) -> None:
+        ladder = self.climb_ladder
+        if ladder is None:
+            self._stop_climb()
+            return
+        self.y = float(ladder.bottom_y)
+        self._stop_climb()
+        self.on_ground = self.y >= self.stage.ground_y - 0.5
+        if self.on_ground:
+            self.state = FighterState.IDLE
+            if self.anim is not None:
+                self.anim.set_clip("idle")
+        else:
+            self.state = FighterState.AIR
+
+    def _stop_climb(self) -> None:
+        self.climbing = False
+        self.climb_ladder = None
+        self.climb_suppressed = True
+        if self.pre_climb_facing is not None:
+            self.facing = self.pre_climb_facing
+        self.pre_climb_facing = None
+        self.climb_anim_dir = None
+
     # --- reset --------------------------------------------------------------
     def reset_common(self, x: float, y: float, facing: int) -> None:
         self.x = float(x)
@@ -233,6 +432,7 @@ class Fighter:
         self.hp = self.max_hp
         self.state = FighterState.IDLE
         self.state_time = 0.0
+        self._stop_climb()
         self.hitstun = 0.0
         self.flash = 0.0
         self.marks = 0
@@ -288,7 +488,14 @@ class Fighter:
                 or self.anim.clip_name == "transform"
                 or self.anim.current_is_flame_frame
             ):
-                self.anim.draw(surface, self.x, self.y, self.facing, tint=tint)
+                scale = (
+                    self.climb_draw_scale
+                    if self.climbing and self.anim.clip_name == "climb"
+                    else 1.0
+                )
+                self.anim.draw(
+                    surface, self.x, self.y, self.facing, tint=tint, scale=scale
+                )
         if self.flash > 0.0:
             pygame.draw.rect(surface, (255, 255, 255), self.hurtbox(), 2)
         if self.show_health_bar:

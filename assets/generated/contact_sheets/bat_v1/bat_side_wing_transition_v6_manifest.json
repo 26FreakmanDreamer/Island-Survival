@@ -1,0 +1,16 @@
+{
+  "title": "Bat side-view wing transition v6 - minimal wing-tip change from wing_00",
+  "columns": 5,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_wing_transition_v6.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 B (anatomy reference)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_v6_a.png", "label": "transition v6 A", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_v6_b.png", "label": "transition v6 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_a.png", "label": "old transition A (reference)", "duration": ""}
+    ]
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "title": "Bat dive candidates - v1 vs v2",
+  "columns": 5,
+  "cell": 320,
+  "pivot": [160, 198],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_dive_compare_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/base_320.png", "label": "canonical / base", "duration": ""},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_a.png", "label": "dive v1 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_b.png", "label": "dive v1 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_v2_a.png", "label": "dive v2 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_v2_b.png", "label": "dive v2 B", "duration": "0.22"}
+    ]
+  ]
+}

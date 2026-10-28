@@ -10,18 +10,48 @@
     },
     "land_margin": 8,
     "blocks": [
-      [400, 560, 90, 60],
-      [760, 560, 90, 60]
+      {"kind": "barrier", "rect": [400, 560, 90, 60]},
+      {"kind": "barrier", "rect": [700, 560, 90, 60]},
+      {
+        "kind": "platform",
+        "rect": [170, 220, 479, 78],
+        "surface_y": 220,
+        "sprite": "platform_tropical_long.png",
+        "sprite_rect": [170, 206, 479, 96]
+      },
+      {
+        "kind": "platform",
+        "rect": [796, 268, 314, 78],
+        "surface_y": 268,
+        "sprite": "platform_tropical_short.png",
+        "sprite_rect": [796, 254, 314, 96]
+      }
+    ],
+    "ladders": [
+      {
+        "rect": [508, 220, 64, 400],
+        "top_y": 220,
+        "bottom_y": 620,
+        "sprite": "ladder_tropical_wood.png",
+        "sprite_rect": [476, 220, 128, 400]
+      },
+      {
+        "rect": [921, 268, 64, 352],
+        "top_y": 268,
+        "bottom_y": 620,
+        "sprite": "ladder_tropical_wood_medium.png",
+        "sprite_rect": [873, 268, 160, 352]
+      }
     ],
     "player_spawn": [280, 620],
-    "dummy_spawn": [1000, 620],
-    "warrior_spawn": [1000, 620],
-    "veno_spawn": [1000, 620],
-    "bat_spawn": [1000, 470]
+    "dummy_spawn": [600, 620],
+    "warrior_spawn": [600, 620],
+    "veno_spawn": [600, 620],
+    "bat_spawn": [600, 470]
   },
   "roster": {
     "default_character": "lina",
-    "default_enemy": "bat"
+    "default_enemy": "warrior"
   },
   "overlay": {
     "hit": [255, 70, 70],

@@ -1,0 +1,16 @@
+{
+  "title": "Bat side-view wing transition v8 B - body-size normalization check",
+  "columns": 5,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_wing_transition_v8_scaled.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_v8_b.png", "label": "v8 B (unscaled)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_v8_b_scaled.png", "label": "v8 B scaled 1.15x", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_02.png", "label": "wing_02 A", "duration": ""}
+    ]
+  ]
+}

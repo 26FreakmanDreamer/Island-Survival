@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Island Survival · Shop</title>
+<style>
+:root{--ink:#f4e8c8;--muted:#cbdcd4;--gold:#e9bd75;--sea:#81d3d9;--deep:#071c2a;--line:#776f5b}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061823;color:var(--ink)}body{font-family:Georgia,serif}[hidden]{display:none!important}.stage{position:absolute;width:1920px;height:1080px;transform-origin:top left;overflow:hidden;background:#082536 url('artwork/island-start-screen-16x9.png') center/cover no-repeat}.stage:before{content:"";position:absolute;inset:0;background:rgba(3,17,29,.42);pointer-events:none}.topline{position:absolute;left:80px;right:80px;top:55px;height:2px;background:linear-gradient(90deg,var(--gold),transparent 48%,transparent 52%,var(--gold))}.topline:before,.topline:after{content:"✧";position:absolute;top:-20px;color:var(--gold);font-size:35px}.topline:before{left:-18px}.topline:after{right:-18px}.corner{position:absolute;right:80px;bottom:38px;font:16px Segoe UI,sans-serif;color:#d3dfd4;letter-spacing:.16em}.back{position:absolute;left:79px;top:87px;display:flex;align-items:center;gap:12px;color:#e9e2cd;text-decoration:none;font:700 18px Segoe UI,sans-serif;letter-spacing:.12em}.back:hover,.back:focus-visible{color:var(--gold)}.back img{width:27px;height:27px}.shop-heading{position:absolute;left:70px;top:128px}.shop-heading h1{font-size:74px;line-height:1;margin:0 0 12px;letter-spacing:.025em}.shop-heading p{font:21px Segoe UI,sans-serif;color:#dce7df;margin:0}.wallet{position:absolute;right:71px;top:139px;display:flex;gap:16px}.wallet-item{display:grid;grid-template-columns:47px 1fr;grid-template-rows:23px 34px;column-gap:11px;align-items:center;min-width:185px;padding:12px 20px 12px 15px;background:rgba(9,38,52,.88);border:1px solid rgba(233,189,117,.76);border-radius:7px}.wallet-item img{grid-row:1/3;width:43px;height:43px}.wallet-item span{font:700 13px Segoe UI,sans-serif;letter-spacing:.17em;color:#b9d5cf}.wallet-item output{font:700 29px Segoe UI,sans-serif;color:#fff0c9}.shop-shell{position:absolute;left:70px;top:246px;width:1780px;height:731px;display:grid;grid-template-columns:1fr 1fr;background:rgba(6,27,41,.89);border:2px solid #b89a69;border-radius:10px;box-shadow:0 19px 42px rgba(0,0,0,.35)}.shop-column{min-width:0;padding:29px 33px}.shop-column:first-child{border-right:1px solid rgba(222,190,134,.47)}.shop-group+.shop-group{margin-top:25px}.group-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 11px}.group-head h2{font-size:29px;font-weight:normal;margin:0}.group-head span{font:16px Segoe UI,sans-serif;color:#9dcdd0}.group-head span b{color:var(--gold);font-weight:600}.products{display:grid;gap:8px}.product{width:100%;height:100px;display:grid;grid-template-columns:77px minmax(0,1fr) 126px;align-items:center;gap:16px;padding:7px 15px;text-align:left;background:rgba(19,51,65,.61);border:1px solid rgba(140,169,164,.46);border-radius:7px;color:var(--ink);cursor:pointer;transition:background .16s,border-color .16s,transform .16s}.product:hover,.product:focus-visible{background:rgba(44,93,100,.78);border-color:var(--gold);transform:translateX(3px);outline:none}.product:disabled{opacity:.45;cursor:not-allowed;transform:none;background:rgba(13,37,49,.49);border-color:rgba(140,169,164,.32)}.product img.product-icon{width:75px;height:75px}.product-copy{min-width:0}.product-copy strong{display:block;font:29px Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.product-copy small{display:block;margin-top:8px;font:17px/1.25 Segoe UI,sans-serif;color:#d6e3dd}.price{display:flex;flex-direction:column;align-items:flex-end;gap:5px;font:700 21px Segoe UI,sans-serif;color:#fff0c9}.price span{display:flex;align-items:center;gap:7px}.price img{width:26px;height:26px}.shop-column:last-child .product{height:133px}.shop-column:last-child .products{gap:10px}.shop-column:last-child .product-copy strong{font-size:30px}.shop-column:last-child .product-copy small{font-size:18px}.shop-note{position:absolute;left:84px;bottom:52px;font:17px Segoe UI,sans-serif;color:var(--sea)}.veil{position:absolute;inset:0;background:rgba(0,10,19,.68);z-index:10}.confirm{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:590px;padding:39px 48px 42px;background:#102e40;border:2px solid var(--gold);border-radius:10px;box-shadow:0 30px 70px rgba(0,0,0,.53);text-align:center}.confirm .tiny{font:700 14px Segoe UI,sans-serif;letter-spacing:.2em;color:var(--sea)}.confirm img.product-icon{width:104px;height:104px;margin:5px auto}.confirm h2{font-size:39px;line-height:1.1;margin:4px 0 12px}.confirm p{font:19px/1.45 Segoe UI,sans-serif;color:#d8e6de;margin:0 0 19px}.confirm .cost{display:flex;justify-content:center;gap:26px;min-height:37px}.confirm .cost span{display:flex;align-items:center;gap:8px;font:700 23px Segoe UI,sans-serif;color:#ffebbd}.confirm .cost img{width:30px;height:30px}.confirm-actions{display:flex;justify-content:center;gap:16px;margin-top:27px}.confirm-actions button{width:192px;height:57px;border:1px solid #b89a69;border-radius:6px;background:#193b4a;color:#f4e8c8;font:700 20px Georgia,serif;cursor:pointer}.confirm-actions button:hover,.confirm-actions button:focus-visible{background:#35636a;outline:2px solid var(--gold);outline-offset:2px}.confirm-actions button.buy{background:#436c69;border-color:#f0c87d;color:#fff6dc}.toast{position:absolute;right:88px;bottom:72px;z-index:12;padding:16px 23px;background:#234c50;border:1px solid var(--gold);border-radius:7px;color:#fff0c9;font:19px Segoe UI,sans-serif;box-shadow:0 12px 26px rgba(0,0,0,.35)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <div class="topline"></div><div class="corner">SURVIVE ANOTHER DAY ✧</div>
+  <a class="back" href="preview.html#menu"><img src="icons/back.svg" alt="">UI PREVIEW</a>
+  <header class="shop-heading"><h1>Shop</h1><p>The battle is over. Prepare for what comes next.</p></header>
+  <div class="wallet" aria-label="Current resources">
+    <div class="wallet-item"><img src="icons/gold.svg" alt=""><span>GOLD</span><output id="goldBalance" aria-label="Gold">20</output></div>
+    <div class="wallet-item"><img src="icons/fullness.svg" alt=""><span>FULLNESS</span><output id="fullnessBalance" aria-label="Fullness">6</output></div>
+  </div>
+  <div class="shop-shell">
+    <div class="shop-column">
+      <section class="shop-group" aria-labelledby="normalTitle">
+        <div class="group-head"><h2 id="normalTitle">Normal Item</h2><span>Immediate use · <b>Gold</b></span></div>
+        <div class="products">
+          <button class="product" data-name="Power Crystal" data-kind="immediate" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/power-crystal.svg" alt=""><span class="product-copy"><strong>Power Crystal</strong><small>Extra ATK +10</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+          <button class="product" data-name="Heart Herb" data-kind="immediate" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/heart-herb.svg" alt=""><span class="product-copy"><strong>Heart Herb</strong><small>Increase HP by 40%</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+        </div>
+      </section>
+      <section class="shop-group" aria-labelledby="specialItemTitle">
+        <div class="group-head"><h2 id="specialItemTitle">Special Item</h2><span>Immediate use · <b>Gold + Fullness</b></span></div>
+        <div class="products">
+          <button class="product" data-name="Might Relic" data-kind="immediate" data-gold="10" data-fullness="2"><img class="product-icon" src="skill-icons/items/might-relic.svg" alt=""><span class="product-copy"><strong>Might Relic</strong><small>Double Basic ATK</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span><span><img src="icons/fullness.svg" alt=""><span class="sr-only">Fullness</span>2</span></span></button>
+          <button class="product" data-name="Amplifier Relic" data-kind="immediate" data-gold="10" data-fullness="2"><img class="product-icon" src="skill-icons/items/amplifier-relic.svg" alt=""><span class="product-copy"><strong>Amplifier Relic</strong><small>Double Extra ATK</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span><span><img src="icons/fullness.svg" alt=""><span class="sr-only">Fullness</span>2</span></span></button>
+          <button class="product" data-name="Fortitude Relic" data-kind="immediate" data-gold="10" data-fullness="2"><img class="product-icon" src="skill-icons/items/fortitude-relic.svg" alt=""><span class="product-copy"><strong>Fortitude Relic</strong><small>Double HP</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span><span><img src="icons/fullness.svg" alt=""><span class="sr-only">Fullness</span>2</span></span></button>
+        </div>
+      </section>
+    </div>
+    <div class="shop-column">
+      <section class="shop-group" aria-labelledby="specialSkillTitle">
+        <div class="group-head"><h2 id="specialSkillTitle">Special Skill</h2><span>For later battles · <b>Gold</b></span></div>
+        <div class="products">
+          <button class="product" data-name="Sacred Shield" data-kind="later" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/sacred-shield.svg" alt=""><span class="product-copy"><strong>Sacred Shield</strong><small>Prevent all damage for 2 seconds</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+          <button class="product" data-name="Purity Seal" data-kind="later" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/purity-seal.svg" alt=""><span class="product-copy"><strong>Purity Seal</strong><small>Cleanse negative effects; block them for 3 seconds</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+          <button class="product" data-name="Fury Unbound" data-kind="later" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/fury-unbound.svg" alt=""><span class="product-copy"><strong>Fury Unbound</strong><small>Double damage dealt for 5 seconds</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+          <button class="product" data-name="Vitality Tonic" data-kind="later" data-gold="10" data-fullness="0"><img class="product-icon" src="skill-icons/items/vitality-tonic.svg" alt=""><span class="product-copy"><strong>Vitality Tonic</strong><small>Restore Level × 50 + 35% HP</small></span><span class="price"><span><img src="icons/gold.svg" alt=""><span class="sr-only">Gold</span>10</span></span></button>
+        </div>
+      </section>
+    </div>
+  </div>
+  <p class="shop-note">Select an item to review its cost before buying.</p>
+  <div class="veil" id="purchaseVeil" hidden>
+    <div class="confirm" role="dialog" aria-modal="true" aria-labelledby="purchaseTitle" aria-describedby="purchaseDescription">
+      <div class="tiny">CONFIRM PURCHASE</div>
+      <img class="product-icon" id="purchaseIcon" src="skill-icons/items/power-crystal.svg" alt="">
+      <h2 id="purchaseTitle"></h2>
+      <p id="purchaseDescription"></p>
+      <div class="cost" id="purchaseCost"></div>
+      <div class="confirm-actions"><button type="button" id="cancelPurchase">Cancel</button><button type="button" class="buy" id="confirmPurchase">Buy Now</button></div>
+    </div>
+  </div>
+  <div class="toast" id="purchaseToast" role="status" hidden></div>
+</main>
+<script>
+const stage=document.getElementById('stage');
+function fit(){const scale=Math.min(innerWidth/1920,innerHeight/1080);stage.style.transform=`translate(${(innerWidth-1920*scale)/2}px,${(innerHeight-1080*scale)/2}px) scale(${scale})`}
+addEventListener('resize',fit);fit();
+let gold=20,fullness=6,pending=null,returnFocus=null,toastTimer;
+const rows=[...document.querySelectorAll('.product')];
+const veil=document.getElementById('purchaseVeil');
+function updateWallet(){
+  document.getElementById('goldBalance').textContent=gold;
+  document.getElementById('fullnessBalance').textContent=fullness;
+  for(const row of rows){row.disabled=gold<Number(row.dataset.gold)||fullness<Number(row.dataset.fullness)}
+}
+function priceMarkup(row){
+  const food=Number(row.dataset.fullness);
+  return `<span><img src="icons/gold.svg" alt="">${row.dataset.gold} Gold</span>${food?`<span><img src="icons/fullness.svg" alt="">${food} Fullness</span>`:''}`;
+}
+function openPurchase(row){
+  if(row.disabled)return;
+  pending=row;returnFocus=row;
+  document.getElementById('purchaseIcon').src=row.querySelector('.product-icon').src;
+  document.getElementById('purchaseTitle').textContent=`Buy ${row.dataset.name}?`;
+  document.getElementById('purchaseDescription').textContent=row.querySelector('.product-copy small').textContent;
+  document.getElementById('purchaseCost').innerHTML=priceMarkup(row);
+  veil.hidden=false;document.getElementById('cancelPurchase').focus();
+}
+function closePurchase(){veil.hidden=true;pending=null;if(returnFocus)returnFocus.focus()}
+function buy(){
+  if(!pending)return;
+  const costGold=Number(pending.dataset.gold),costFullness=Number(pending.dataset.fullness);
+  if(gold<costGold||fullness<costFullness){closePurchase();return}
+  gold-=costGold;fullness-=costFullness;
+  const name=pending.dataset.name,kind=pending.dataset.kind;
+  closePurchase();updateWallet();
+  const toast=document.getElementById('purchaseToast');
+  toast.textContent=`${name} purchased · ${kind==='later'?'Ready for a later battle':'Applied immediately'}`;
+  toast.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.hidden=true,3500);
+}
+for(const row of rows)row.addEventListener('click',()=>openPurchase(row));
+document.getElementById('cancelPurchase').addEventListener('click',closePurchase);
+document.getElementById('confirmPurchase').addEventListener('click',buy);
+veil.addEventListener('click',event=>{if(event.target===veil)closePurchase()});
+document.addEventListener('keydown',event=>{
+  if(veil.hidden)return;
+  if(event.key==='Escape'){closePurchase();return}
+  if(event.key==='Tab'){
+    const cancel=document.getElementById('cancelPurchase'),confirm=document.getElementById('confirmPurchase');
+    if(event.shiftKey&&document.activeElement===cancel){event.preventDefault();confirm.focus()}
+    else if(!event.shiftKey&&document.activeElement===confirm){event.preventDefault();cancel.focus()}
+  }
+});
+updateWallet();
+</script>
+</body>
+</html>

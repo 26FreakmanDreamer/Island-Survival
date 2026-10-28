@@ -1,0 +1,13 @@
+{
+  "title": "contact_sheet_grid tool test",
+  "columns": 2,
+  "cell": 320,
+  "pivot": [160, 198],
+  "out": "assets/generated/contact_sheets/bat_v1/_tooltest_sheet.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/base_320.png", "label": "canonical / base", "duration": ""},
+      {"path": "assets/generated/staged/bat/_tooltest/base_test.png", "label": "base import test", "duration": "0.22"}
+    ]
+  ]
+}

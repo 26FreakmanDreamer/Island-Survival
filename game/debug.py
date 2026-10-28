@@ -76,6 +76,18 @@ class DebugPanel:
             image = self.font.render(line[:44], True, color)
             surface.blit(image, (x + 8, y + 7 + index * 15))
 
+    @staticmethod
+    def _climb_label(scene) -> str:
+        player = scene.player
+        ladder = getattr(player, "climb_ladder", None)
+        if not getattr(player, "climbing", False) or ladder is None:
+            return "-"
+        if scene.input.is_held("climb_up"):
+            return "up"
+        if scene.input.is_held("climb_down"):
+            return "down"
+        return "idle"
+
     def _lines(self, scene) -> list[str]:
         player = scene.player
         enemy = scene.enemy
@@ -94,7 +106,9 @@ class DebugPanel:
             f"CHAR {scene.character_id} {character_index}/{len(characters)}  "
             f"ENEMY {scene.enemy_id} {enemy_index}/{len(enemies)}  "
             f"RESULT {scene.match_over or '-'}",
-            f"BLOCKS {'ON' if scene.stage.blocks_enabled else 'OFF'}  B toggle",
+            f"BLOCKS {'ON' if scene.stage.blocks_enabled else 'OFF'} B  "
+            f"BARRIERS {len(scene.stage.barriers)}  PLATFORMS {len(scene.stage.platforms)}",
+            f"LADDERS {len(scene.stage.ladders)}  CLIMB {self._climb_label(scene)}",
             f"LOCK {'ON' if scene.lock_on else 'OFF'}  MMB toggle",
             f"PLAYER {player.state.name}  HP {player.hp:5.1f}/{player.max_hp:.0f}",
         ]

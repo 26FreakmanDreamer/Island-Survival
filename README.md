@@ -14,17 +14,25 @@ run.bat --smoke-test
 
 The smoke test first repeats Lina's punch/kick/Q/block/flame checks against the training dummy, then
 switches to Warrior and verifies hurt, startup super armor, recovery interruption, axe damage/KO,
-dash knock-up, throw out-and-back damage, the inter-skill gap, win/loss, AI approach and block jump,
-body separation/facing stability (no enemy flip across a block; capped separation slide), interrupted-transform visibility, flame revert, roster switching,
+dash knock-up, throw out-and-back damage, the inter-skill gap, win/loss, AI approach and barrier jump,
+body separation/facing stability (no enemy flip across a barrier; capped separation slide), interrupted-transform visibility, flame revert, roster switching,
 the data-driven V/C/X/Z skill slots, and the F7 plus `[` / `]` roster switches.
 It then runs Nyra against the dummy (wave/thrust damage, mark stacking and detonation, Q slash
 hitbox/FX, pass-through dash, cooldowns, per-target marks, lock-on) and Veno-Spider against Lina
 (bite, poison stacking, stun web, hover ascent/descent, V/C/X slots, win). It also checks that each
 Veno keeps independent skill cooldowns and that the 3-body group wins only when all are dead, and
 checks `missing_frames == 0` for Lina, Nyra, Veno, Warrior and Bat. The Bat phase verifies the
-default five-Bat match, five spawn/cruise heights, free flight (40–420), dive 10, V/C/X/Z slots,
-sonic 12 + 1s stun, out/return/wall/block bounce, the 0.65s cast lock, hurt/stun staying airborne,
-KO landing, and the five-body group spawn/independent cooldowns/WIN.
+five-Bat group (selected with F7; the default enemy is Warrior), five spawn/cruise heights, free
+flight (40–420), dive 10, V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the 0.65s
+cast lock, hurt/stun staying airborne, KO landing, and the five-body group spawn/independent
+cooldowns/WIN.
+The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
+`platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
+semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the two-frame back-view
+climb clips (`lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok`), ladders not
+blocking projectiles (`ladder_no_block_ok`), Nyra climbing (`nyra_climb_ok`, `nyra_climb_anim_ok`),
+spawn clearance (`platform_spawn_clear_ok`), the `penetrates_blocks` flag (`penetration_flag_ok`)
+and the default enemy (`default_enemy_ok`).
 It checks the projectile VFX dispatch
 (`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`, `q_flame_color_ok`, `veno_poison_cast_ok`,
 `veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`, `veno_bite_hit_fx_ok`,
@@ -38,8 +46,10 @@ settlement cadence (`poison_interval_ok`, `poison_tint_ok`), web collision radiu
 | Input | Action |
 |---|---|
 | A / D | Move left / right |
-| W / Space | Jump |
-| S / Shift | Crouch |
+| W | Climb up while a ladder is in reach; otherwise jump |
+| Space | Jump; while climbing, jump off the ladder |
+| S | Crouch; while climbing, climb down |
+| Shift | Crouch only (does not climb) |
 | Left mouse | Punch (alternating hands) |
 | Right mouse | Kick (alternating legs) |
 | Middle mouse | Toggle attack lock-on (default off) |
@@ -70,13 +80,27 @@ Attack direction follows Lina's facing: tap A/D to turn left/right; punches, kic
 Middle mouse toggles attack lock-on: while on, each attack turns Lina toward the living enemy at
 attack start. It defaults off and resets to off when the character or enemy is switched; F9 keeps the
 current setting.
-Q spawns at fist height relative to Lina's feet, so its trajectory rises when she stands on a block.
-Walking and attack lunges stop at block edges; jump onto a block to cross it.
+Q spawns at fist height relative to Lina's feet, so its trajectory rises when she stands on a barrier or platform.
+Barriers are solid obstacles. Platforms are full AABB solids: they block from the top, side and underside;
+landing on the top requires the feet center to be within `land_margin` of the span. The outer platform edges
+are inset from the arena walls so a character can walk off and fall; there is no fall damage. B toggles
+barrier + platform drawing and collision; ladders stay visible and climbable. With B off, reaching a
+ladder top holds the character on the ladder instead of snapping to the platform.
+
+Climbing: walk to a ladder and hold W to climb, S to descend, and Space to jump off. Climbing locks the
+character to the ladder and ignores barriers/platforms. The climb art is a two-frame back-view clip:
+frame 0 has the left hand high and right leg high, frame 1 the right hand high and left leg high,
+0.20s per frame. Moving loops the clip (up 0→1→0, down 1→0→1); releasing W/S holds the current
+frame. Climbing never horizontally flips the back view and restores the previous facing on exit.
+Lina's normal and flame tables each have their own climb clip, and Nyra has a dedicated clip with
+her sword still sheathed diagonally across her back. The draw scale is character-specific around
+the feet pivot (Lina 1.2×, Nyra 1.1×); combat hurtboxes and stage collision are unchanged. Attacks,
+hits, stun and KO drop the character off. Ladders have no collision and never block projectiles.
 
 ## Combat modes
 
-The default enemy is a group of **five Bats** (50 HP fliers). Press F7 to cycle the enemy roster
-(Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → back); `[` / `]` cycle the playable character roster
+The default enemy is a single **Warrior** (300 HP); the five-Bat group is selectable with F7. Press F7
+to cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → back); `[` / `]` cycle the playable character roster
 (Lina ↔ Nyra). A switch performs a full
 match reset and leaves the enemy AI off for manual testing. The AI also starts off on launch and after
 any reset (F5 reload, F9, R); press F8 to turn it on. The dummy has
@@ -95,20 +119,20 @@ web (8s) cooldowns, so one Veno attacking never delays the others. Its visual ho
 pose with a draw-only web strand above it.
 
 Five Bats spawn at different altitudes (180/320/240/380/280px) and keep those as cruise heights;
-they fly over 40–420px with no gravity, but honour the arena walls and the real block rectangles.
+they fly over 40–420px with no gravity, but honour the arena walls and the solid barrier/platform AABBs.
 The dive (10 damage, 2s) is deterministic and only fires when its hitbox can actually reach the
 player from the current altitude; otherwise the Bat keeps flying. The sonic (12 damage + 1s stun,
 10s) is the only randomly-timed skill: a random opening cooldown and a 50% cast gate desynchronise
 the group, plus a 0.55s same-skill stagger. The wave flies in the mouth→player direction, bounces
-off walls and blocks, and returns to the Bat's current position, dealing at most one hit. Bats stay
-airborne through hurt/stun and only fall on KO. `roster.json` uses `count: 5`, five spawn offsets
-and five spawn heights.
+off walls and barriers/platforms, and returns to the Bat's current position, dealing at most one hit.
+Bats stay airborne through hurt/stun and only fall on KO. `roster.json` uses `count: 5`, five spawn
+offsets and five spawn heights. The group is selected with F7; the default match is a single Warrior.
 
 ## Debug controls
 
 | Key | Action |
 |---|---|
-| F1 | Toggle hitbox/hurtbox, lane, wall and block overlay |
+| F1 | Toggle hitbox/hurtbox, lane, wall, barrier, platform and ladder overlay |
 | F2 | Toggle the live debug panel |
 | F3 | Pause / resume |
 | F4 | Step one simulation tick (pauses) |
@@ -122,19 +146,21 @@ and five spawn heights.
 | F11 | Cycle a forced status on the current enemy |
 | F12 | Damage Lina / show KO |
 | V / C / X / Z | Trigger the enemy's skill slots 1 / 2 / 3 / 4 (undefined slots do nothing) |
-| B | Toggle block collision and visibility |
+| B | Toggle barrier + platform collision and visibility (ladders stay visible and climbable) |
 | Arrow keys | Move the current enemy horizontally |
 | PgUp / PgDn | Current enemy HP +/-100 |
 | R | Restart after VICTORY / DEFEATED |
 
 ## Current scope
 
-- Two playable characters (Lina, Nyra) vs. Warrior, Veno-Spider or Bat in a single arena; the training Dummy remains available through F7. A `roster.json` registry drives character/enemy construction.
-- Lina: 45 normal + 41 flame-form frames (86); damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Q launches a fist-sized static sprite projectile: a pixel-art teal glass ball (white rim/highlights, short trail) drawn slightly above the fist lane in normal form, orange/red fire in flame form, with matching teal/orange cast and impact colors. Nyra: 29 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150.
-- Nyra: HP 100, basic ATK 20; LMB wave 20 (0.30s), RMB thrust 24, Q slash 30 (8s), E dash 30 (15s). LMB uses a 5-frame wave animation (0.06s each) and cast-anchored hitboxes (no projectile): the RMB thrust box `[28,-165,130,48]` during t=0–0.06s and 0.24–0.30s, and the extended `[28,-212,162,123]` (reach 190) during t=0.06–0.24s; it adds 1 mark and has no FX. Q uses a 6-frame slash animation (0.40s) and cast-anchored hitboxes: the thrust box during t=0–0.12s and 0.30–0.40s, and the extended box during t=0.12–0.30s; it adds 1 mark, has super armor for its 0.40s, and plays the separate six-frame blue slash FX (visible frames 02–04 align with the character's 02–04 frames and overlap the extended window). RMB uses a 5-frame thrust animation (0.08s each, 0.40s) with a single hitbox `[28,-165,130,48]` active t=0.16–0.24s. Melee hits add 1 mark (max 3); the 4th melee hit detonates for `1.8×atk + 10% target max HP` and leaves 1 mark. E dashes at 1100px/s for t=0.06–0.36s (~330px) with super armor during the dash, passes through the enemy but respects walls/blocks, and pushes the enemy out at the end.
-- Warrior AI approaches, jumps blocks, attacks with a telegraphed axe slash, has startup/active super armor, and supports win/loss/restart. Its damage is `atk`-scaled: axe slash 24, dash 30 + 1.5s knock-up, axe throw 24 per pass. The dash knock-up uses a reduced knock-up gravity so the target stays airborne for the 1.5s window, and draws a procedural cyan vortex at the launched fighter's feet for the full status duration.
+- Two playable characters (Lina, Nyra) vs. Warrior, Veno-Spider or Bat in a single arena; the training Dummy remains available through F7. A `roster.json` registry drives character/enemy construction. The current default enemy is Warrior.
+- Scene: `blocks` use `kind: barrier | platform`; barriers are solid obstacles, platforms are full AABB solids (top/side/underside), and `ladders` are separate non-solid climb triggers. Current layout: long platform x=170..649 at surface y=220, short platform x=796..1110 at surface y=268, long ladder x=508..572 (400px), medium ladder x=921..985 (352px, native 160px width), ground barriers x=400..490 and x=700..790; player spawn x=280, enemy spawn x=600. B toggles barriers/platforms; ladders stay visible and climbable. F1 shows the collision boxes; F2 shows counts and `CLIMB`. `penetrates_blocks` defaults false for all current skills.
+- Lina: 47 normal + 43 flame-form frames (90); both tables include the 2-frame back-view climb clip. Damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Q launches a fist-sized static sprite projectile: a pixel-art teal glass ball (white rim/highlights, short trail) drawn slightly above the fist lane in normal form, orange/red fire in flame form, with matching teal/orange cast and impact colors. Nyra: 31 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3, climb 2) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150.
+- Climb animations: Lina normal/flame and Nyra each have two dedicated back-view frames; Nyra's sword stays sheathed on her back and her hands stay free. Lina draws at 1.2× and Nyra at 1.1× around the feet pivot; the combat hurtbox and stage body are not scaled. Enemy climb art/AI is not implemented yet.
+- Nyra: HP 100, basic ATK 20; LMB wave 20 (0.30s), RMB thrust 24, Q slash 30 (8s), E dash 30 (15s). LMB uses a 5-frame wave animation (0.06s each) and cast-anchored hitboxes (no projectile): the RMB thrust box `[28,-165,130,48]` during t=0–0.06s and 0.24–0.30s, and the extended `[28,-212,162,123]` (reach 190) during t=0.06–0.24s; it adds 1 mark and has no FX. Q uses a 6-frame slash animation (0.40s) and cast-anchored hitboxes: the thrust box during t=0–0.12s and 0.30–0.40s, and the extended box during t=0.12–0.30s; it adds 1 mark, has super armor for its 0.40s, and plays the separate six-frame blue slash FX (visible frames 02–04 align with the character's 02–04 frames and overlap the extended window). RMB uses a 5-frame thrust animation (0.08s each, 0.40s) with a single hitbox `[28,-165,130,48]` active t=0.16–0.24s. Melee hits add 1 mark (max 3); the 4th melee hit detonates for `1.8×atk + 10% target max HP` and leaves 1 mark. E dashes at 1100px/s for t=0.06–0.36s (~330px) with super armor during the dash, passes through the enemy but respects walls and solid barriers/platforms, and pushes the enemy out at the end.
+- Warrior AI approaches, jumps solid barriers/platforms, attacks with a telegraphed axe slash, has startup/active super armor, and supports win/loss/restart. Its damage is `atk`-scaled: axe slash 24, dash 30 + 1.5s knock-up, axe throw 24 per pass. The dash knock-up uses a reduced knock-up gravity so the target stays airborne for the 1.5s window, and draws a procedural cyan vortex at the launched fighter's feet for the full status duration.
 - Veno-Spider: half-size body (160×160 runtime frames, 75×75 hurtbox, `stage_body_width` 70, bite range 75); HP 50, ATK 10; bite 15, poison glob 8 + 3% max HP/s for 3s, web 10 + 1s stun. Cooldowns are bite 1s, poison 5s and web 8s, tracked independently by each spider. Selecting Veno spawns a group of **3** (default 1 ground + 2 hovering; `roster.json` `count`/`spawn_offsets`/`spawn_modes`); the player's attacks and projectiles can hit any living Veno and the match is won when all 3 die. Nyra's marks stack independently on each Veno. Same-source poison reapplication adds the new duration to the remaining time (2s + 3s = 5s); different sources — including different Venos — keep independent damage instances. Poison settles every 0.5s. It hovers on a web at 140–300px (base 220), prioritizes bite on the ground and venom/web while airborne, and uses a draw-only curved web strand. Poison is dark green (layered glob, cast mist and splash) and a poisoned body flashes green/purple every 0.18s; web uses the approved web_05 crop at 64px with a 150–170px impact decal, a procedural silk trail and collision radius 30; a connected bite adds a short green arc.
-- Bat: 14 frames (wing 4, dive 3, sonic 3, hurt 1, stun 1, KO 2) on a 384×384 source / 192×192 runtime canvas with pivot (115,143); HP 50, ATK 10. Dive 10 (2s), sonic 12 + 1s stun (10s); free flight 40–420 (preferred 240, bob 24, vertical speed 300); five default spawns at 180/320/240/380/280px; hurtbox 100×66, `stage_body_width` 56. It is the default five-enemy match. The body and the sonic wave collide with the real 60px block rectangles (not full-height columns). Dive is height-gated; sonic is the only randomly-timed skill (random opening cooldown + 50% cast gate, 0.55s group same-skill stagger). The sonic hitbox is a forward circle (+8px, r24) matching the Wi-Fi-style arcs. `count: 5` with five `spawn_offsets` and five `spawn_heights`.
+- Bat: 14 frames (wing 4, dive 3, sonic 3, hurt 1, stun 1, KO 2) on a 384×384 source / 192×192 runtime canvas with pivot (115,143); HP 50, ATK 10. Dive 10 (2s), sonic 12 + 1s stun (10s); free flight 40–420 (preferred 240, bob 24, vertical speed 300); five default spawns at 180/320/240/380/280px; hurtbox 100×66, `stage_body_width` 56. It is selected with F7; the default match is a single Warrior. The body and the sonic wave collide with the barrier/platform AABBs; platforms are full solids. Dive is height-gated; sonic is the only randomly-timed skill (random opening cooldown + 50% cast gate, 0.55s group same-skill stagger). The sonic hitbox is a forward circle (+8px, r24) matching the Wi-Fi-style arcs. `count: 5` with five `spawn_offsets` and five `spawn_heights`.
 - `V/C/X/Z` read the current enemy's four skill slots from data; undefined slots are safe no-ops and show `-` in F2.
 - Frame data, hitboxes, cooldowns, damage and stage geometry are in `game/data/*.json`.
 - Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, group balancing beyond the Veno 3-body group and the five-Bat sandbox, other playable characters/enemies, packaging.
@@ -151,6 +177,7 @@ assets/frames/nyra/      Nyra frames on the 384x384 canvas
 assets/frames/warrior/   Warrior frames on the 384x384 canvas
 assets/frames/veno/      Veno-Spider frames on the 320x320 canvas
 assets/frames/bat/       Bat frames on the 384x384 source (192x192 runtime) canvas
+assets/sprites/stage/    runtime platform/ladder PNGs copied from the contact sheets
 assets/generated/        raw candidates, staged frames, contact sheets
 tools/                   collect_frames.py, import_frames.py, contact_sheet.py
 docs/                    design decisions, asset pipeline, debugging guide

@@ -1,0 +1,25 @@
+{
+  "title": "Bat key poses - v1 candidates (reference + 5 poses x 2)",
+  "columns": 6,
+  "cell": 320,
+  "pivot": [160, 198],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_keyposes_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/base_320.png", "label": "canonical / base", "duration": ""},
+      {"path": "assets/generated/staged/bat/keyposes/wing_00_a.png", "label": "wing_00 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/wing_00_b.png", "label": "wing_00 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/wing_01_a.png", "label": "wing_01 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/wing_01_b.png", "label": "wing_01 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/wing_02_a.png", "label": "wing_02 A", "duration": "0.22"}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/keyposes/wing_02_b.png", "label": "wing_02 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_a.png", "label": "bat_dive_01 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_dive_01_b.png", "label": "bat_dive_01 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_sonic_01_a.png", "label": "bat_sonic_01 A", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/keyposes/bat_sonic_01_b.png", "label": "bat_sonic_01 B", "duration": "0.30"},
+      null
+    ]
+  ]
+}

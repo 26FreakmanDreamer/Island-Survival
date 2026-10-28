@@ -356,6 +356,14 @@ camera, scale, position and lighting in every frame. Only change the pose:
 
 ## 场景与 HUD
 
+> 2026-10-27 更新：场景已扩展为 barrier / platform / ladder。当前坐标与规则以
+> `game/data/debug.json` 和 `docs/DESIGN_DECISIONS.md` 的 “Stage props and climbing” 为准；
+> 下面 2026-10-24 的 block 记录保留为历史。
+>
+> 当前第一版：地面 barrier `[400,560,90,60]`、`[700,560,90,60]`；长平台 `[170,220,479,78]`
+> （surface 220）；短平台 `[796,268,314,78]`（surface 268）；长梯 `[508,220,64,400]`；
+> 中梯 `[921,268,64,352]`；玩家出生 x=280，敌人出生 x=600；默认敌人 Warrior。
+
 - 逻辑分辨率 1280×720；背景从 1664×936 一次性缩放到 1280×720；固定镜头。
 - 地面 y=620；不可见侧墙 x=90 / 1190；两个矩形 block：`[400,560,90,60]`、`[760,560,90,60]`（顶面 y=560，可站立/阻挡地面移动；跳跃可越过；投射物按 AABB 碰撞）。
 - 出生：Lina x=280，木桩 x=1000；二者都在 block 外。
@@ -397,7 +405,7 @@ camera, scale, position and lighting in every frame. Only change the pose:
 ## 验收清单
 
 1. 新开一个终端，双击 `run.bat`，无需手动装依赖即可进入沙盒。
-2. A/D 移动、W/Space 跳跃、S/Shift 下蹲；撞侧墙停住；能跳上/越过 block。
+2. A/D 移动；远离梯子时 W/Space 跳跃，近梯时 W 上爬、S 下爬、Space 跳离；Shift 只下蹲；撞侧墙停住；能跳上/越过 barrier；platform 顶/侧/底全实体，外侧边缘可走落（无落地伤害）。
 3. 左键拳交替、右键腿交替；命中伤害 20/30，回能 15/20；腿击退明显强于拳。
 4. Q 发射中弹道气流；命中 25 伤害、+20 能量；冷却 8s，开局就绪。
 5. 能量 100 时 E 可用；释放后能量 0、Q 立即刷新、E 冷却 15s（开局就绪）、火焰 5s。
@@ -423,7 +431,7 @@ camera, scale, position and lighting in every frame. Only change the pose:
 - LMB/RMB/Q 仅地面可用；E 空中可用；没有空中普攻。
 - 攻击自动面向最近敌人；攻击期间锁水平移动，事件时刻小幅前踏。
 - 木桩 1000 HP、无 AI、不攻击；Lina 的 HP/受击/KO 只由调试场景触发。
-- block 是通用实体：阻挡地面移动、可站立、可被跳跃越过；投射物按 AABB 碰撞。
+- block 是类别：barrier 为实体障碍；platform 为可站立的全 AABB 实体（顶/侧/底）；ladder 默认无体积，只做攀爬触发。
 - 首版不做音频；所有 UI 文本英文；不做完整 HUD。
 
 ## 风险与缓解
@@ -435,7 +443,7 @@ camera, scale, position and lighting in every frame. Only change the pose:
 - **输入/计时漂移**：60Hz 固定步长；输入缓冲/冷却/状态全部用模拟秒；失焦清空输入；0.25×/2×/逐帧验收。
 - **动画与攻击窗口不匹配**：导入器校验 clip 总时长 vs `attacks.json` duration；F2 面板显示当前帧/攻击时钟，便于现场调。
 - **路径含空格/中文**：`run.bat` 使用 `cd /d "%~dp0"` 和引号；Python 用 `pathlib.Path`。
-- **block 与出生点重叠**：舞台坐标集中在 `debug.json`，F1 叠层可见；已把出生点放在 block 外。
+- **block 与出生点重叠**：舞台坐标集中在 `debug.json`，F1 叠层可见；reset/B 开启时自动解嵌；出生点已检查。
 - **canonical 素材被覆盖**：所有生成物只写 `assets/frames/`、`assets/generated/`；`Image/` 只读。
 - **没有自动测试**：按约定不做 pytest；用 F1/F2 + 场景预设 + 验收清单替代；每次改规则后手动回归关键路径。
 - **生成耗时/成本**：先 20 帧验证管线，审批后再批量 25 帧；不一次性生成全部候选。

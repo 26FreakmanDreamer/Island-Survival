@@ -5,6 +5,10 @@ from __future__ import annotations
 from .combat import AttackRuntime
 from .fighter import Fighter, FighterState
 
+# Nyra's canonical bbox is ~243px high; her staged climb frames are ~220/216px,
+# so 1.1x matches the standard silhouette while 1.2x overshoots.
+NYRA_CLIMB_DRAW_SCALE = 1.1
+
 
 class Nyra(Fighter):
     def __init__(self, store, stage, entry: dict, anim) -> None:
@@ -29,6 +33,7 @@ class Nyra(Fighter):
         self.cfg = cfg
         self.combat_cfg = combat_cfg
         self.spawn = (float(x), float(y))
+        self.climb_draw_scale = NYRA_CLIMB_DRAW_SCALE
         self.set_attack_stats(cfg)
         self.knock_up_gravity = float(
             combat_cfg.get("knock_up_gravity", self.gravity)
@@ -104,6 +109,10 @@ class Nyra(Fighter):
             self.stage.move_fighter(self, dt)
             return
 
+        if self.climbing:
+            self._update_climb(dt, input_state, scene)
+            return
+
         if self.state == FighterState.ATTACK:
             self._update_attack(dt, input_state, target, scene)
             self.stage.move_fighter(self, dt)
@@ -118,7 +127,8 @@ class Nyra(Fighter):
             return
 
         self._handle_control(dt, input_state, target, scene)
-        self.stage.move_fighter(self, dt)
+        if not self.climbing:
+            self.stage.move_fighter(self, dt)
 
     def _update_attack(self, dt, input_state, target, scene) -> None:
         self.vx = 0.0
@@ -251,6 +261,10 @@ class Nyra(Fighter):
 
         if input_state.buffer.has("kick") and self._start_thrust(scene, target):
             input_state.buffer.consume("kick")
+            return
+
+        if self.try_start_climb(input_state, scene):
+            input_state.buffer.consume("jump")
             return
 
         if input_state.buffer.has("jump") and self._start_jump():

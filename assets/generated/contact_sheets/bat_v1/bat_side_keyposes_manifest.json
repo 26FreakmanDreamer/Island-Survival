@@ -1,0 +1,25 @@
+{
+  "title": "Bat side-view key poses - v1 candidates (base C + 5 poses x 2)",
+  "columns": 6,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_keyposes_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/side_base_384.png", "label": "approved base C", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_00_a.png", "label": "side wing_00 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_00_b.png", "label": "side wing_00 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_01_a.png", "label": "side wing_01 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_01_b.png", "label": "side wing_01 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_02_a.png", "label": "side wing_02 A", "duration": "0.22"}
+    ],
+    [
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_02_b.png", "label": "side wing_02 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_01_a.png", "label": "side dive_01 A", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_dive_01_b.png", "label": "side dive_01 B", "duration": "0.22"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_01_a.png", "label": "side sonic_01 A", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_sonic_01_b.png", "label": "side sonic_01 B", "duration": "0.30"},
+      null
+    ]
+  ]
+}

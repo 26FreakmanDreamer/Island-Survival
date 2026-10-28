@@ -71,6 +71,15 @@ class InputState:
         pygame.K_q: "q",
         pygame.K_e: "e",
     }
+    # W/S keep their normal jump/crouch actions and additionally drive the
+    # climb state while a ladder trigger overlaps the player. Shift stays
+    # crouch-only, so it never climbs down.
+    CLIMB_ACTIONS = {
+        pygame.K_w: "climb_up",
+        pygame.K_s: "climb_down",
+        # Space leaves the ladder; W keeps climbing even when re-pressed.
+        pygame.K_SPACE: "climb_jump",
+    }
     BUFFERED_KEYS = {"jump", "q", "e"}
 
     def __init__(self, buffer_seconds: float = 0.12) -> None:
@@ -86,11 +95,17 @@ class InputState:
         self.held.add(action)
         if action in self.BUFFERED_KEYS:
             self.buffer.press(action)
+        climb_action = self.CLIMB_ACTIONS.get(key)
+        if climb_action is not None:
+            self.held.add(climb_action)
 
     def key_up(self, key: int) -> None:
         action = self.KEY_ACTIONS.get(key)
         if action is not None:
             self.held.discard(action)
+        climb_action = self.CLIMB_ACTIONS.get(key)
+        if climb_action is not None:
+            self.held.discard(climb_action)
 
     def mouse_down(self, button: int) -> None:
         if button == 1:
@@ -124,6 +139,9 @@ class InputState:
             for key, action in self.KEY_ACTIONS.items()
             if action in ("left", "right", "crouch") and pressed[key]
         }
+        for key, action in self.CLIMB_ACTIONS.items():
+            if action in ("climb_up", "climb_down") and pressed[key]:
+                self.held.add(action)
 
     def clear(self) -> None:
         self.held.clear()

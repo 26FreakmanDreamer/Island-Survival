@@ -44,9 +44,10 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Second form (flame form) animation set
 
 - `transform_04` is the appearance base: red/black outfit, steady orange fire aura, glowing eyes.
-- 41 dedicated flame-form frames were generated from the normal pose references using multi-image
+- 43 dedicated flame-form frames were generated from the normal pose references using multi-image
   fusion (pose image + `transform_04`):
-  idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2.
+  idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2,
+  climb 2.
 - The animation player keeps two clip tables: normal and flame. After the transform clip finishes,
   it switches to the flame table for idle/walk/punch/kick/Q/hurt/KO.
 - Jump, crouch, hurt and KO have dedicated flame frames, so they keep the red/black outfit and a
@@ -81,33 +82,110 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Stage and projectile heights
 
 - 1280x720 logical resolution; background scaled from 1664x936; fixed camera.
-- Ground y=620; walls at x=90 and x=1190; two solid blocks at x=400..490 and x=760..850.
-- Lina spawns at x=280; the dummy and Warrior spawn at x=1000.
+- Ground y=620; walls at x=90 and x=1190. Two ground barriers: x=400..490 and x=700..790.
+  Two platforms: x=170..649 at surface y=220 and x=796..1110 at surface y=268; each collision
+  rect is 78px tall. Ladders: x=508..572 (long, 400px) and x=921..985 (medium, 352px).
+- Lina spawns at x=280; the dummy, Warrior, Veno and Bat base spawns are at x=600 (Bat base y=470).
+  The current default enemy is Warrior; F7 selects the others.
 - Fighters keep a minimum center distance equal to the sum of their stage body half-widths
-  (Lina 50 + Warrior 60 = 110px). The enemy yields first on his current side; if a wall/block
+  (Lina 50 + Warrior 60 = 110px). The enemy yields first on his current side; if a wall/barrier/platform
   blocks that side, he is not flipped across the player — Lina is pushed to the free side instead.
   Separation moves at most `combat.separation_speed × dt` (600px/s), so a deep overlap slides apart
   over a few ticks instead of teleporting. Warrior facing ignores targets within an 8px deadzone,
   so overlapping bodies cannot flip the sprite every tick.
 - Stage collision uses a wider grounded body than the 56px combat hurtbox: Lina's
-  `stage_body_width` is 100px, so her front boot stops at the block edge instead of entering it.
-  While airborne, collision falls back to the hurtbox width so stepping off a ledge does not snap
-  the character sideways. Attack lunges use the same stage collision, not a direct x change.
-- Overlapping a block resolves to the nearer side; landing on a block top requires the feet center
-  to be within 8px of the block span (`land_margin`).
-- B toggles both block drawing and collision for observation; the AI also stops jumping when blocks
-  are off. The toggle persists across F9 and resets on F5/rebuild.
+  `stage_body_width` is 100px, so her front boot stops at a barrier/platform edge instead of
+  entering it. While airborne, collision falls back to the hurtbox width so stepping off a ledge
+  does not snap the character sideways. Attack lunges use the same stage collision, not a direct
+  x change.
+- Barriers are solid AABBs. Platforms are full AABBs: the top is standable, the sides block
+  horizontal movement, and the underside stops a rising body. Landing on a top requires the feet
+  center to be within 8px of the span (`land_margin`). A fighter embedded by a B re-enable or a
+  spawn is pushed to the nearest free side (`Stage.resolve_overlap`). Platform outer edges are
+  inset 80px from the walls so a character can walk off; there is no fall damage.
+- B toggles barrier + platform drawing and collision for observation; ladders have no volume and
+  stay visible/climbable. With B off, reaching a ladder top holds the character on the ladder
+  instead of snapping to the platform. The AI also stops jumping when blocks are off. The toggle
+  persists across F9 and resets on F5/rebuild.
 - Projectile lane heights are measured upward from the attacker's feet: high 180px, fist 142px,
   mid 120px, low 60px. Lina Q spawns at `attacker.y - 142`, so it is screen y 478 on flat ground
-  and y 418 while she stands on a 60px block. The ball keeps that spawn height in flight.
+  and y 418 while she stands on a 60px barrier; on a platform the same offset applies from its
+  surface. The ball keeps that spawn height in flight.
 - This makes the Q trajectory follow Lina vertically instead of staying on a fixed world lane.
 - Lina's sprite body height is approximately 210px, anchored at the feet-center pivot (128,244) on a
   256x256 canvas. Warrior uses a 384x384 canvas with pivot (192,372) and a body height of about 230px.
 
+## Stage props and climbing
+
+- `game/data/debug.json` `stage.blocks` is a list of `{kind, rect, ...}` entries. `kind: "barrier"`
+  is a solid obstacle; `kind: "platform"` is a standable solid with an optional sprite.
+  `Stage.blocks` is the combined solid-rect view used by movement, AI, separation and projectiles;
+  `Stage.barriers` and `Stage.platforms` are filtered views. `stage.ladders` is a separate list of
+  `Ladder` objects and is never added to `Stage.blocks`.
+- Platform sprites (`platform_tropical_long.png`, `platform_tropical_short.png`) are copied from
+  `assets/generated/contact_sheets/` to `assets/sprites/stage/` and rendered at 0.6 scale. The
+  `sprite_rect` is separate from the collision `rect`; `surface_y` (or `rect.top`) is the standable
+  line. The collision height is 78px, leaving the decorative grass/rock fringe outside the solid.
+- Current first-pass layout: long platform x=170..649 at y=220; short platform x=796..1110 at
+  y=268; long ladder x=508..572 (400px) using `ladder_tropical_wood.png`; medium ladder x=921..985
+  (352px) using `ladder_tropical_wood_medium.png` (native 160px width; the long ladder is rendered
+  128px wide). Ground barriers are at x=400..490 and x=700..790. No barriers are placed on the
+  platforms in this pass.
+- The short platform bottom is 346px, so a 230px Warrior standing on the ground (head ~390px) and
+  a 210px Lina (head ~410px) can walk underneath it. The medium ladder is fully inside the short
+  platform's x-span, and both ladders sit under their platforms.
+- Climbing: `InputState` exposes `climb_up` (W) and `climb_down` (S) held actions in addition to
+  the normal jump/crouch mapping; `Space` is a separate `climb_jump`. On a ladder, W climbs,
+  S descends, Space jumps off, and Shift stays crouch-only. The climb state locks x to the ladder
+  center, ignores solids, and plays the dedicated back-view climb clip described below. Reaching
+  the top snaps to the platform and sets `on_ground`; reaching the bottom returns to the ground.
+  Attacks, hits, stun and KO exit the climb; a short suppression prevents held W from immediately
+  re-grabbing after a deliberate exit. Lina and Nyra share the implementation in `Fighter`;
+  enemies never call it.
+- `penetrates_blocks` is an optional projectile flag on `QWave`, `SwordWave`, `AimedProjectile` and
+  `SonicWave`; every block collision site honours it. It defaults to false and no current skill
+  sets it. The two spec skills that need it (Eira Frostveil's E ice ball and Creepy Shooter's
+  skill-2 lock-on bullet) are not implemented yet. `AxeThrow` and melee hitboxes remain as before
+  (no block occlusion) in this pass.
+- Debug: F1 draws barrier boxes in yellow, platform boxes in cyan, and ladder trigger boxes in
+  magenta with green/red top/bottom lines. F2 shows `BARRIERS n PLATFORMS n` and
+  `CLIMB up/down/idle`. B toggles barrier+platform rendering/collision; ladders stay visible and
+  climbable.
+
+## Climb animations (playable characters)
+
+- Standard is a direct back view: frame 0 has the character-left hand high and right leg high;
+  frame 1 has the right hand high and left leg high. Each frame lasts 0.20s; the clip loops while
+  the character moves (up 0→1→0, down 1→0→1) and holds the current frame when the character stops.
+  The back view is not horizontally flipped while climbing; the pre-climb facing is restored on
+  exit.
+- Lina normal (`climb/`) and flame (`flame/climb/`) each have a dedicated two-frame clip;
+  `flame_offsets` are 0 for both flame climb frames. Nyra (`climb/`) has her own two-frame clip.
+  Nyra's base and frames keep the single long silver sword sheathed diagonally across her back
+  (hilt above her right shoulder, tip toward her lower-left hip); both hands are free. In frame 01
+  the raised right arm passes in front of the hilt but does not grip it.
+- Runtime clips live in `game/data/animations.json` under `clips.climb`,
+  `flame_clips.climb` and `nyra_clips.climb`; `game/config.py` requires `climb` for Lina normal,
+  Lina flame and Nyra. `FighterState.CLIMB` plus `Fighter.try_start_climb`/`_update_climb` choose
+  the variant-appropriate clip and start frame; `_stop_climb` restores facing.
+- The climb sprite is drawn with a character-specific visual scale around the feet pivot:
+  Lina 1.2× (default `CLIMB_DRAW_SCALE`) and Nyra 1.1× (`NYRA_CLIMB_DRAW_SCALE`).
+  `AnimationPlayer.draw(scale=...)` scales the frame and pivot around the feet; only the climb
+  clip is scaled. Lina's canonical bbox is ~253px and her climb frames are ~209/211px; Nyra's
+  canonical bbox is ~243px and her staged climb frames are ~220/216px. Nyra frame 00 is staged
+  1.02× relative to frame 01 to match the silhouette; this is a one-time staging normalization,
+  not per-frame runtime auto-scaling. Combat hurtboxes and stage collision are unchanged; F1
+  shows the unscaled boxes.
+- Smoke covers `lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok` and
+  `nyra_climb_anim_ok` in addition to the existing ladder flags. Enemy climb art/AI is not
+  implemented; the data-driven clip path exists for a future explicitly specified enemy, but no
+  enemy currently uses it.
+
 ## Warrior (Phase 2)
 
-- Warrior is selectable through F7; the current sandbox default is five Bats. The training Dummy
-  remains available through F7. Dummy mode is training-only and does not show a win/loss banner.
+- The current sandbox default is a single Warrior; the five-Bat group is selectable through F7.
+  The training Dummy remains available through F7. Dummy mode is training-only and does not show a
+  win/loss banner.
 - Canvas: 384x384, feet-center pivot (192,372), body about 230px. Lina stays 256x256 / (128,244).
 - Frames (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4. Axe slash
   frame 01 is a mid-lift between the low rear guard and the high wind-up; frames 03/04 use a
@@ -140,7 +218,7 @@ This document records the provisional rules used by the sandbox. Values live in
   disappears immediately with the status. It resets to full on a refresh. Tuning lives in
   `combat.knock_up_fx`. The effect is draw-only: it does not change animation frames, state,
   collision, movement or hitstop.
-- AI: always faces Lina; approaches when outside 160px; jumps when a block is in front; attacks when
+- AI: always faces Lina; approaches when outside 160px; jumps when a solid barrier/platform is in front; attacks when
   within 160px and the cooldown is ready; no crouch, no second attack, no pathfinding beyond jumps.
 - Super armor: during axe startup+active (runtime time < 0.55s), a hit deals damage and flash but
   does not clear the attack, enter HURT, or apply hitstun/knockback. Recovery is interruptible. A
@@ -154,8 +232,10 @@ This document records the provisional rules used by the sandbox. Values live in
 
 - Playable character. Canonical art `Image/Character/nyra-steel-256.png`; fallback uses the same
   canonical file. Canvas 384x384, feet-center pivot (192,372), body about 214px.
-- Frames (29 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6 (Q), thrust 5,
-  wave 5 (LMB), dash 3. Only right-facing frames are stored; the runtime mirrors for left. The crouch
+- Frames (31 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6 (Q), thrust 5,
+  wave 5 (LMB), dash 3, climb 2. Only right-facing frames are stored; the runtime mirrors for left.
+  The back-view climb is the exception and is not horizontally flipped; the sword stays sheathed
+  on her back. The crouch
   frame is imported at ~170px, midway between the original 212px crouch and the 128px deep-crouch
   variant, so it reads smaller than the 214px standing body without becoming tiny. The crouching
   hurtbox remains 56×130; only the image was changed.
@@ -190,7 +270,7 @@ This document records the provisional rules used by the sandbox. Values live in
 - E dash thrust: `1.5 * basic + 1.8 * extra` = 30, 0.45s; dash event moves at 1100px/s during
   0.06..0.36s (~330px); hitbox `[0,-180,90,180]` active 0.06..0.36; knockback 250; hitstun 0.3;
   hitstop 0.08; super armor during the dash (`armor_until: 0.36`). `pass_through_enemy` skips body
-  separation during the attack; walls and blocks still stop the dash. At dash end, `scene.push_apart`
+  separation during the attack; walls and solid barriers/platforms still stop the dash. At dash end, `scene.push_apart`
   pushes the enemy to the far side, or pushes Nyra back if the enemy cannot be moved. Does not add or
   detonate marks.
 - Marks: LMB/RMB/Q add exactly 1 mark per connecting attack (multi-hit/projectile events count
@@ -243,12 +323,12 @@ This document records the provisional rules used by the sandbox. Values live in
   radius 30 (visual 64px; impact decal 150–170px).
 - AI: on the ground it faces the player and chases, bites when within 75px and the bite is ready,
   and ascends when the player is outside bite range and at least one ranged skill is ready. It can
-  hop over a block when both ranged skills are cooling down. While hovering it prioritizes poison,
+  hop over a barrier/platform when both ranged skills are cooling down. While hovering it prioritizes poison,
   then web; it descends when the player is within 70px, when both ranged skills are cooling down
   (after 0.5s of hover), or when hit while airborne. While descending it drifts toward the player
   if beyond bite range. An attack keeps the current mode and altitude.
 - The lower 50px projectile origins mean the smaller Veno's poison/web are more easily blocked by
-  the arena's 60px blocks; the smoke damage/status tests disable block collision to isolate the
+  barriers/platforms; the smoke damage/status tests disable block collision to isolate the
   projectile logic. This is a consequence of scaling the mouth to the half-size body.
 - Hover height is a sine wave around 220px, clamped to 140-300px. The low part of the cycle brings
   the spider into melee and ground-hitbox reach (including Nyra's Q); the high part needs a jump
@@ -260,7 +340,7 @@ This document records the provisional rules used by the sandbox. Values live in
   above the head. F11 can force either status on any enemy for inspection.
 - Group spawn: `roster.json` sets Veno `count` 3, `spawn_offsets` `[-100, 0, 120]` and
   `spawn_modes` `["ground", "hover", "hover"]`. Selecting Veno creates three half-size Venos
-  (default positions 900/1000/1120; one ground + two hanging). `scene.enemies` holds the group;
+  (default positions 500/600/720 with the x=600 spawn; one ground + two hanging). `scene.enemies` holds the group;
   `scene.enemy` is the nearest living primary for HUD/lock-on/player targeting. The player's melee
   hitboxes test every living enemy (`AttackRuntime.targets`), projectiles hit the first living
   enemy they collide with, and each Veno runs its own AI. Enemies also separate from each other.
@@ -293,9 +373,9 @@ This document records the provisional rules used by the sandbox. Values live in
   gravity 2200. Gravity is used only for the KO fall; flight never applies it.
 - Flight: mode `fly`; no gravity; x clamped to the arena walls; altitude 40-420 above ground
   (y = ground_y - height), preferred 240 with a sine bob of 24 at 1.5 rad/s; vertical speed 300.
-  The five default Bats spawn and cruise at 180/320/240/380/280px, so the group occupies different
-  heights. The body respects the real block rectangles; at cruise heights it passes above them,
-  while low flight or a downward path can meet the actual block volume.
+  The five-Bat group spawns and cruises at 180/320/240/380/280px, so the group occupies different
+  heights. The body respects barrier/platform AABBs; at cruise heights it passes above ground
+  barriers, while low flight or a downward path can meet the actual barrier/platform volume.
 - Cooldowns are per instance: dive 2.0s, sonic 10.0s, set at attack start. The dive is deterministic:
   it fires when ready and `_dive_can_reach` confirms the dive hitbox can reach the target from the
   current altitude; otherwise the Bat keeps flying. The sonic is the only randomly-timed skill: a
@@ -311,17 +391,17 @@ This document records the provisional rules used by the sandbox. Values live in
   feet, aimed at the target's mid-hurtbox at spawn (no homing); speed 420, range 3000 as a leak cap,
   timeout 8s; 12 damage, 1s stun, knockback 0, hitstun 0.1, hitstop 0.05. Its hitbox is a forward
   circle (+8px along travel, radius 24) matching the Wi-Fi arc silhouette; walls, top/ground and
-  block rectangles bounce it into the return phase; hitting the player deals damage and latches the
-  one-hit guard. On return it tracks the owner's current position, vanishes within 16px, passes
-  through the player and can deal the single hit on the way back; if the owner dies it survives at
-  most 0.5s; a block on the return path absorbs it. The arc direction and hitbox both follow the
-  actual return direction.
+  barrier/platform AABBs bounce it into the return phase; hitting the player deals damage and
+  latches the one-hit guard. On return it tracks the owner's current position, vanishes within
+  16px, passes through the player and can deal the single hit on the way back; if the owner dies
+  it survives at most 0.5s; a barrier/platform on the return path absorbs it. The arc direction
+  and hitbox both follow the actual return direction.
 - Sonic VFX: procedural Wi-Fi/signal arcs (three nested arcs opening along travel, an emitter dot
   and a short trail), no baked frames; `RingBurstFx` cast and impact flashes use the same palette.
-- Default match: `debug.json` `default_enemy` is `bat`, roster `count` is 5; F7 order is
-  Warrior -> Veno -> Bat -> Dummy. Five spawn offsets and five spawn heights
-  (180/320/240/380/280) are used. Hurt/stun stay airborne; only KO falls to the ground and switches
-  to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly` and `HOVER` altitude.
+- Match selection: `debug.json` `default_enemy` is `warrior`; the Bat group is selected with F7 and
+  its roster `count` is 5. F7 order is Warrior -> Veno -> Bat -> Dummy. Five spawn offsets and five
+  spawn heights (180/320/240/380/280) are used. Hurt/stun stay airborne; only KO falls to the ground
+  and switches to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly` and `HOVER` altitude.
 - `skill_slots` is `["bat_dive","bat_sonic",null,null]`; `separates` and `decides_match` are true;
   `force_attack` works airborne and clears both timers.
 
@@ -380,11 +460,12 @@ This document records the provisional rules used by the sandbox. Values live in
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
   longer constructs Lina/Nyra/Warrior/Veno/Dummy directly. Playable classes keep Lina's
   `update(dt, input_state, target, scene)` signature; Lina and Nyra are installed.
-- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → training Dummy); `[` / `]`
+- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → training Dummy);
+  the current default enemy is Warrior. `[` / `]`
   cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
-  cleared. The B block toggle is preserved; the enemy AI is forced off whenever fighters are rebuilt
+  cleared. The B block toggle (barriers + platforms; ladders unaffected) is preserved; the enemy AI is forced off whenever fighters are rebuilt
   or reset — startup, F5 reload, roster switches, F9 and R — and F8 toggles it during a battle.
 - `skill_slots` is a fixed 4-entry list of attack ids or `null`, in slot order. `V/C/X/Z` call
   `Fighter.force_skill(scene, target, 0..3)`, which resolves the id and calls the class's

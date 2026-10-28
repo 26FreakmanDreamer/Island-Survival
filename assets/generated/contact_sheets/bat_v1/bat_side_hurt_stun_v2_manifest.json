@@ -1,0 +1,16 @@
+{
+  "title": "Bat side-view hurt vs stun v2 vs KO",
+  "columns": 5,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_hurt_stun_v2.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_keyposes/side_hurt_00_a.png", "label": "hurt_00 A", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_stun_00_v2_a.png", "label": "stun_00 v2 A", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_stun_00_v2_b.png", "label": "stun_00 v2 B", "duration": "0.30"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_ko_00_a.png", "label": "ko_00 A", "duration": "0.35"},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_ko_01_a.png", "label": "ko_01 A", "duration": "0.35"}
+    ]
+  ]
+}

@@ -13,8 +13,8 @@ armor, recovery interruption, axe damage/KO, dash damage + knock-up (`dash_ok`),
 (`air_pose_ok`), KO-in-place (`dash_ko_ok`), super-armor launch suppression (`dash_armor_ok`,
 `armor_knockup_ok`), the draw-only knock-up vortex (`knockup_fx_ok`), throw out-and-back damage
 (`throw_ok`), the inter-skill gap, win/loss, AI
-approach + block jump, body separation/facing stability (`overlap_ok`), capped separation with no
-enemy flip across a block (`separation_block_ok`), interrupted-transform
+approach + barrier jump, body separation/facing stability (`overlap_ok`), capped separation with no
+enemy flip across a barrier (`separation_block_ok`), interrupted-transform
 visibility (`transform_hit_ok`), flame revert, flame alignment coverage (`flame_offset_ok`), roster
 switching (`roster_ok`), and the data-driven V/C/X/Z slots (`slots_ok`). Phase C switches to Nyra
 against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wave_burst_ok`,
@@ -24,11 +24,21 @@ against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wa
 damage/cooldowns, per-target mark independence (`nyra_marks_per_target_ok`) and reset/death
 clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs
 Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots,
-win and `veno_missing_frames`. Phase E switches to Bat and checks the default five-Bat match, five
-spawn/cruise heights, free flight 40–420, dive 10 (height-gated), V/C/X/Z slots, sonic 12 + 1s
-stun, out/return/wall/block bounce, the 0.65s cast lock, hurt/stun staying airborne, KO landing,
-win, the F7 order, the five-body group spawn/independent cooldowns/WIN and the sonic-only random
-stagger.
+win and `veno_missing_frames`. Phase E switches to Bat and checks the five-Bat group (selected with
+F7; the default enemy is Warrior), five spawn/cruise heights, free flight 40–420, dive 10
+(height-gated), V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the
+0.65s cast lock, hurt/stun staying airborne, KO landing, win, the F7 order, the five-body group
+spawn/independent cooldowns/WIN and the sonic-only random stagger.
+The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
+`platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
+semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the two-frame back-view
+climb clips (`lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok`), ladders not
+blocking projectiles (`ladder_no_block_ok`), Nyra climbing (`nyra_climb_ok`, `nyra_climb_anim_ok`),
+spawn clearance (`platform_spawn_clear_ok`), the `penetrates_blocks` flag
+(`penetration_flag_ok`) and the default enemy (`default_enemy_ok`). The climb checks verify the
+`climb` clip name, both frames, up 0→1 / down 1→0, holding the current frame when stopped, the
+restored facing after jump-off, and the flame variant using its flame climb art;
+`flame_offset_ok` includes the two new flame climb frames.
 It also checks the projectile VFX dispatch (`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`,
 `q_flame_color_ok`, `q_flame_cast_ok`, `veno_bite_hit_fx_ok`, `veno_poison_cast_ok`,
 `veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`, `bat_dive_hit_fx_ok`,
@@ -43,11 +53,16 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
 ## Overlay and panel
 
 - **F1 overlay**: hitboxes (red), hurtboxes (green), pivot/facing markers, projectile lane lines
-  measured upward from Lina's feet (high/fist/mid/low), wall/block bounds and entity state labels.
-  The green box is the combat hurtbox; grounded stage movement uses a wider invisible body
-  (`stage_body_width`), so Lina stops with her boots short of a block before the green box touches it.
+  measured upward from Lina's feet (high/fist/mid/low), wall/barrier/platform/ladder bounds and
+  entity state labels. Barrier boxes are yellow, platform boxes cyan; ladder trigger boxes are
+  magenta with green/red top/bottom lines. The green box is the combat hurtbox; grounded stage
+  movement uses a wider invisible body (`stage_body_width`), so Lina stops with her boots short of
+  a barrier/platform before the green box touches it. Climb sprites are draw-scaled around the
+  feet pivot (Lina 1.2×, Nyra 1.1×); the F1 boxes and combat hurtboxes are not scaled, so the
+  climb sprite intentionally looks larger than the green box.
 - **F2 panel**: FPS/tick/sim time, current character/enemy ids and roster positions, result, block
-  and lock-on state, Lina state/HP/energy/Q/E cooldowns, flame timer/hits/next bonus, animation
+  counts (`BARRIERS n PLATFORMS n LADDERS n`), `CLIMB up/down/idle`, and lock-on state, Lina
+  state/HP/energy/Q/E cooldowns, flame timer/hits/next bonus, animation
   clip/frame, attack
   clock/queued action, hitstun/knockback, positions/facing, player and current-enemy statuses, the
   enemy's four skill slots with remaining cooldowns (`S1 axe_slash 0.0s ... S4 -`), enemy AI
@@ -81,7 +96,7 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
 | F12 | Damage Lina by 10, then 999 when low; shows hurt/KO |
 | V / C / X / Z | Trigger the enemy's skill slots 1/2/3/4; undefined slots are no-ops and show `-` in F2 |
 | Middle mouse | Toggle attack lock-on (default off; resets off on character/enemy switch) |
-| B | Toggle block collision and visibility (HUD shows BLOCKS OFF) |
+| B | Toggle barrier + platform collision/visibility; ladders stay visible and climbable (HUD shows BLOCKS OFF) |
 | Arrow keys | Move the current enemy -20/+20px |
 | PgUp/PgDn | Current enemy HP +/-100 |
 | R | Restart after VICTORY/DEFEATED (normal mode) |
@@ -140,27 +155,39 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    a white rim/highlights and a short pixel trail in normal form, orange-red in flame form. It is
    drawn 7px above the collision lane so it lines up with the punching fist; cast/impact effects
    use the same teal/orange family. The normal form has no code-generated ball.
-10. Bat checks: the default match is **five Bats** (`count: 5`) spawning at x offsets
-    `[0,-160,160,-80,80]` and altitudes `180/320/240/380/280`; they keep those as cruise heights.
-    F7 selects Bat after Veno, and F8 starts the AI. V dives (locked direction, 10 damage, 2s); it
+10. Bat checks: the five-Bat group is selected with F7 (`count: 5`; the default enemy is Warrior).
+    With the x=600 spawn it uses x offsets `[0,-160,160,-80,80]` and altitudes
+    `180/320/240/380/280`; they keep those as cruise heights. F7 selects Bat after Veno, and F8
+    starts the AI. V dives (locked direction, 10 damage, 2s); it
     only fires when `_dive_can_reach` confirms the dive hitbox can reach the player from the current
     altitude, otherwise the Bat keeps flying. C casts the sonic (0.65s lock, 12 + 1s stun, 10s); the
     sonic is the only randomly-timed skill (random 0-2.5s opening cooldown + 50% cast gate), and a
     0.55s group stagger prevents same-skill overlaps. X/Z are no-ops. The sonic spawns at the mouth
     (46px forward / 30px above the feet), uses a forward circle hitbox (+8px, r24), bounces off
-    arena walls and the real 60px block rectangles, returns to the Bat's current position and hits
-    at most once. Use B to compare block on/off. F1 shows the 100×66 hurtbox and the dive hitbox
+    arena walls and barrier/platform AABBs, returns to the Bat's current position and hits at most
+    once. Use B to compare block on/off; ladders are unaffected. F1 shows the 100×66 hurtbox and the dive hitbox
     following the body; F2 shows `MODE fly`, `HOVER` altitude, slots and cooldowns. Flight range is
     40–420 (preferred 240, bob 24, vertical speed 300). Hurt/stun keep it airborne; only KO falls
     and switches to `ko_01`. All five Bats must die for WIN.
-11. Use B to remove both blocks from drawing and collision when observing approach/attacks; this also
-    stops the AI from jumping over them. The toggle persists across F9 and resets on F5/rebuild.
+11. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
+    triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
+    jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left
+    hand/right leg high, frame 1 the right hand/left leg high; moving loops it, stopping holds the
+    frame, and it is not horizontally flipped. Lina normal, Lina flame and Nyra each have their own
+    clip; Nyra's sword stays sheathed diagonally on her back. Platform tops/sides/undersides are
+    solid; walking off an outer edge falls (no fall damage). F2 shows
+    `BARRIERS/PLATFORMS/LADDERS` counts, `CLIMB`, and the current animation clip/frame. Use B to
+    remove barriers/platforms from drawing/collision; ladders stay visible/climbable, and B-off at
+    a ladder top holds the character on the ladder instead of snapping to the platform. The toggle
+    persists across F9 and resets on F5/rebuild.
 12. Edit `game/data/*.json` and press F5 to tune values without restarting.
 13. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
-    cache keys on path + mtime. Projectile FX sprites use the same rule:
-    `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and
-    `assets/frames/veno/veno_web_fx/`. Changing `LINA_Q_SPECS` sizes/durations or any effect
-    duration in `game/fx.py` requires restarting Python; F5 only reloads PNG/JSON.
+    cache keys on path + mtime. Climb frames are `assets/frames/lina/climb/`,
+    `assets/frames/lina/flame/climb/` and `assets/frames/nyra/climb/`. Projectile FX sprites use the
+    same rule: `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and
+    `assets/frames/veno/veno_web_fx/`. Changing `LINA_Q_SPECS` sizes/durations, the climb draw
+    scales (`CLIMB_DRAW_SCALE`, `NYRA_CLIMB_DRAW_SCALE`) or any effect duration in `game/fx.py`
+    requires restarting Python; F5 only reloads PNG/JSON.
 
 ## Input checks
 
@@ -168,8 +195,11 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   `queue=<action>` until it executes; playback starts when the attack ends (E cancels recovery).
 - An action pressed during hitstun or a control lock (knock_up/freeze/stun) is also queued; F2 shows
   `queue=<action>` while control is locked, and the action starts when control returns.
-- Pause/resume, F5/F9 resets and window focus regain resync held movement/crouch keys. Q/E/jump are
-  press-only, so they still need a fresh press after those transitions.
+- Pause/resume, F5/F9 resets and window focus regain resync held movement/crouch/climb keys. Q/E/jump
+  are press-only, so they still need a fresh press after those transitions. W is both jump and
+  `climb_up`: away from a ladder it jumps, while near one it climbs. S is crouch and `climb_down`;
+  Shift is crouch-only. A deliberate exit (Space/attack/hit) suppresses an immediate re-grab while
+  W remains held.
 - `pygame.key.stop_text_input()` runs at startup; if keys are still swallowed, switch the Windows IME
   to English before launching the sandbox.
 

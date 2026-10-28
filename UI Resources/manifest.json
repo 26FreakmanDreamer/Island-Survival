@@ -1,0 +1,32 @@
+{
+  "designSize": [1920, 1080],
+  "gameCheckSize": [1280, 720],
+  "entry": "preview.html",
+  "shopEntry": "shop.html",
+  "screens": {
+    "mainMenu": "previews/01-main-menu.png",
+    "openingStoryLayout": "previews/02-opening-story-layout.png",
+    "characterSelect": [
+      "previews/03-character-1-lina-seabright.png",
+      "previews/03-character-2-nyra-steel.png",
+      "previews/03-character-3-rhea-thorn.png",
+      "previews/03-character-4-eira-frostveil.png"
+    ],
+    "initialStatus": "previews/04-initial-status.png",
+    "shop": "previews/09-shop.png",
+    "shopConfirmation": "previews/09-shop-confirm.png",
+    "shop1280": "previews/shop-1280x720.png",
+    "noSave": "previews/05-no-save.png",
+    "operationSettings": "previews/06-settings-operation.png",
+    "soundSettings": "previews/07-settings-sound.png",
+    "exitConfirmation": "previews/08-exit-confirmation.png"
+  },
+  "iconDirectory": "icons",
+  "skillNamesDocument": "Island Survival Character Skills and Items.docx",
+  "skillIconCatalog": "skill-icons/catalog.json",
+  "shopIconCatalog": "skill-icons/shop-catalog.json",
+  "skillIconDirectory": "skill-icons",
+  "skillIconSheets": ["skill-icons/character-skills-sheet.png", "skill-icons/item-icons-sheet.png", "skill-icons/nyra-steel-variants-sheet.png"],
+  "chromeDirectory": "chrome",
+  "artworkDirectory": "artwork"
+}

@@ -1,0 +1,13 @@
+{
+  "title": "Bat side-view base C - pivot check (384, pivot 230/285)",
+  "columns": 2,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_base_check_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/reference/side_base_384.png", "label": "side base C - original", "duration": ""},
+      {"path": "assets/generated/staged/bat/reference/side_base_384_mirror.png", "label": "side base C - mirrored check", "duration": "", "pivot": [154, 285]}
+    ]
+  ]
+}

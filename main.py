@@ -12,7 +12,7 @@ from game.config import FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.fx import missing_lina_q_assets, missing_veno_web_asset
 from game.particles import knock_up_vortex_intensity
-from game.projectile import SonicWave
+from game.projectile import AimedProjectile, SonicWave
 from game.status import StatusSet
 from game.scene import DEBUG_KEYS, ArenaScene
 from game.slash_fx import missing_frames as missing_slash_fx_frames
@@ -53,8 +53,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # Isolate the existing single-enemy checks; the group spawn is verified
     # separately at the end of the Veno phase.
     scene.enemy_count_override = 1
-    bat_default_ok = (
-        scene.enemy_id == "bat" and getattr(scene.enemy, "name", "") == "Bat"
+    default_enemy_ok = (
+        scene.enemy_id == "warrior" and getattr(scene.enemy, "name", "") == "Warrior"
     )
     startup_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
@@ -117,7 +117,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
 
     # A lunge next to a block must not embed Lina in it.
     scene.reset()
-    block = scene.stage.blocks[0]
+    block = scene.stage.barriers[0]
     scene.player.x = block.left - scene.player.stage_half_width
     scene.input.mouse_down(1)
     for _ in range(30):
@@ -304,10 +304,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.reset()
     warrior = scene.enemy
     lina = scene.player
-    lina.x = 950.0
+    lina.x = 300.0
     lina.y = scene.stage.ground_y
     lina.on_ground = True
-    warrior.x = 950.0
+    warrior.x = 300.0
     warrior.y = scene.stage.ground_y
     warrior.on_ground = True
     warrior.attack_cd = 999.0
@@ -655,7 +655,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.reset()
     warrior = scene.enemy
     warrior.ai_enabled = False
-    lane_block = scene.stage.blocks[0]
+    lane_block = scene.stage.barriers[0]
     warrior.x = float(lane_block.centerx)
     warrior.y = float(lane_block.top)
     warrior.on_ground = True
@@ -695,7 +695,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     )
 
     # B toggles block collision/visibility; with blocks off, Lina can pass one.
-    block = scene.stage.blocks[0]
+    block = scene.stage.barriers[0]
     scene.stage.set_blocks_enabled(False)
     scene.player.x = block.left - scene.player.stage_half_width
     scene.stage.move_x(scene.player, 200.0)
@@ -1182,7 +1182,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     player.x = 300.0
     player.y = scene.stage.ground_y
     player.on_ground = True
-    veno.x = 1000.0
+    veno.x = 600.0
     veno.y = scene.stage.ground_y
     veno.on_ground = True
     veno.mode = "ground"
@@ -1547,7 +1547,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     block_wave = SonicWave(
         owner=bat,
         target=scene.player,
-        x=700.0,
+        x=650.0,
         y=555.0,
         ux=1.0,
         uy=0.0,
@@ -1797,6 +1797,319 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.show_panel = False
     scene.draw(screen)
 
+    # --- platforms, ladders and block penetration ---------------------------
+    scene.stage.set_blocks_enabled(True)
+    scene.set_character("lina")
+    scene.set_enemy("dummy")
+    scene.reset()
+    platform = scene.stage.platforms[0]
+    ladder = scene.stage.ladders[0]
+
+    # Falling body lands on the platform top.
+    player = scene.player
+    player.x = float(platform.centerx)
+    player.y = float(platform.top - 80)
+    player.on_ground = False
+    player.vy = 0.0
+    for _ in range(120):
+        scene.tick(FIXED_DT)
+        if player.on_ground:
+            break
+    platform_land_ok = (
+        player.on_ground and abs(player.y - float(platform.top)) < 0.5
+    )
+
+    # Airborne body stops at the platform side.
+    scene.reset()
+    player = scene.player
+    player.y = float(platform.top + 120)
+    player.on_ground = False
+    player.vy = 0.0
+    player.x = float(platform.right) + player.hurtbox_width * 0.5 + 1.0
+    scene.stage.move_x(player, -120.0)
+    platform_side_ok = player.x >= (
+        float(platform.right) + player.hurtbox_width * 0.5 - 0.5
+    )
+
+    # Rising body stops against the platform underside.
+    scene.reset()
+    player = scene.player
+    body_height = player.hurtbox_dims[1]
+    player.x = float(platform.centerx)
+    player.y = float(platform.bottom) + body_height + 1.0
+    player.on_ground = False
+    player.vy = -500.0
+    scene.tick(FIXED_DT)
+    platform_bottom_bump_ok = (
+        abs(player.y - (float(platform.bottom) + body_height)) < 0.5
+        and abs(player.vy) < 0.01
+    )
+
+    # B off lets the same body pass through the platform side.
+    scene.reset()
+    player = scene.player
+    scene.stage.set_blocks_enabled(False)
+    player.y = float(platform.top + 120)
+    player.on_ground = False
+    player.x = float(platform.right) + player.hurtbox_width * 0.5 + 1.0
+    scene.stage.move_x(player, -120.0)
+    platform_toggle_ok = player.x < float(platform.right)
+    scene.stage.set_blocks_enabled(True)
+
+    # W climbs the long ladder and stands on the platform.
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.x = float(ladder.rect.centerx)
+    player.y = float(ladder.bottom_y)
+    player.on_ground = True
+    player.vy = 0.0
+    scene.input.key_down(pygame.K_w)
+    ladder_climb_ok = False
+    for _ in range(240):
+        scene.tick(FIXED_DT)
+        if player.on_ground and abs(player.y - float(ladder.top_y)) < 0.5:
+            ladder_climb_ok = True
+            break
+    scene.input.key_up(pygame.K_w)
+
+    # S climbs back down; Shift must not.
+    ladder_down_ok = False
+    scene.input.key_down(pygame.K_s)
+    for _ in range(240):
+        scene.tick(FIXED_DT)
+        if player.on_ground and abs(player.y - float(ladder.bottom_y)) < 0.5:
+            ladder_down_ok = True
+            break
+    scene.input.key_up(pygame.K_s)
+
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.x = float(ladder.rect.centerx)
+    player.y = float(ladder.top_y)
+    player.on_ground = True
+    player.vy = 0.0
+    scene.input.key_down(pygame.K_LSHIFT)
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    ladder_shift_no_down_ok = (
+        abs(player.y - float(ladder.top_y)) < 0.5 and not player.climbing
+    )
+    scene.input.key_up(pygame.K_LSHIFT)
+
+    # Climb animation: back view, 2 frames, up 0->1, down 1->0, hold, facing.
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.facing = -1
+    player.x = float(ladder.rect.centerx)
+    player.y = float(ladder.bottom_y)
+    player.on_ground = True
+    player.vy = 0.0
+    scene.input.key_down(pygame.K_w)
+    scene.tick(FIXED_DT)
+    climb_anim = player.anim
+    up_start_ok = (
+        player.climbing
+        and climb_anim.clip_name == "climb"
+        and len(climb_anim.clip["frames"]) == 2
+        and climb_anim.frame_index == 0
+    )
+    for _ in range(16):
+        scene.tick(FIXED_DT)
+    up_advance_ok = (
+        climb_anim.clip_name == "climb" and climb_anim.frame_index == 1
+    )
+    scene.input.key_up(pygame.K_w)
+    held_index = climb_anim.frame_index
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    hold_ok = (
+        player.climbing
+        and climb_anim.clip_name == "climb"
+        and climb_anim.frame_index == held_index
+    )
+    lina_climb_anim_ok = up_start_ok and up_advance_ok and hold_ok
+
+    # Descending starts at frame 1 and advances toward frame 0.
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.facing = -1
+    player.x = float(ladder.rect.centerx)
+    player.y = float(ladder.top_y)
+    player.on_ground = True
+    player.vy = 0.0
+    scene.input.key_down(pygame.K_s)
+    scene.tick(FIXED_DT)
+    down_start_ok = (
+        player.climbing
+        and player.anim.clip_name == "climb"
+        and player.anim.frame_index == 1
+    )
+    for _ in range(16):
+        scene.tick(FIXED_DT)
+    down_advance_ok = (
+        player.climbing
+        and player.anim.clip_name == "climb"
+        and player.anim.frame_index == 0
+    )
+    lina_climb_anim_ok = lina_climb_anim_ok and down_start_ok and down_advance_ok
+    lina_climb_facing_ok = player.climbing and player.facing == 1
+    scene.input.key_down(pygame.K_SPACE)
+    scene.tick(FIXED_DT)
+    scene.input.key_up(pygame.K_SPACE)
+    scene.input.key_up(pygame.K_s)
+    lina_climb_facing_ok = (
+        lina_climb_facing_ok
+        and not player.climbing
+        and player.facing == -1
+    )
+
+    # Flame form uses its own two-frame climb art.
+    scene.set_character("lina")
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.flame_time = 5.0
+    player.anim.set_variant("flame")
+    player.x = float(ladder.rect.centerx)
+    player.y = float(ladder.bottom_y)
+    player.on_ground = True
+    player.vy = 0.0
+    scene.input.key_down(pygame.K_w)
+    scene.tick(FIXED_DT)
+    flame_climb_anim = player.anim
+    lina_flame_climb_anim_ok = (
+        player.climbing
+        and flame_climb_anim.variant == "flame"
+        and flame_climb_anim.clip_name == "climb"
+        and flame_climb_anim.current_is_flame_frame
+        and len(flame_climb_anim.clip["frames"]) == 2
+        and flame_climb_anim.frame_index == 0
+    )
+    for _ in range(16):
+        scene.tick(FIXED_DT)
+    lina_flame_climb_anim_ok = (
+        lina_flame_climb_anim_ok
+        and flame_climb_anim.clip_name == "climb"
+        and flame_climb_anim.frame_index == 1
+    )
+    scene.input.key_up(pygame.K_w)
+
+    # A ladder never blocks a projectile.
+    scene.reset()
+    enemy = scene.enemy
+    enemy.ai_enabled = False
+    enemy.x = 1150.0
+    enemy.y = scene.stage.ground_y
+    ladder_wave = AimedProjectile(
+        owner=scene.player,
+        target=None,
+        x=450.0,
+        y=500.0,
+        vx=500.0,
+        vy=0.0,
+        max_range=200.0,
+        damage=0.0,
+        knockback=0.0,
+        hitstun=0.0,
+        hitstop=0.0,
+        kind="venom_glob",
+        radius=10.0,
+    )
+    for _ in range(20):
+        ladder_wave.update(FIXED_DT, scene)
+    ladder_no_block_ok = (
+        ladder_wave.alive and ladder_wave.x > float(ladder.rect.right)
+    )
+
+    # Every roster group spawns clear of solid scene geometry, including
+    # roster spawn_offsets/heights (resolve_overlap runs on reset).
+    platform_spawn_clear_ok = True
+    previous_enemy = scene.enemy_id
+    scene.set_character("lina")
+    for enemy_id in scene.store.roster.get("enemies", {}):
+        scene.set_enemy(enemy_id)
+        scene.reset()
+        for fighter in [scene.player, *scene.enemies]:
+            body = scene.stage.body_rect(fighter)
+            if any(
+                body.colliderect(solid) for solid in scene.stage.blocks
+            ):
+                platform_spawn_clear_ok = False
+                break
+        if not platform_spawn_clear_ok:
+            break
+    scene.set_enemy(previous_enemy)
+    scene.reset()
+
+    # penetrates_blocks lets a projectile cross a barrier; default dies.
+    barrier = scene.stage.barriers[0]
+    scene.reset()
+    enemy = scene.enemy
+    enemy.ai_enabled = False
+    enemy.x = 1150.0
+
+    def _aimed_at_barrier(penetrates: bool) -> AimedProjectile:
+        return AimedProjectile(
+            owner=scene.player,
+            target=None,
+            x=float(barrier.left - 40),
+            y=float(barrier.centery),
+            vx=500.0,
+            vy=0.0,
+            max_range=400.0,
+            damage=0.0,
+            knockback=0.0,
+            hitstun=0.0,
+            hitstop=0.0,
+            kind="venom_glob",
+            radius=10.0,
+            penetrates_blocks=penetrates,
+        )
+
+    default_wave = _aimed_at_barrier(False)
+    piercing_wave = _aimed_at_barrier(True)
+    for _ in range(40):
+        default_wave.update(FIXED_DT, scene)
+        piercing_wave.update(FIXED_DT, scene)
+    penetration_flag_ok = (not default_wave.alive) and piercing_wave.alive
+
+    # Nyra shares the same climb path.
+    scene.set_character("nyra")
+    scene.reset()
+    nyra = scene.player
+    scene.input.clear()
+    nyra.x = float(ladder.rect.centerx)
+    nyra.y = float(ladder.bottom_y)
+    nyra.on_ground = True
+    nyra.vy = 0.0
+    scene.input.key_down(pygame.K_w)
+    scene.tick(FIXED_DT)
+    nyra_climb_anim = nyra.anim
+    nyra_climb_anim_ok = (
+        nyra.climbing
+        and nyra_climb_anim.clip_name == "climb"
+        and len(nyra_climb_anim.clip["frames"]) == 2
+        and nyra_climb_anim.frame_index == 0
+    )
+    for _ in range(16):
+        scene.tick(FIXED_DT)
+    nyra_climb_anim_ok = (
+        nyra_climb_anim_ok
+        and nyra_climb_anim.clip_name == "climb"
+        and nyra_climb_anim.frame_index == 1
+    )
+    nyra_climb_ok = False
+    for _ in range(240):
+        scene.tick(FIXED_DT)
+        if nyra.on_ground and abs(nyra.y - float(ladder.top_y)) < 0.5:
+            nyra_climb_ok = True
+            break
+    scene.input.key_up(pygame.K_w)
+
     print(
         "SMOKE "
         f"ticks={smoke_ticks} "
@@ -1844,7 +2157,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"veno_group_ok={veno_group_ok} "
         f"veno_group_cooldowns_ok={veno_group_cooldowns_ok} "
         f"veno_missing_frames={veno_missing} "
-        f"bat_present={bat_present} bat_default_ok={bat_default_ok} "
+        f"bat_present={bat_present} default_enemy_ok={default_enemy_ok} "
         f"bat_flight_ok={bat_flight_ok} bat_dive_ok={bat_dive_ok} "
         f"bat_dive_hit_fx_ok={bat_dive_hit_fx_ok} "
         f"bat_slots_ok={bat_slots_ok} bat_hurt_airborne_ok={bat_hurt_airborne_ok} "
@@ -1882,6 +2195,20 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"throw_ok={throw_ok} throw_return_ok={throw_return_ok} "
         f"throw_lane_ok={throw_lane_ok} ai_ranged_ok={ai_ranged_ok} "
         f"slots_ok={slots_ok} roster_ok={roster_ok} "
+        f"platform_land_ok={platform_land_ok} "
+        f"platform_side_ok={platform_side_ok} "
+        f"platform_bottom_bump_ok={platform_bottom_bump_ok} "
+        f"platform_toggle_ok={platform_toggle_ok} "
+        f"ladder_climb_ok={ladder_climb_ok} ladder_down_ok={ladder_down_ok} "
+        f"ladder_shift_no_down_ok={ladder_shift_no_down_ok} "
+        f"lina_climb_anim_ok={lina_climb_anim_ok} "
+        f"lina_climb_facing_ok={lina_climb_facing_ok} "
+        f"lina_flame_climb_anim_ok={lina_flame_climb_anim_ok} "
+        f"ladder_no_block_ok={ladder_no_block_ok} "
+        f"nyra_climb_ok={nyra_climb_ok} "
+        f"nyra_climb_anim_ok={nyra_climb_anim_ok} "
+        f"platform_spawn_clear_ok={platform_spawn_clear_ok} "
+        f"penetration_flag_ok={penetration_flag_ok} "
         f"warrior_missing_frames={warrior_missing}"
     )
     return 0 if (
@@ -1948,7 +2275,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and veno_group_cooldowns_ok
         and veno_missing == 0
         and bat_present
-        and bat_default_ok
+        and default_enemy_ok
         and bat_flight_ok
         and bat_dive_ok
         and bat_dive_hit_fx_ok
@@ -1988,6 +2315,21 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and flame_offset_ok
         and skill_gap_ok
         and blocks_toggle_ok
+        and platform_land_ok
+        and platform_side_ok
+        and platform_bottom_bump_ok
+        and platform_toggle_ok
+        and ladder_climb_ok
+        and ladder_down_ok
+        and ladder_shift_no_down_ok
+        and lina_climb_anim_ok
+        and lina_climb_facing_ok
+        and lina_flame_climb_anim_ok
+        and ladder_no_block_ok
+        and nyra_climb_ok
+        and nyra_climb_anim_ok
+        and platform_spawn_clear_ok
+        and penetration_flag_ok
         and dash_ok
         and dash_hitstop_ok
         and air_pose_ok

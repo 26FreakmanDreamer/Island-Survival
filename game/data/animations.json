@@ -67,6 +67,11 @@
       "loop": false,
       "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
       "durations": [0.15, 0.15, 0.15, 0.15]
+    },
+    "climb": {
+      "loop": true,
+      "frames": ["climb/climb_00.png", "climb/climb_01.png"],
+      "durations": [0.2, 0.2]
     }
   },
   "warrior_clips": {
@@ -161,6 +166,11 @@
       "loop": false,
       "frames": ["nyra_dash/nyra_dash_00.png", "nyra_dash/nyra_dash_01.png", "nyra_dash/nyra_dash_02.png"],
       "durations": [0.08, 0.12, 0.25]
+    },
+    "climb": {
+      "loop": true,
+      "frames": ["climb/climb_00.png", "climb/climb_01.png"],
+      "durations": [0.20, 0.20]
     }
   },
   "veno_clips": {
@@ -295,6 +305,11 @@
       "frames": ["flame/q/q_00.png", "flame/q/q_01.png", "flame/q/q_02.png", "flame/q/q_03.png"],
       "durations": [0.06, 0.10, 0.10, 0.09]
     },
+    "climb": {
+      "loop": true,
+      "frames": ["flame/climb/climb_00.png", "flame/climb/climb_01.png"],
+      "durations": [0.20, 0.20]
+    },
     "hurt": {
       "loop": false,
       "frames": ["flame/hurt/hurt_00.png", "flame/hurt/hurt_01.png"],
@@ -313,6 +328,8 @@
   }
 ,
   "flame_offsets": {
+    "flame/climb/climb_00.png": 0,
+    "flame/climb/climb_01.png": 0,
     "flame/crouch/crouch_00.png": -42,
     "flame/hurt/hurt_00.png": -25,
     "flame/hurt/hurt_01.png": -28,

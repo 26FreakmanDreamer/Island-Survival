@@ -1,0 +1,17 @@
+{
+  "title": "Bat side-view wing cycle - dual half-frame transitions (00, t00, t01 A/B, 01, 02)",
+  "columns": 6,
+  "cell": 384,
+  "pivot": [230, 285],
+  "out": "assets/generated/contact_sheets/bat_v1/bat_side_wing_cycle_5f_v1.png",
+  "rows": [
+    [
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_00.png", "label": "wing_00 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_v6_b.png", "label": "t00 (v6 B)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_01_a.png", "label": "t01 A (from wing_01)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_keyposes/side_wing_transition_01_b.png", "label": "t01 B (from wing_01)", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_01.png", "label": "wing_01 B", "duration": ""},
+      {"path": "assets/generated/staged/bat/side_final/keyposes/side_wing_02.png", "label": "wing_02 A", "duration": ""}
+    ]
+  ]
+}

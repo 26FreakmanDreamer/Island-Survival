@@ -144,6 +144,10 @@ class Lina(Fighter):
             self.stage.move_fighter(self, dt)
             return
 
+        if self.climbing:
+            self._update_climb(dt, input_state, scene)
+            return
+
         if self.state == FighterState.TRANSFORM:
             self.vx = 0.0
             self.anim.update(dt)
@@ -172,7 +176,8 @@ class Lina(Fighter):
             return
 
         self._handle_control(dt, input_state, target, scene)
-        self.stage.move_fighter(self, dt)
+        if not self.climbing:
+            self.stage.move_fighter(self, dt)
 
     def _update_attack(self, dt: float, input_state, target, scene) -> None:
         self.vx = 0.0
@@ -308,6 +313,10 @@ class Lina(Fighter):
 
         if input_state.buffer.has("kick") and self._start_kick(scene, target):
             input_state.buffer.consume("kick")
+            return
+
+        if self.try_start_climb(input_state, scene):
+            input_state.buffer.consume("jump")
             return
 
         if input_state.buffer.has("jump") and self._start_jump():

@@ -167,6 +167,7 @@ class AnimationPlayer:
         y: float,
         facing: int = 1,
         tint: tuple[int, int, int] | None = None,
+        scale: float = 1.0,
     ) -> None:
         surface = self.surface(facing=facing)
         image = surface
@@ -184,6 +185,16 @@ class AnimationPlayer:
             if facing < 0:
                 offset = -offset
         pivot_x, pivot_y = self.pivot
+        # Optional uniform draw scale for the climb art; the pivot (feet)
+        # stays the anchor so the body grows upward.
+        if scale != 1.0:
+            width, height = image.get_size()
+            image = pygame.transform.smoothscale(
+                image, (max(1, round(width * scale)), max(1, round(height * scale)))
+            )
+            offset *= scale
+            pivot_x *= scale
+            pivot_y *= scale
         if facing < 0:
             pivot_x = image.get_width() - pivot_x
         target.blit(image, (round(x - pivot_x + offset), round(y - pivot_y)))

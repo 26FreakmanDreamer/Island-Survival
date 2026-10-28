@@ -21,9 +21,9 @@
 
 ## Frame inventory
 
-- Normal (45): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4,
-  transform 6, hurt 2, KO 4.
-- Flame form (41): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2.
+- Normal (47): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4,
+  transform 6, hurt 2, KO 4, climb 2.
+- Flame form (43): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2, climb 2.
 - Warrior (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4.
 - Bat (14): wing 4 (shared idle/fly), bat_dive 3, bat_sonic 3, hurt 1, stun 1, KO 2.
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
@@ -119,6 +119,25 @@ wind-up does not shrink, and frames 03/04 use the one-handed rear grip (the hand
 pommel with a long empty haft section ahead of it) from the follow-through reference. The axe has a
 single upper crescent blade; the lower side is a blunt counterweight.
 
+## Climb frames (2026-10-28)
+
+- Approved runtime clips: `assets/frames/lina/climb/climb_00.png` and `climb_01.png`,
+  `assets/frames/lina/flame/climb/...`, and `assets/frames/nyra/climb/...`.
+- All playable characters use a direct back view, two frames: frame 0 has the character-left hand
+  high and right leg high; frame 1 has the right hand high and left leg high. Each frame is 0.20s.
+  The clip loops while moving (up 0→1→0, down 1→0→1) and holds its current frame when stopped;
+  climbing frames are never horizontally flipped.
+- Lina normal uses the 256×256 canvas/pivot (128,244); Lina flame uses the same canvas with
+  `flame/climb` and `flame_offsets` 0; Nyra uses the 384×384 canvas/pivot (192,372). Nyra's approved
+  back base is `assets/generated/base/nyra_back_base.png`; the single long sword stays sheathed
+  diagonally on her back (hilt above her right shoulder, tip toward lower left), hands free.
+- Runtime draw scale is character-specific: Lina 1.2× and Nyra 1.1×, anchored at the feet pivot;
+  this is visual only, not a hitbox change. The current Nyra frame 00 is 1.02× the frame 01 staging
+  scale to match the torso/silhouette; both frames were aligned by body-center + feet bottom rather
+  than the generic support-foot pivot, because the support leg alternates.
+- The approved frames are not to be regenerated or re-imported without an explicit request; enemy
+  climb art is not part of this set.
+
 ## Nyra Steel (2026-10-22)
 
 - Approved side base: `assets/generated/base/nyra_side_base.png`; canonical source
@@ -128,9 +147,9 @@ single upper crescent blade; the lower side is a blunt counterweight.
   split skirt/coattails, dark thigh-high stockings with upper-thigh bands, fingerless gloves, black
   boots with blue details, one long narrow silver sword with a cool-blue edge in the RIGHT hand.
   No eyepatch. Do not mirror or duplicate the sword.
-- Frame inventory (29 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6 (Q),
-  nyra_thrust 5, nyra_wave 5 (LMB), nyra_dash 3. The base's sword is held horizontally for clean
-  `--body-height` calibration. The 1-frame crouch is imported with `--body-height 173`, producing
+- Frame inventory (31 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6 (Q),
+  nyra_thrust 5, nyra_wave 5 (LMB), nyra_dash 3, climb 2. The base's sword is held horizontally for
+  clean `--body-height` calibration. The 1-frame crouch is imported with `--body-height 173`, producing
   a ~170px visible body (midway between the original 212px crouch and the 128px deep crouch); the
   crouching hurtbox stays 56×130 and other clips use 214. The 6-frame slash (Q) follows: initial
   front-down 45°; transition with
