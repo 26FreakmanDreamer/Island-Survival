@@ -5,6 +5,7 @@ from __future__ import annotations
 from .animation import AnimationPlayer
 from .bat import Bat
 from .config import ASSETS_DIR, ROOT
+from .creepy_shooter import CreepyShooter
 from .dummy import Dummy
 from .lina import Lina
 from .nyra import Nyra
@@ -18,6 +19,7 @@ FIGHTER_CLASSES = {
     "nyra": Nyra,
     "veno": Veno,
     "bat": Bat,
+    "creepy_shooter": CreepyShooter,
 }
 
 

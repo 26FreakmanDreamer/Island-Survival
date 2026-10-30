@@ -147,6 +147,37 @@
       "decision_interval": 0.15
     }
   },
+  "creepy_shooter": {
+    "hp": 200,
+    "basic_atk": 20,
+    "extra_atk": 0,
+    "stage_body_width": 100,
+    "move": {
+      "walk": 220,
+      "jump_v": 700,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "shot": 1.0,
+      "homing": 8.0,
+      "roll": 10.0,
+      "jump": 10.0
+    },
+    "hurtbox": {
+      "standing": [56, 210],
+      "crouching": [56, 130]
+    },
+    "ai": {
+      "near_range": 180.0,
+      "far_range": 320.0,
+      "level_tolerance": 60.0,
+      "decision_interval": 0.15,
+      "roll_distance": 140.0,
+      "roll_time": 0.28,
+      "platform_reach": 180.0,
+      "jump_heights": [220.0, 268.0]
+    }
+  },
   "dummy": {
     "hp": 1000,
     "invincible": false,

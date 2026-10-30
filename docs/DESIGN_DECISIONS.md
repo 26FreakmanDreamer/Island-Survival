@@ -86,7 +86,8 @@ This document records the provisional rules used by the sandbox. Values live in
   Two platforms: x=170..649 at surface y=220 and x=796..1110 at surface y=268; each collision
   rect is 78px tall. Ladders: x=508..572 (long, 400px) and x=921..985 (medium, 352px).
 - Lina spawns at x=280; the dummy, Warrior, Veno and Bat base spawns are at x=600 (Bat base y=470).
-  The current default enemy is Warrior; F7 selects the others.
+  Creepy Shooter spawns at (1000, 220) on its stage variant. The current default enemy is Creepy
+  Shooter; F7 selects the others.
 - Fighters keep a minimum center distance equal to the sum of their stage body half-widths
   (Lina 50 + Warrior 60 = 110px). The enemy yields first on his current side; if a wall/barrier/platform
   blocks that side, he is not flipped across the player — Lina is pushed to the free side instead.
@@ -130,7 +131,10 @@ This document records the provisional rules used by the sandbox. Values live in
   y=268; long ladder x=508..572 (400px) using `ladder_tropical_wood.png`; medium ladder x=921..985
   (352px) using `ladder_tropical_wood_medium.png` (native 160px width; the long ladder is rendered
   128px wide). Ground barriers are at x=400..490 and x=700..790. No barriers are placed on the
-  platforms in this pass.
+  platforms in this pass. The Creepy Shooter stage variant (`debug.json`
+  `stage_variants.creepy_shooter`) mirrors this layout: long platform 601–1080 at y=220, short
+  platform 170–484 at y=268, long ladder 708–772, medium ladder 295–359, barriers 400–490 and
+  790–880; the Creepy spawn is (1000,220).
 - The short platform bottom is 346px, so a 230px Warrior standing on the ground (head ~390px) and
   a 210px Lina (head ~410px) can walk underneath it. The medium ladder is fully inside the short
   platform's x-span, and both ladders sit under their platforms.
@@ -398,12 +402,82 @@ This document records the provisional rules used by the sandbox. Values live in
   and hitbox both follow the actual return direction.
 - Sonic VFX: procedural Wi-Fi/signal arcs (three nested arcs opening along travel, an emitter dot
   and a short trail), no baked frames; `RingBurstFx` cast and impact flashes use the same palette.
-- Match selection: `debug.json` `default_enemy` is `warrior`; the Bat group is selected with F7 and
-  its roster `count` is 5. F7 order is Warrior -> Veno -> Bat -> Dummy. Five spawn offsets and five
+- Match selection: `debug.json` `default_enemy` is `creepy_shooter`; the Bat group is selected with
+  F7 and its roster `count` is 5. F7 order is Warrior -> Veno -> Bat -> Creepy Shooter -> Dummy.
+  Five spawn offsets and five
   spawn heights (180/320/240/380/280) are used. Hurt/stun stay airborne; only KO falls to the ground
   and switches to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly` and `HOVER` altitude.
 - `skill_slots` is `["bat_dive","bat_sonic",null,null]`; `separates` and `decides_match` are true;
   `force_attack` works airborne and clears both timers.
+
+## Creepy Shooter (2026-10-30)
+
+- Enemy. Canonical art `Image/Enemy/creepy-shooter-256.png`; fallback uses the same file. Approved
+  side base `assets/generated/base/creepy_shooter_side_base.png`; frames 384x384, pivot (192,372),
+  body 214, hurtbox 56x210 standing / 56x130 crouching (the rifle is excluded), `stage_body_width`
+  100. Only right-facing frames are stored; the runtime mirrors for left.
+- Frames (29): idle 2, walk 4, crouch 1, jump 2, hurt 2, KO 2, `creepy_shot` 2,
+  `creepy_homing_shot` 4, `creepy_roll_shot` 6, `creepy_jump_shot` 4. Clip durations are
+  `[0.30]` idle loop, `[0.12]*4` walk, `[0.50]` crouch, `[0.20]*2` jump, `[0.10]*2` hurt,
+  `[0.35]*2` KO, `creepy_shot` `[0.18,0.27]`, `creepy_homing_shot` `[0.15,0.85,0.10,0.45]`,
+  `creepy_roll_shot` `[0.14,0.13,0.13,0.10,0.18,0.22]`, `creepy_jump_shot` `[0.10,0.15,0.70,0.15]`.
+  The roll set is imported at 0.9x (body 193); its final standing frame is ~211px, matching Lina's
+  ~210px build instead of the earlier 1.10x/234px exception.
+- Stats: HP 200, basic ATK 20, extra ATK 0; walk 220, jump_v 700, gravity 2200. Cooldowns are
+  `shot` 1s, `homing` 8s, `roll` 10s and `jump` 10s, set at attack start and per instance. AI values:
+  `near_range` 180, `far_range` 320, `level_tolerance` 60, `decision_interval` 0.15,
+  `roll_distance` 140, `roll_time` 0.28, `platform_reach` 180, `jump_heights` [220, 268].
+- Skill 1 `creepy_shot`: 0.45s action, shot at t=0.18; 1.5x ATK = 30; strictly horizontal at the
+  mid lane; speed 980, range 900, radius 9, knockback 40; blocked by barriers/platforms. The bullet
+  spawns at the measured muzzle, 163px above and 129px forward of the feet, rather than at a lane
+  height.
+- Skill 2 `creepy_homing_shot`: 1.55s action; 1s interruptible wind-up (a hit or KO cancels the
+  shot but the 8s cooldown is already consumed), fired at t=1.0 from 143px up / 111px forward.
+  The bolt re-aims at the target's hurtbox center every tick, penetrates blocks and platforms,
+  deals 20 once, has an 8s lifetime, speed 520 and radius 14. It is not removed when the owner is
+  KO'd after firing. During the wind-up the player carries a three-frame reticle (large / small red
+  dot / large at 0.30/0.40/0.30s) drawn at chest height; it is visual only and has no hitbox.
+- Skill 3 `creepy_roll_shot`: triggers within 180px; crouch, roll backward 140px over 0.28s with no
+  i-frames, fire at t=0.30, then crouch and stand (0.90s total); 1.2x ATK = 24, speed 900, range
+  700, radius 9, knockback 40, cooldown 10s. Walls and blocks clip the roll; a platform edge does
+  not. Rolling past the edge clears `on_ground` and the shooter falls under gravity for the rest of
+  the action. The shot leaves the muzzle 120px up / 100px forward.
+- Skill 4 `creepy_jump_shot`: cooldown 10s; 1.10s action. It only starts on the ground and within
+  10px of a valid takeoff point beside a reachable platform (surface 220 or 268). Phase 1 rises
+  vertically to 80px above the surface, then phase 2 drifts horizontally onto it; the hard timeout
+  is 1.6s. The shot fires at t=0.10 from 120px up / 100px forward, aims at the player when the
+  target is below and inside a ±45° cone (`atan2(dx, dy)`, `dy > 0`), otherwise straight down;
+  1.2x ATK = 24, speed 900, range 600, radius 12, blocked by blocks. With no eligible platform,
+  `force_attack` returns False.
+- AI: on a platform, within 180px uses skill 3; if the horizontal line to the player is blocked or
+  the level differs by more than 60px, uses skill 2; otherwise skill 1, with skill 2 also used at
+  `far_range` when ready. On the ground, within 180px uses skill 3; otherwise it plans a platform
+  return, uses skill 1 when the line is clear, skill 2 when it is not, walks to the takeoff, and
+  uses skill 4 when ready. A ground barrier in the path triggers a hop (`vy = -jump_v*1.15`,
+  `vx = facing*walk*2.0`) strong enough to clear a 90px barrier. Attacks and decisions are
+  throttled by `decision_interval`; the AI never walks and attacks on the same tick.
+- Stage: `debug.json` `stage_variants.creepy_shooter` mirrors the default stage. Long platform
+  `[601,220,479,78]`, short platform `[170,268,314,78]`, ladders `[708,220,64,400]` and
+  `[295,268,64,352]`, ground barriers `[790,560,90,60]` and `[400,560,90,60]`. Player spawn
+  (280,620); Creepy spawns at (1000,220) on the long platform. `roster.json` names the variant and
+  `ArenaScene` selects it by enemy; switching enemies rebuilds the Stage and preserves the B block
+  toggle.
+- Projectiles: `CreepyBullet` (straight, one hit, dies on range/wall/block/hit, cyan 2-frame
+  tracer), `CreepyHomingBullet` (violet 3-frame bolt rotated to travel, one hit, penetrates blocks
+  and platforms, 8s lifetime, not owner-KO-bound) and `CreepyDownBullet` (fixed direction set at
+  spawn, block collision, dies on ground/range/hit, reuses the tracer rotated). All use the
+  muzzle origins above; cast/impact FX are cyan for the normal/down shots and violet for homing.
+- Match selection: `debug.json` `default_enemy` is `creepy_shooter`; F7 order is
+  Warrior -> Veno -> Bat -> Creepy Shooter -> Dummy. `skill_slots` is
+  `["creepy_shot","creepy_homing_shot","creepy_roll_shot","creepy_jump_shot"]`; `separates` and
+  `decides_match` are true. `force_attack` rejects KO/HURT/unknown ids, clears all four timers, and
+  enforces the skill-4 takeoff rule. `skill_remaining` maps the four ids to the F2 cooldown line.
+- Smoke flags: `creepy_present`, `creepy_stage_ok`, `creepy_shot_ok`, `creepy_homing_ok`,
+  `creepy_lock_ok`, `creepy_roll_ok` + `creepy_roll_edge`, `creepy_jump_ok` +
+  `creepy_jump_long/short/right/none`, `creepy_ai_ok` + `creepy_ai_hop`, `creepy_slots_ok`,
+  `creepy_win_ok`, `creepy_cleanup_ok`, `creepy_stage_switch_ok`, `creepy_missing_frames == 0`
+  and `creepy_fx_missing == 0`. Ground barriers sit below the flat-ground mid lane, so the shot
+  test spawns a bullet at `barrier.centery` to verify block collision.
 
 ## Projectile / skill VFX (2026-10-24)
 
@@ -460,8 +534,8 @@ This document records the provisional rules used by the sandbox. Values live in
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
   longer constructs Lina/Nyra/Warrior/Veno/Dummy directly. Playable classes keep Lina's
   `update(dt, input_state, target, scene)` signature; Lina and Nyra are installed.
-- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → training Dummy);
-  the current default enemy is Warrior. `[` / `]`
+- F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → Creepy Shooter →
+  training Dummy); the current default enemy is Creepy Shooter. `[` / `]`
   cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
@@ -472,13 +546,14 @@ This document records the provisional rules used by the sandbox. Values live in
   `force_attack`. Undefined slots and enemies without `force_attack` (Dummy) are safe no-ops. F2
   prints the four slots and their cooldowns (`-` for empty slots).
 - Cooldown values stay in `stats.json` (`ai.attack_cooldown`, `ai.dash_cooldown`,
-  `ai.throw_cooldown`); the roster only maps slot order to attack ids.
+  `ai.throw_cooldown` for Warrior; `cooldowns.shot/homing/roll/jump` for Creepy Shooter); the
+  roster only maps slot order to attack ids.
 - Debug: F7 enemy roster, `[` / `]` character roster, F8 AI/invincibility, V/C/X/Z skill slots,
   arrows move the enemy, PgUp/PgDn change enemy HP.
 
 ## Out of scope in the current sandbox
 
 Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
-Lina/Nyra, enemies beyond Warrior/Veno/Bat/Dummy and their AI, group balancing beyond the Veno
-3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
+Lina/Nyra, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Dummy and their AI, group balancing
+beyond the Veno 3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
 dummy is a debug tool, not a spec enemy.

@@ -8,11 +8,11 @@ import sys
 import pygame
 
 from game.combat import resolve_hit
-from game.config import FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
+from game.config import ASSETS_DIR, FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.fx import missing_lina_q_assets, missing_veno_web_asset
 from game.particles import knock_up_vortex_intensity
-from game.projectile import AimedProjectile, SonicWave
+from game.projectile import AimedProjectile, CreepyBullet, SonicWave
 from game.status import StatusSet
 from game.scene import DEBUG_KEYS, ArenaScene
 from game.slash_fx import missing_frames as missing_slash_fx_frames
@@ -54,7 +54,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # separately at the end of the Veno phase.
     scene.enemy_count_override = 1
     default_enemy_ok = (
-        scene.enemy_id == "warrior" and getattr(scene.enemy, "name", "") == "Warrior"
+        scene.enemy_id == "creepy_shooter"
+        and getattr(scene.enemy, "name", "") == "Creepy Shooter"
     )
     startup_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
@@ -1733,6 +1734,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.handle_debug_key(pygame.K_F7)
     f7_bat_ok = scene.enemy_id == "bat"
     scene.handle_debug_key(pygame.K_F7)
+    f7_creepy_ok = scene.enemy_id == "creepy_shooter"
+    scene.handle_debug_key(pygame.K_F7)
     f7_dummy_ok = scene.enemy_id == "dummy"
     b_before = scene.stage.blocks_enabled
     scene.handle_debug_key(pygame.K_b)
@@ -1777,6 +1780,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and switch_clears_ok
         and f7_cycle_ok
         and f7_bat_ok
+        and f7_creepy_ok
         and f7_dummy_ok
         and b_key_ok
         and lock_switch_off_ok
@@ -2110,6 +2114,330 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
             break
     scene.input.key_up(pygame.K_w)
 
+    # --- Creepy Shooter phase -------------------------------------------------
+    scene.set_character("lina")
+    scene.set_enemy("creepy_shooter")
+    scene.reset()
+    scene.enemy_count_override = 1
+    scene.stage.set_blocks_enabled(True)
+    creepy = scene.enemy
+    creepy_player = scene.player
+    creepy.ai_enabled = False
+    scene.input.clear()
+    creepy_present = (
+        creepy.name == "Creepy Shooter"
+        and creepy.max_hp == 200.0
+        and abs(creepy.atk - 20.0) < 1e-6
+        and creepy.skill_slots == [
+            "creepy_shot", "creepy_homing_shot",
+            "creepy_roll_shot", "creepy_jump_shot",
+        ]
+        and bool(scene.enemy_spec.get("decides_match"))
+        and bool(scene.enemy_spec.get("separates"))
+    )
+    long_platform = next(r for r in scene.stage.platforms if r.top == 220)
+    short_platform = next(r for r in scene.stage.platforms if r.top == 268)
+    creepy_stage_ok = (
+        long_platform.left == 601
+        and long_platform.right == 1080
+        and short_platform.left == 170
+        and short_platform.right == 484
+        and abs(creepy.x - 1000.0) < 0.5
+        and abs(creepy.y - 220.0) < 0.5
+        and scene.stage.spawn("player_spawn") == (280, 620)
+    )
+    creepy_missing = len(creepy.anim.missing_paths()) if creepy.anim else -1
+    creepy_fx_dir = ASSETS_DIR / "frames" / "creepy_shooter" / "fx"
+    creepy_fx_missing = sum(
+        1
+        for name in (
+            "creepy_bullet_00.png", "creepy_bullet_01.png",
+            "creepy_homing_bullet_00.png", "creepy_homing_bullet_01.png",
+            "creepy_homing_bullet_02.png",
+            "creepy_lock_00.png", "creepy_lock_01.png", "creepy_lock_02.png",
+        )
+        if not (creepy_fx_dir / name).exists()
+    )
+
+    def _place_creepy(x, y):
+        creepy.x = float(x)
+        creepy.y = float(y)
+        creepy.vx = 0.0
+        creepy.vy = 0.0
+        creepy.kb_vx = 0.0
+        creepy.kb_time = 0.0
+        creepy.on_ground = True
+        creepy.state = FighterState.IDLE
+        creepy.anim.set_clip("idle")
+
+    def _place_player(x, y):
+        creepy_player.x = float(x)
+        creepy_player.y = float(y)
+        creepy_player.vx = 0.0
+        creepy_player.vy = 0.0
+        creepy_player.on_ground = True
+        creepy_player.hp = creepy_player.max_hp
+        creepy_player.statuses = StatusSet()
+        creepy_player.state = FighterState.IDLE
+        if creepy_player.anim is not None:
+            creepy_player.anim.set_clip("idle")
+
+    def _reset_creepy():
+        scene.reset()
+        creepy.ai_enabled = False
+        scene.input.clear()
+        creepy_player.hp = creepy_player.max_hp
+
+    # Skill 1: horizontal mid-lane shot, cooldown, ground miss, block collision.
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(950, 220)
+    creepy.facing = 1
+    creepy.force_attack(scene, creepy_player, "creepy_shot")
+    for _ in range(42):
+        scene.tick(FIXED_DT)
+    shot_damage_ok = abs(creepy_player.hp - (creepy_player.max_hp - 30.0)) < 0.01
+    shot_cd_ok = creepy.shot_cd > 0.2
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(800, 620)
+    creepy.force_attack(scene, creepy_player, "creepy_shot")
+    for _ in range(42):
+        scene.tick(FIXED_DT)
+    ground_miss_ok = creepy_player.hp == creepy_player.max_hp
+
+    _reset_creepy()
+    shot_barrier = scene.stage.barriers[0]
+    test_bullet = CreepyBullet(
+        owner=creepy, target=creepy_player,
+        x=float(shot_barrier.left - 40.0), y=float(shot_barrier.centery),
+        direction=1, speed=600.0, max_range=400.0,
+        damage=1.0, knockback=0.0, hitstun=0.0, hitstop=0.0, radius=9.0,
+    )
+    for _ in range(30):
+        test_bullet.update(FIXED_DT, scene)
+    block_collision_ok = not test_bullet.alive
+    creepy_shot_ok = (
+        shot_damage_ok and shot_cd_ok and ground_miss_ok and block_collision_ok
+    )
+
+    # Skill 2: interruptible 1s wind-up, lock reticle, platform penetration.
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(800, 620)
+    creepy.force_attack(scene, creepy_player, "creepy_homing_shot")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    lock_marker_ok = creepy.lock_marker_progress() is not None
+    scene.draw(screen)
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    homing_spawned = any(
+        getattr(p, "visual_kind", "") == "creepy_homing_bullet"
+        for p in scene.projectiles
+    )
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    homing_hit_ok = abs(creepy_player.hp - (creepy_player.max_hp - 20.0)) < 0.01
+    lock_marker_cleared_ok = creepy.lock_marker_progress() is None
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(950, 220)
+    creepy.force_attack(scene, creepy_player, "creepy_homing_shot")
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    creepy.take_hit(5.0, 0.0, 0.1, 1)
+    for _ in range(70):
+        scene.tick(FIXED_DT)
+    homing_interrupt_ok = (
+        creepy.homing_cd > 6.0
+        and not any(
+            getattr(p, "visual_kind", "") == "creepy_homing_bullet"
+            for p in scene.projectiles
+        )
+    )
+    creepy_homing_ok = (
+        lock_marker_ok and homing_spawned and homing_hit_ok
+        and lock_marker_cleared_ok and homing_interrupt_ok
+    )
+    creepy_lock_ok = lock_marker_ok and lock_marker_cleared_ok
+
+    # Skill 3: back-roll distance, shot damage, no i-frames, cooldown.
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(700, 220)
+    roll_start_x = creepy.x
+    creepy.force_attack(scene, creepy_player, "creepy_roll_shot")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    roll_distance_ok = abs((creepy.x - roll_start_x) - 140.0) < 4.0
+    roll_damage_ok = (
+        abs(creepy_player.hp - (creepy_player.max_hp - 24.0)) < 0.01
+    )
+    roll_cd_ok = creepy.roll_cd > 8.0
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(700, 220)
+    creepy.force_attack(scene, creepy_player, "creepy_roll_shot")
+    for _ in range(5):
+        scene.tick(FIXED_DT)
+    creepy.take_hit(5.0, 0.0, 0.1, 1)
+    roll_no_iframes_ok = abs(creepy.hp - 195.0) < 0.01
+
+    _reset_creepy()
+    _place_creepy(1050, 220)
+    _place_player(950, 220)
+    roll_edge_ok = creepy.force_attack(scene, creepy_player, "creepy_roll_shot")
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+    roll_edge_ok = (
+        roll_edge_ok and creepy.y > 300.0 and not creepy.on_ground
+    )
+    creepy_roll_ok = (
+        roll_distance_ok and roll_damage_ok and roll_cd_ok
+        and roll_no_iframes_ok and roll_edge_ok
+    )
+
+    # Skill 4: two platform heights, downward shot, no-platform refusal.
+    _reset_creepy()
+    _place_creepy(545, 620)
+    _place_player(660, 620)
+    long_jump_ok = creepy.force_attack(scene, creepy_player, "creepy_jump_shot")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    long_jump_ok = (
+        long_jump_ok
+        and abs(creepy.y - 220.0) < 1.0
+        and creepy.on_ground
+        and abs(creepy_player.hp - (creepy_player.max_hp - 24.0)) < 0.01
+    )
+
+    _reset_creepy()
+    _place_creepy(540, 620)
+    _place_player(300, 620)
+    short_jump_ok = creepy.force_attack(scene, creepy_player, "creepy_jump_shot")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    short_jump_ok = short_jump_ok and abs(creepy.y - 268.0) < 1.0
+
+    _reset_creepy()
+    _place_creepy(1136, 620)
+    _place_player(1100, 620)
+    right_jump_ok = creepy.force_attack(scene, creepy_player, "creepy_jump_shot")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    right_jump_ok = right_jump_ok and abs(creepy.y - 220.0) < 1.0
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(950, 220)
+    no_platform_ok = not creepy.force_attack(
+        scene, creepy_player, "creepy_jump_shot"
+    )
+    creepy_jump_ok = (
+        long_jump_ok and short_jump_ok and right_jump_ok and no_platform_ok
+    )
+
+    # AI priorities: far shot, blocked homing, near roll, grounded shot.
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(1000, 220)
+    creepy.ai_enabled = True
+    creepy.decision_cd = 0.0
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    ai_far_shot_ok = creepy.attack_id == "creepy_shot"
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(1000, 620)
+    creepy.ai_enabled = True
+    creepy.decision_cd = 0.0
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    ai_blocked_homing_ok = creepy.attack_id == "creepy_homing_shot"
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(700, 220)
+    creepy.ai_enabled = True
+    creepy.decision_cd = 0.0
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    ai_near_roll_ok = creepy.attack_id == "creepy_roll_shot"
+
+    _reset_creepy()
+    _place_creepy(1000, 620)
+    _place_player(300, 620)
+    creepy.ai_enabled = True
+    creepy.decision_cd = 0.0
+    for _ in range(12):
+        scene.tick(FIXED_DT)
+    ai_ground_ok = creepy.attack_id == "creepy_shot"
+
+    _reset_creepy()
+    _place_creepy(300, 620)
+    _place_player(1000, 620)
+    creepy.ai_enabled = True
+    creepy.decision_cd = 0.0
+    ai_hop_ok = False
+    for _ in range(150):
+        scene.tick(FIXED_DT)
+        if creepy.x > 490.0:
+            ai_hop_ok = True
+    creepy_ai_ok = (
+        ai_far_shot_ok and ai_blocked_homing_ok and ai_near_roll_ok and ai_ground_ok
+        and ai_hop_ok
+    )
+
+    # Slots V/C/X/Z map to the four skills; Z needs a valid takeoff.
+    creepy_slot_checks = {}
+    for key, expected in (
+        (pygame.K_v, "creepy_shot"),
+        (pygame.K_c, "creepy_homing_shot"),
+        (pygame.K_x, "creepy_roll_shot"),
+    ):
+        _reset_creepy()
+        _place_creepy(800, 220)
+        _place_player(950, 220)
+        scene.handle_debug_key(key)
+        creepy_slot_checks[expected] = creepy.attack_id == expected
+    _reset_creepy()
+    _place_creepy(545, 620)
+    _place_player(660, 620)
+    scene.handle_debug_key(pygame.K_z)
+    creepy_slot_checks["creepy_jump_shot"] = (
+        creepy.attack_id == "creepy_jump_shot"
+    )
+    creepy_slots_ok = all(creepy_slot_checks.values())
+
+    # KO -> WIN and projectile cleanup on switch.
+    _reset_creepy()
+    creepy.hp = 1.0
+    creepy.take_hit(5.0, 0.0, 0.1, 1)
+    scene.tick(FIXED_DT)
+    creepy_win_ok = scene.match_over == "WIN"
+
+    _reset_creepy()
+    _place_creepy(800, 220)
+    _place_player(800, 620)
+    creepy.force_attack(scene, creepy_player, "creepy_homing_shot")
+    for _ in range(65):
+        scene.tick(FIXED_DT)
+    had_homing = any(
+        getattr(p, "visual_kind", "") == "creepy_homing_bullet"
+        for p in scene.projectiles
+    )
+    scene.set_enemy("warrior")
+    creepy_cleanup_ok = had_homing and not scene.projectiles
+    creepy_stage_switch_ok = (
+        scene.stage.platforms[0].left == 170 and scene.enemy.name == "Warrior"
+    )
+    scene.reset()
+
     print(
         "SMOKE "
         f"ticks={smoke_ticks} "
@@ -2175,6 +2503,19 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"bat_group_cooldowns_ok={bat_group_cooldowns_ok} "
         f"bat_group_win_ok={bat_group_win_ok} "
         f"bat_missing_frames={bat_missing} "
+        f"creepy_present={creepy_present} creepy_stage_ok={creepy_stage_ok} "
+        f"creepy_shot_ok={creepy_shot_ok} creepy_homing_ok={creepy_homing_ok} "
+        f"creepy_lock_ok={creepy_lock_ok} creepy_roll_ok={creepy_roll_ok} "
+        f"creepy_roll_edge={roll_edge_ok} "
+        f"creepy_jump_ok={creepy_jump_ok} "
+        f"creepy_jump_long={long_jump_ok} creepy_jump_short={short_jump_ok} "
+        f"creepy_jump_right={right_jump_ok} "
+        f"creepy_jump_none={no_platform_ok} creepy_ai_ok={creepy_ai_ok} "
+        f"creepy_ai_hop={ai_hop_ok} "
+        f"creepy_slots_ok={creepy_slots_ok} creepy_win_ok={creepy_win_ok} "
+        f"creepy_cleanup_ok={creepy_cleanup_ok} "
+        f"creepy_stage_switch_ok={creepy_stage_switch_ok} "
+        f"creepy_missing_frames={creepy_missing} creepy_fx_missing={creepy_fx_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -2295,6 +2636,20 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and bat_count_ok
         and bat_group_ok
         and bat_missing == 0
+        and creepy_present
+        and creepy_stage_ok
+        and creepy_shot_ok
+        and creepy_homing_ok
+        and creepy_lock_ok
+        and creepy_roll_ok
+        and creepy_jump_ok
+        and creepy_ai_ok
+        and creepy_slots_ok
+        and creepy_win_ok
+        and creepy_cleanup_ok
+        and creepy_stage_switch_ok
+        and creepy_missing == 0
+        and creepy_fx_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok

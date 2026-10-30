@@ -164,6 +164,52 @@ class Stage:
         height = self.lane_heights.get(name, self.lane_heights["mid"])
         return feet_y - height
 
+    def platform_top_at(self, x: float, feet_y: float) -> float | None:
+        """Return the platform top under a fighter's feet, if any."""
+        for rect in self.platforms:
+            if rect.left <= x <= rect.right and abs(feet_y - rect.top) <= 1.0:
+                return float(rect.top)
+        return None
+
+    def segment_hits_blocks(
+        self, x0: float, y0: float, x1: float, y1: float
+    ) -> bool:
+        """True when a segment crosses any solid block (line-of-sight probe)."""
+        if not self.blocks_enabled:
+            return False
+        return any(
+            self._segment_hits_rect(x0, y0, x1, y1, block) for block in self.blocks
+        )
+
+    @staticmethod
+    def _segment_hits_rect(
+        x0: float, y0: float, x1: float, y1: float, rect: pygame.Rect
+    ) -> bool:
+        """Liang-Barsky segment/AABB intersection."""
+        dx = x1 - x0
+        dy = y1 - y0
+        t0, t1 = 0.0, 1.0
+        for p, q in (
+            (-dx, x0 - rect.left),
+            (dx, rect.right - x0),
+            (-dy, y0 - rect.top),
+            (dy, rect.bottom - y0),
+        ):
+            if abs(p) < 1e-9:
+                if q < 0.0:
+                    return False
+                continue
+            t = q / p
+            if p < 0.0:
+                if t > t1:
+                    return False
+                t0 = max(t0, t)
+            else:
+                if t < t0:
+                    return False
+                t1 = min(t1, t)
+        return True
+
     def set_blocks_enabled(self, enabled: bool) -> None:
         self.blocks_enabled = bool(enabled)
 

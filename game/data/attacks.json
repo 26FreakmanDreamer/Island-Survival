@@ -253,5 +253,66 @@
        "hitbox_forward": 8, "hitbox_radius": 24,
        "status": "stun", "status_duration": 1.0}
     ]
+  },
+  "creepy_shot": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.45,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {"t": 0.18, "type": "projectile", "id": "creepy_shot", "projectile": "creepy_bullet",
+       "lane": "mid", "speed": 980, "range": 900, "hitbox_radius": 9,
+       "origin_height": 163, "origin_forward": 129, "knockback": 40}
+    ]
+  },
+  "creepy_homing_shot": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 1.55,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": [
+      {"t": 1.0, "type": "projectile", "id": "creepy_homing_shot", "projectile": "creepy_homing_bullet",
+       "speed": 520, "range": 3000, "lifetime": 8.0, "hitbox_radius": 14,
+       "origin_height": 143, "origin_forward": 111, "knockback": 60,
+       "penetrates_blocks": true}
+    ]
+  },
+  "creepy_roll_shot": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.90,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {"t": 0.30, "type": "projectile", "id": "creepy_roll_shot", "projectile": "creepy_bullet",
+       "lane": "mid", "speed": 900, "range": 700, "hitbox_radius": 9,
+       "origin_height": 120, "origin_forward": 100, "knockback": 40}
+    ]
+  },
+  "creepy_jump_shot": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 1.10,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {"t": 0.10, "type": "projectile", "id": "creepy_jump_shot", "projectile": "creepy_down_bullet",
+       "speed": 900, "range": 600, "hitbox_radius": 12,
+       "origin_height": 120, "origin_forward": 100, "knockback": 60}
+    ]
   }
 }

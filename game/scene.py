@@ -22,7 +22,16 @@ from .fx import (
 from .hud import HUD
 from .input import InputState
 from .particles import ParticleSystem, draw_knock_up_vortex
-from .projectile import AimedProjectile, AxeThrow, QWave, SonicWave, SwordWave
+from .projectile import (
+    AimedProjectile,
+    AxeThrow,
+    CreepyBullet,
+    CreepyDownBullet,
+    CreepyHomingBullet,
+    QWave,
+    SonicWave,
+    SwordWave,
+)
 from .roster import create_fighter
 from .stage import Stage
 from .slash_fx import SlashEffect
@@ -247,9 +256,15 @@ class ArenaScene:
             if hasattr(enemy, "ai_enabled"):
                 enemy.ai_enabled = False
 
+    def _stage_config(self) -> dict:
+        variant = self.enemy_spec.get("stage_variant")
+        if variant:
+            return self.store.debug["stage_variants"][variant]
+        return self.store.debug["stage"]
+
     def rebuild(self) -> None:
-        self.stage = Stage(self.store.debug["stage"])
         self._resolve_ids()
+        self.stage = Stage(self._stage_config())
         self._rebuild_fighters()
         self.input.buffer.max_age = float(self.store.stats["combat"]["input_buffer"])
 
@@ -282,6 +297,9 @@ class ArenaScene:
             return False
         self.enemy_id = enemy_id
         self.enemy_spec = enemies[enemy_id]
+        blocks_enabled = self.stage.blocks_enabled
+        self.stage = Stage(self._stage_config())
+        self.stage.blocks_enabled = blocks_enabled
         self._rebuild_fighters()
         return True
 
@@ -599,6 +617,32 @@ class ArenaScene:
                 x + ux * 8.0, y + uy * 8.0, (235, 220, 255), 4,
                 speed=120.0, life=(0.10, 0.18),
             )
+        elif visual_kind in ("creepy_bullet", "creepy_down_bullet"):
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (80, 230, 225), life=0.10,
+                    start_radius=3.0, end_radius=16.0, width=2,
+                    sparks=3, spark_color=(210, 255, 252),
+                    kind="creepy_bullet_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 6.0, y + uy * 6.0, (170, 255, 250), 3,
+                speed=130.0, life=(0.08, 0.16),
+            )
+        elif visual_kind == "creepy_homing_bullet":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (190, 120, 255), life=0.16,
+                    start_radius=5.0, end_radius=26.0, width=2,
+                    sparks=4, spark_color=(235, 220, 255),
+                    kind="creepy_homing_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (190, 120, 255), 5, speed=120.0,
+                life=(0.10, 0.20),
+            )
 
     def spawn_projectile_impact(self, projectile, target) -> None:
         """Emit the elemental hit effect at the same anchor as the hit particles."""
@@ -669,6 +713,26 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (230, 215, 255), 8, speed=180.0,
             )
+        elif visual_kind in ("creepy_bullet", "creepy_down_bullet"):
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (80, 230, 225), life=0.16,
+                    start_radius=6.0, end_radius=36.0, width=2,
+                    sparks=5, spark_color=(220, 255, 252),
+                    kind="creepy_bullet_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (170, 255, 250), 8, speed=190.0)
+        elif visual_kind == "creepy_homing_bullet":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (190, 120, 255), life=0.20,
+                    start_radius=8.0, end_radius=42.0, width=3,
+                    sparks=6, spark_color=(235, 220, 255),
+                    kind="creepy_homing_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (190, 120, 255), 10, speed=200.0)
 
     def spawn_hit_fx(self, kind: str, attacker, target, event: dict | None = None) -> None:
         """Visual-only hook for melee hit feedback; unknown kinds are ignored."""
@@ -822,6 +886,71 @@ class ArenaScene:
                 hitbox_forward=float(event.get("hitbox_forward", 8.0)),
                 hitbox_radius=float(event.get("hitbox_radius", 24.0)),
                 penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+        elif projectile_kind == "creepy_bullet":
+            origin_height = float(event.get("origin_height", 143.0))
+            origin_forward = float(event.get("origin_forward", 111.0))
+            projectile = CreepyBullet(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * origin_forward,
+                y=attacker.y - origin_height,
+                direction=direction,
+                speed=float(event.get("speed", 980.0)),
+                max_range=float(event.get("range", 900.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
+                hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+                radius=float(event.get("hitbox_radius", 9.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+        elif projectile_kind == "creepy_homing_bullet":
+            origin_height = float(event.get("origin_height", 120.0))
+            origin_forward = float(event.get("origin_forward", 48.0))
+            projectile = CreepyHomingBullet(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * origin_forward,
+                y=attacker.y - origin_height,
+                speed=float(event.get("speed", 520.0)),
+                max_range=float(event.get("range", 3000.0)),
+                lifetime=float(event.get("lifetime", 8.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
+                hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+                radius=float(event.get("hitbox_radius", 14.0)),
+            )
+        elif projectile_kind == "creepy_down_bullet":
+            origin_height = float(event.get("origin_height", 110.0))
+            origin_forward = float(event.get("origin_forward", 24.0))
+            origin_x = attacker.x + direction * origin_forward
+            origin_y = attacker.y - origin_height
+            ux, uy = 0.0, 1.0
+            if target is not None:
+                aim_x = target.x
+                aim_y = target.y - target.hurtbox_dims[1] * 0.5
+                dx = aim_x - origin_x
+                dy = aim_y - origin_y
+                if dy > 0.0 and abs(math.atan2(dx, dy)) <= math.pi / 4.0:
+                    distance = math.hypot(dx, dy)
+                    if distance > 1e-6:
+                        ux, uy = dx / distance, dy / distance
+            projectile = CreepyDownBullet(
+                owner=attacker,
+                target=target,
+                x=origin_x,
+                y=origin_y,
+                ux=ux,
+                uy=uy,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 600.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(attack.get("hitstun", self.store.stats["combat"]["hitstun"])),
+                hitstop=float(attack.get("hitstop", self.store.stats["combat"]["hitstop"])),
+                radius=float(event.get("hitbox_radius", 12.0)),
             )
         elif projectile_kind == "axe":
             projectile = AxeThrow(
@@ -1037,6 +1166,10 @@ class ArenaScene:
             projectile.draw(surface)
         self.particles.draw(surface)
         self.player.draw(surface, tint=self._poison_tint(self.player))
+        for enemy in self.enemies:
+            draw_lock = getattr(enemy, "draw_lock_marker", None)
+            if draw_lock is not None:
+                draw_lock(surface)
         for effect in self.slash_effects:
             effect.draw(surface)
         for effect in self.fx_effects:

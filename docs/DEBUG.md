@@ -25,10 +25,16 @@ damage/cooldowns, per-target mark independence (`nyra_marks_per_target_ok`) and 
 clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs
 Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots,
 win and `veno_missing_frames`. Phase E switches to Bat and checks the five-Bat group (selected with
-F7; the default enemy is Warrior), five spawn/cruise heights, free flight 40–420, dive 10
+F7; the startup default is Creepy Shooter), five spawn/cruise heights, free flight 40–420, dive 10
 (height-gated), V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the
 0.65s cast lock, hurt/stun staying airborne, KO landing, win, the F7 order, the five-body group
 spawn/independent cooldowns/WIN and the sonic-only random stagger.
+Phase F switches to Creepy Shooter and checks the mirrored stage variant, HP/ATK/slots, the straight
+shot (30, block collision), the 1s lock wind-up and three-frame reticle, the homing bolt (platform
+penetration, 20 once, 8s lifetime, survives owner KO), the back-roll (140px, 24, no i-frames, 10s,
+falling off a platform edge), the jump shot (220/268 surfaces, right takeoff 1136, 24 downward,
+no-platform rejection), barrier hopping (`creepy_ai_hop`), AI priority, V/C/X/Z mapping, WIN,
+cleanup, stage switching, and `creepy_missing_frames` / `creepy_fx_missing`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the two-frame back-view
@@ -70,7 +76,9 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   For Nyra the panel shows `Q ... E ...` without an energy line and adds the primary enemy's
   `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
-  (altitude above ground). Poison and stun appear in the status list. The three mark pips above each
+  (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
+`creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns. The
+lock reticle is draw-only. Poison and stun appear in the status list. The three mark pips above each
   living enemy, the green poison pulse and the stun stars are draw-only.
 
 ## Simulation controls
@@ -87,7 +95,7 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → …) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → training Dummy → …) |
 | [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
@@ -155,7 +163,8 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
    a white rim/highlights and a short pixel trail in normal form, orange-red in flame form. It is
    drawn 7px above the collision lane so it lines up with the punching fist; cast/impact effects
    use the same teal/orange family. The normal form has no code-generated ball.
-10. Bat checks: the five-Bat group is selected with F7 (`count: 5`; the default enemy is Warrior).
+10. Bat checks: the five-Bat group is selected with F7 (`count: 5`; the startup default is Creepy
+    Shooter).
     With the x=600 spawn it uses x offsets `[0,-160,160,-80,80]` and altitudes
     `180/320/240/380/280`; they keep those as cruise heights. F7 selects Bat after Veno, and F8
     starts the AI. V dives (locked direction, 10 damage, 2s); it
@@ -169,7 +178,23 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
     following the body; F2 shows `MODE fly`, `HOVER` altitude, slots and cooldowns. Flight range is
     40–420 (preferred 240, bob 24, vertical speed 300). Hurt/stun keep it airborne; only KO falls
     and switches to `ko_01`. All five Bats must die for WIN.
-11. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
+11. Creepy Shooter checks: the startup default (and the F7 step after Bat) selects it on the
+    mirrored stage variant — long platform 601–1080 at y=220, short 170–484 at y=268, barriers
+    400–490 and 790–880, spawn (1000,220). F8 toggles AI. V fires the straight shot (30, 1s); it is
+    strictly horizontal, so a platform shot cannot hit a ground player. C starts the 1s lock
+    wind-up: the three-frame reticle appears on the player, and a hit during the wind-up cancels the
+    bolt but leaves the 8s cooldown. An uninterrupted bolt homes without limit, penetrates
+    blocks/platforms, deals 20 once, has an 8s lifetime and is not removed by the shooter's KO. X
+    rolls backward 140px, fires for 24 at t=0.30, has no i-frames (10s cooldown), and rolls off a
+    platform edge instead of being clamped. Z is the platform jump shot: it starts only at a valid
+    takeoff (the far-right ground point is 1136), rises beside the edge, lands on the 220 or 268
+    surface and fires down for 24; without a platform it is a no-op. Bullets leave the measured
+    muzzle, not the waist. The AI uses skill 1 across a clear level, skill 2 across a blocked line
+    or level difference >60px, skill 3 inside 180px, and skill 4 to return to a platform; it hops
+    90px ground barriers (`jump_v×1.15`, `walk×2.0` horizontal). F1 shows the collision boxes; F2
+    shows the four cooldowns. Ground barriers sit below the flat-ground mid lane, so test block
+    collision from the platform or with the smoke's direct `barrier.centery` bullet.
+12. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
     triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
     jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left
     hand/right leg high, frame 1 the right hand/left leg high; moving loops it, stopping holds the
@@ -180,8 +205,8 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
     remove barriers/platforms from drawing/collision; ladders stay visible/climbable, and B-off at
     a ladder top holds the character on the ladder instead of snapping to the platform. The toggle
     persists across F9 and resets on F5/rebuild.
-12. Edit `game/data/*.json` and press F5 to tune values without restarting.
-13. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
+13. Edit `game/data/*.json` and press F5 to tune values without restarting.
+14. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
     cache keys on path + mtime. Climb frames are `assets/frames/lina/climb/`,
     `assets/frames/lina/flame/climb/` and `assets/frames/nyra/climb/`. Projectile FX sprites use the
     same rule: `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and

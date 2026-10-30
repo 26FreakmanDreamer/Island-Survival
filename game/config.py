@@ -18,11 +18,12 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "combat")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "creepy_shooter", "combat")
 REQUIRED_ATTACKS = (
     "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
     "veno_bite", "veno_poison", "veno_web", "bat_dive", "bat_sonic",
+    "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
 )
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
@@ -44,14 +45,21 @@ REQUIRED_VENO_CLIPS = (
 REQUIRED_BAT_CLIPS = (
     "idle", "fly", "bat_dive", "bat_sonic", "hurt", "stun", "ko",
 )
+REQUIRED_CREEPY_SHOOTER_CLIPS = (
+    "idle", "walk", "crouch", "jump", "hurt", "ko",
+    "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
+)
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno", "bat")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "creepy_shooter")
 PLAYABLE_CLASSES = ("lina", "nyra")
-ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno", "bat")
-PROJECTILE_KINDS = ("q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno", "bat", "creepy_shooter")
+PROJECTILE_KINDS = (
+    "q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave",
+    "creepy_bullet", "creepy_homing_bullet", "creepy_down_bullet",
+)
 
 
 class JsonStore:
@@ -244,6 +252,28 @@ class JsonStore:
         ):
             if key not in bat.get("ai", {}):
                 raise ValueError(f"stats.json bat.ai missing '{key}'")
+        creepy = stats.get("creepy_shooter", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "ai",
+        ):
+            if key not in creepy:
+                raise ValueError(f"stats.json creepy_shooter missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in creepy.get("move", {}):
+                raise ValueError(f"stats.json creepy_shooter.move missing '{key}'")
+        for key in ("shot", "homing", "roll", "jump"):
+            if key not in creepy.get("cooldowns", {}):
+                raise ValueError(f"stats.json creepy_shooter.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in creepy.get("hurtbox", {}):
+                raise ValueError(f"stats.json creepy_shooter.hurtbox missing '{key}'")
+        for key in (
+            "near_range", "far_range", "level_tolerance", "decision_interval",
+            "roll_distance", "roll_time", "platform_reach", "jump_heights",
+        ):
+            if key not in creepy.get("ai", {}):
+                raise ValueError(f"stats.json creepy_shooter.ai missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -296,9 +326,19 @@ class JsonStore:
         for key, clip in bat_clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json bat clip '{key}' frame/duration count mismatch")
+        creepy_clips = animations.get("creepy_shooter_clips", {})
+        for key in REQUIRED_CREEPY_SHOOTER_CLIPS:
+            if key not in creepy_clips:
+                raise ValueError(f"animations.json missing creepy_shooter clip '{key}'")
+        for key, clip in creepy_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json creepy_shooter clip '{key}' frame/duration count mismatch"
+                )
         for key in (
             "nyra_frame_size", "nyra_pivot", "veno_frame_size", "veno_pivot",
             "bat_frame_size", "bat_pivot",
+            "creepy_shooter_frame_size", "creepy_shooter_pivot",
         ):
             value = animations.get(key)
             if not (isinstance(value, list) and len(value) == 2):
@@ -308,6 +348,16 @@ class JsonStore:
             if key not in stage:
                 raise ValueError(f"debug.json stage missing '{key}'")
         JsonStore._validate_stage(stage)
+        variants = debug.get("stage_variants", {})
+        if not isinstance(variants, dict):
+            raise ValueError("debug.json stage_variants must be an object")
+        for name, variant in variants.items():
+            if not isinstance(variant, dict):
+                raise ValueError(f"debug.json stage_variants '{name}' must be an object")
+            for key in REQUIRED_STAGE:
+                if key not in variant:
+                    raise ValueError(f"debug.json stage_variants '{name}' missing '{key}'")
+            JsonStore._validate_stage(variant)
         for key, clip in clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json clip '{key}' frame/duration count mismatch")
@@ -346,7 +396,16 @@ class JsonStore:
                 if entry["stats"] not in stats:
                     raise ValueError(f"roster.json {section} '{key}' stats '{entry['stats']}' missing")
                 spawn_key = entry["spawn"]
-                if not spawn_key.endswith("_spawn") or spawn_key not in stage:
+                entry_stage = stage
+                variant_name = entry.get("stage_variant")
+                if variant_name is not None:
+                    if variant_name not in variants:
+                        raise ValueError(
+                            f"roster.json {section} '{key}' unknown stage_variant "
+                            f"'{variant_name}'"
+                        )
+                    entry_stage = variants[variant_name]
+                if not spawn_key.endswith("_spawn") or spawn_key not in entry_stage:
                     raise ValueError(
                         f"roster.json {section} '{key}' invalid spawn '{spawn_key}'"
                     )

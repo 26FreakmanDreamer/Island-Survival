@@ -1,6 +1,6 @@
-# Island Survival — Lina / Nyra vs Warrior / Veno / Bat Combat Sandbox
+# Island Survival — Lina / Nyra vs Warrior / Veno / Bat / Creepy Shooter Combat Sandbox
 
-A 2D side-view combat sandbox for testing Lina Seabright and Nyra Steel against the Warrior, Veno-Spider and Bat before the full survival game is built.
+A 2D side-view combat sandbox for testing Lina Seabright and Nyra Steel against the Warrior, Veno-Spider, Bat and Creepy Shooter before the full survival game is built.
 Python 3.14 + pygame-ce 2.5.8; all gameplay tuning is hot-reloadable JSON.
 
 ## Run
@@ -21,11 +21,18 @@ It then runs Nyra against the dummy (wave/thrust damage, mark stacking and deton
 hitbox/FX, pass-through dash, cooldowns, per-target marks, lock-on) and Veno-Spider against Lina
 (bite, poison stacking, stun web, hover ascent/descent, V/C/X slots, win). It also checks that each
 Veno keeps independent skill cooldowns and that the 3-body group wins only when all are dead, and
-checks `missing_frames == 0` for Lina, Nyra, Veno, Warrior and Bat. The Bat phase verifies the
-five-Bat group (selected with F7; the default enemy is Warrior), five spawn/cruise heights, free
-flight (40–420), dive 10, V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the 0.65s
-cast lock, hurt/stun staying airborne, KO landing, and the five-body group spawn/independent
-cooldowns/WIN.
+checks `missing_frames == 0` for Lina, Nyra, Veno, Warrior, Bat and Creepy Shooter. The Bat phase
+verifies the five-Bat group (selected with F7; the startup default is Creepy Shooter), five
+spawn/cruise heights, free flight (40–420), dive 10, V/C/X/Z slots, sonic 12 + 1s stun,
+out/return/wall/barrier/platform bounce, the 0.65s cast lock, hurt/stun staying airborne, KO
+landing, and the five-body group spawn/independent cooldowns/WIN.
+The Creepy Shooter phase checks the dedicated mirrored stage (long platform 601–1080, short
+170–484, spawn 1000,220), HP/ATK/slots, the straight shot (30, cooldown ~1s, block collision), the
+1s lock wind-up and three-frame reticle, the homing bolt (penetrates platforms, 20 once, 8s
+lifetime), the back-roll (140px, 24 damage, no i-frames, cooldown 10, falling off a platform edge),
+the platform jump shot (surfaces 220/268, right takeoff 1136, 24 downward, no-platform rejection),
+barrier hopping, AI priority, V/C/X/Z mapping, WIN, cleanup, stage switching, and
+`creepy_missing_frames == 0` / `creepy_fx_missing == 0`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the two-frame back-view
@@ -99,12 +106,13 @@ hits, stun and KO drop the character off. Ladders have no collision and never bl
 
 ## Combat modes
 
-The default enemy is a single **Warrior** (300 HP); the five-Bat group is selectable with F7. Press F7
-to cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → back); `[` / `]` cycle the playable character roster
+The default enemy is a single **Creepy Shooter** (200 HP); the five-Bat group and the other enemies
+are selectable with F7. Press F7 to cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 →
+Creepy Shooter → training Dummy → back); `[` / `]` cycle the playable character roster
 (Lina ↔ Nyra). A switch performs a full
 match reset and leaves the enemy AI off for manual testing. The AI also starts off on launch and after
 any reset (F5 reload, F9, R); press F8 to turn it on. The dummy has
-no AI and is useful for isolated tests; Warrior, Veno and Bat are the full opponents. After VICTORY or
+no AI and is useful for isolated tests; Warrior, Veno, Bat and Creepy Shooter are the full opponents. After VICTORY or
 DEFEATED, press R to restart; F9 resets at any time. Warrior's dash knock-up draws a cyan vortex at
 the target's feet; it follows the body, stays visible at a minimum strength through the 1.5s window,
 then vanishes. Extended knock-up gravity keeps the target airborne for that window, so landing and
@@ -126,7 +134,26 @@ player from the current altitude; otherwise the Bat keeps flying. The sonic (12 
 the group, plus a 0.55s same-skill stagger. The wave flies in the mouth→player direction, bounces
 off walls and barriers/platforms, and returns to the Bat's current position, dealing at most one hit.
 Bats stay airborne through hurt/stun and only fall on KO. `roster.json` uses `count: 5`, five spawn
-offsets and five spawn heights. The group is selected with F7; the default match is a single Warrior.
+offsets and five spawn heights. The group is selected with F7; the startup default is a single
+Creepy Shooter.
+
+Creepy Shooter is a platform sniper with HP 200 / ATK 20 and four skills. It spawns on the right end
+of the long platform (1000, 220) on a dedicated mirrored stage variant (long platform 601–1080,
+short platform 170–484, ground barriers at 400 and 790, mirrored ladders); selecting it with F7 or
+at startup swaps the stage, and B still toggles blocks. Its shot is strictly horizontal at the
+shooter's mid lane and is blocked by barriers/platforms (30 damage, 1s cooldown); standing on the
+long platform therefore cannot hit a ground player with skill 1. The homing bolt is the cross-level
+answer: a 1s interruptible wind-up draws a three-frame lock reticle on the player (0.30/0.40/0.30s,
+red dot in the middle frame), then a violet bolt homes without limit, penetrates blocks and
+platforms, deals 20 once, and survives the shooter's KO (8s cooldown, 8s lifetime). Back-roll fires
+when the player is within 180px: it rolls 140px backward over 0.28s with no i-frames, fires at
+t=0.30 for 24, and falls off a platform edge instead of being clamped (10s cooldown). Jump shot
+walks to a valid takeoff outside a reachable platform, jumps onto the 220 or 268 surface, and fires
+downward for 24 inside a ±45° cone (10s cooldown); without a platform `force_attack` rejects it.
+Bullets leave the measured muzzle (skill 1 at 163px high / 129px forward), not the waist, and the
+AI hops 90px ground barriers with a stronger jump (`jump_v×1.15`, `walk×2.0` horizontal) instead of
+stalling. Skill 2 is preferred when the line is blocked, the level differs by more than 60px, or
+skill 1 is on cooldown.
 
 ## Debug controls
 
@@ -138,7 +165,7 @@ offsets and five spawn heights. The group is selected with F7; the default match
 | F4 | Step one simulation tick (pauses) |
 | F5 | Hot-reload all JSON and soft-reset the scene |
 | F6 | Cycle time scale 0.25x / 0.5x / 1x / 2x |
-| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → training Dummy → …) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → training Dummy → …) |
 | [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
@@ -153,30 +180,32 @@ offsets and five spawn heights. The group is selected with F7; the default match
 
 ## Current scope
 
-- Two playable characters (Lina, Nyra) vs. Warrior, Veno-Spider or Bat in a single arena; the training Dummy remains available through F7. A `roster.json` registry drives character/enemy construction. The current default enemy is Warrior.
-- Scene: `blocks` use `kind: barrier | platform`; barriers are solid obstacles, platforms are full AABB solids (top/side/underside), and `ladders` are separate non-solid climb triggers. Current layout: long platform x=170..649 at surface y=220, short platform x=796..1110 at surface y=268, long ladder x=508..572 (400px), medium ladder x=921..985 (352px, native 160px width), ground barriers x=400..490 and x=700..790; player spawn x=280, enemy spawn x=600. B toggles barriers/platforms; ladders stay visible and climbable. F1 shows the collision boxes; F2 shows counts and `CLIMB`. `penetrates_blocks` defaults false for all current skills.
-- Lina: 47 normal + 43 flame-form frames (90); both tables include the 2-frame back-view climb clip. Damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Q launches a fist-sized static sprite projectile: a pixel-art teal glass ball (white rim/highlights, short trail) drawn slightly above the fist lane in normal form, orange/red fire in flame form, with matching teal/orange cast and impact colors. Nyra: 31 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3, climb 2) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150.
+- Two playable characters (Lina, Nyra) vs. Warrior, Veno-Spider, Bat or Creepy Shooter in a single arena; the training Dummy remains available through F7. A `roster.json` registry drives character/enemy construction. The current default enemy is Creepy Shooter; an enemy entry may name a `stage_variant` that replaces the stage when selected.
+- Scene: `blocks` use `kind: barrier | platform`; barriers are solid obstacles, platforms are full AABB solids (top/side/underside), and `ladders` are separate non-solid climb triggers. Current default-stage layout: long platform x=170..649 at surface y=220, short platform x=796..1110 at surface y=268, long ladder x=508..572 (400px), medium ladder x=921..985 (352px, native 160px width), ground barriers x=400..490 and x=700..790; player spawn x=280, enemy spawn x=600. The Creepy Shooter variant mirrors these: long platform x=601..1080, short platform x=170..484, ladders x=708..772 and x=295..359, barriers x=400..490 and x=790..880, Creepy spawn x=1000 at y=220. B toggles barriers/platforms; ladders stay visible and climbable. F1 shows the collision boxes; F2 shows counts and `CLIMB`. `penetrates_blocks` is false by default; only the Creepy Shooter homing bolt sets it true.
+- Lina: 47 normal + 43 flame-form frames (90); both tables include the 2-frame back-view climb clip. Damage follows the docx formulas (punch 20, kick 24, Q 20 at the starting stats). Q launches a fist-sized static sprite projectile: a pixel-art teal glass ball (white rim/highlights, short trail) drawn slightly above the fist lane in normal form, orange/red fire in flame form, with matching teal/orange cast and impact colors. Nyra: 31 minimal frames (idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, slash 6 (Q), thrust 5, wave 5 (LMB), dash 3, climb 2) on a 384x384 canvas with pivot (192,372), body 214. Warrior: 36 frames (idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4) on a 384x384 canvas with pivot (192,372). Veno-Spider: 20 minimal frames (idle 2, walk 2, hover 2, jump 2, hurt 1, KO 2, bite/poison/web 3 each) on a 320x320 canvas with pivot (160,308), body 150. Creepy Shooter: 29 frames (idle 2, walk 4, crouch 1, jump 2, hurt 2, KO 2, shot 2, homing 4, roll 6, jump shot 4) on a 384x384 canvas with pivot (192,372), body 214 (the roll set is imported at 0.9×); hurtbox 56×210 standing / 56×130 crouching, excluding the rifle.
 - Climb animations: Lina normal/flame and Nyra each have two dedicated back-view frames; Nyra's sword stays sheathed on her back and her hands stay free. Lina draws at 1.2× and Nyra at 1.1× around the feet pivot; the combat hurtbox and stage body are not scaled. Enemy climb art/AI is not implemented yet.
 - Nyra: HP 100, basic ATK 20; LMB wave 20 (0.30s), RMB thrust 24, Q slash 30 (8s), E dash 30 (15s). LMB uses a 5-frame wave animation (0.06s each) and cast-anchored hitboxes (no projectile): the RMB thrust box `[28,-165,130,48]` during t=0–0.06s and 0.24–0.30s, and the extended `[28,-212,162,123]` (reach 190) during t=0.06–0.24s; it adds 1 mark and has no FX. Q uses a 6-frame slash animation (0.40s) and cast-anchored hitboxes: the thrust box during t=0–0.12s and 0.30–0.40s, and the extended box during t=0.12–0.30s; it adds 1 mark, has super armor for its 0.40s, and plays the separate six-frame blue slash FX (visible frames 02–04 align with the character's 02–04 frames and overlap the extended window). RMB uses a 5-frame thrust animation (0.08s each, 0.40s) with a single hitbox `[28,-165,130,48]` active t=0.16–0.24s. Melee hits add 1 mark (max 3); the 4th melee hit detonates for `1.8×atk + 10% target max HP` and leaves 1 mark. E dashes at 1100px/s for t=0.06–0.36s (~330px) with super armor during the dash, passes through the enemy but respects walls and solid barriers/platforms, and pushes the enemy out at the end.
 - Warrior AI approaches, jumps solid barriers/platforms, attacks with a telegraphed axe slash, has startup/active super armor, and supports win/loss/restart. Its damage is `atk`-scaled: axe slash 24, dash 30 + 1.5s knock-up, axe throw 24 per pass. The dash knock-up uses a reduced knock-up gravity so the target stays airborne for the 1.5s window, and draws a procedural cyan vortex at the launched fighter's feet for the full status duration.
 - Veno-Spider: half-size body (160×160 runtime frames, 75×75 hurtbox, `stage_body_width` 70, bite range 75); HP 50, ATK 10; bite 15, poison glob 8 + 3% max HP/s for 3s, web 10 + 1s stun. Cooldowns are bite 1s, poison 5s and web 8s, tracked independently by each spider. Selecting Veno spawns a group of **3** (default 1 ground + 2 hovering; `roster.json` `count`/`spawn_offsets`/`spawn_modes`); the player's attacks and projectiles can hit any living Veno and the match is won when all 3 die. Nyra's marks stack independently on each Veno. Same-source poison reapplication adds the new duration to the remaining time (2s + 3s = 5s); different sources — including different Venos — keep independent damage instances. Poison settles every 0.5s. It hovers on a web at 140–300px (base 220), prioritizes bite on the ground and venom/web while airborne, and uses a draw-only curved web strand. Poison is dark green (layered glob, cast mist and splash) and a poisoned body flashes green/purple every 0.18s; web uses the approved web_05 crop at 64px with a 150–170px impact decal, a procedural silk trail and collision radius 30; a connected bite adds a short green arc.
-- Bat: 14 frames (wing 4, dive 3, sonic 3, hurt 1, stun 1, KO 2) on a 384×384 source / 192×192 runtime canvas with pivot (115,143); HP 50, ATK 10. Dive 10 (2s), sonic 12 + 1s stun (10s); free flight 40–420 (preferred 240, bob 24, vertical speed 300); five default spawns at 180/320/240/380/280px; hurtbox 100×66, `stage_body_width` 56. It is selected with F7; the default match is a single Warrior. The body and the sonic wave collide with the barrier/platform AABBs; platforms are full solids. Dive is height-gated; sonic is the only randomly-timed skill (random opening cooldown + 50% cast gate, 0.55s group same-skill stagger). The sonic hitbox is a forward circle (+8px, r24) matching the Wi-Fi-style arcs. `count: 5` with five `spawn_offsets` and five `spawn_heights`.
+- Bat: 14 frames (wing 4, dive 3, sonic 3, hurt 1, stun 1, KO 2) on a 384×384 source / 192×192 runtime canvas with pivot (115,143); HP 50, ATK 10. Dive 10 (2s), sonic 12 + 1s stun (10s); free flight 40–420 (preferred 240, bob 24, vertical speed 300); five default spawns at 180/320/240/380/280px; hurtbox 100×66, `stage_body_width` 56. It is selected with F7; the startup default is a single Creepy Shooter. The body and the sonic wave collide with the barrier/platform AABBs; platforms are full solids. Dive is height-gated; sonic is the only randomly-timed skill (random opening cooldown + 50% cast gate, 0.55s group same-skill stagger). The sonic hitbox is a forward circle (+8px, r24) matching the Wi-Fi-style arcs. `count: 5` with five `spawn_offsets` and five `spawn_heights`.
+- Creepy Shooter: HP 200, ATK 20; straight shot 30 (1s), homing bolt 20 (8s, platform-penetrating, 8s lifetime), back-roll 24 (10s, 140px, no i-frames, falls off platform edges), jump shot 24 (10s, surfaces 220/268, no-platform rejection). Bullets spawn at the measured muzzle (163/129 for skill 1); the homing wind-up draws a user-drawn three-frame reticle (0.30/0.40/0.30s) on the player. It is the default enemy and uses `stage_variants.creepy_shooter` (long platform 601–1080, short 170–484, spawn 1000,220).
 - `V/C/X/Z` read the current enemy's four skill slots from data; undefined slots are safe no-ops and show `-` in F2.
 - Frame data, hitboxes, cooldowns, damage and stage geometry are in `game/data/*.json`.
-- Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, group balancing beyond the Veno 3-body group and the five-Bat sandbox, other playable characters/enemies, packaging.
+- Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, group balancing beyond the Veno 3-body group and the five-Bat sandbox, other playable characters/enemies (Creepy Shooter is the newest enemy), packaging.
 - No pytest suite or file logging; verification is through the sandbox, contact sheets and `--smoke-test`.
 
 ## Layout
 
 ```text
 main.py                  entry point and fixed-step loop
-game/                    runtime modules and data (including lina.py, nyra.py, warrior.py, veno.py, bat.py)
+game/                    runtime modules and data (including lina.py, nyra.py, warrior.py, veno.py, bat.py, creepy_shooter.py)
 game/data/               stats, attacks, animations, roster and debug geometry
 assets/frames/lina/      normal frames + flame/<action> frames
 assets/frames/nyra/      Nyra frames on the 384x384 canvas
 assets/frames/warrior/   Warrior frames on the 384x384 canvas
 assets/frames/veno/      Veno-Spider frames on the 320x320 canvas
 assets/frames/bat/       Bat frames on the 384x384 source (192x192 runtime) canvas
+assets/frames/creepy_shooter/  Creepy Shooter frames on the 384x384 canvas + fx/ bullets and reticle
 assets/sprites/stage/    runtime platform/ladder PNGs copied from the contact sheets
 assets/generated/        raw candidates, staged frames, contact sheets
 tools/                   collect_frames.py, import_frames.py, contact_sheet.py

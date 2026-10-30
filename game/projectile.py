@@ -7,7 +7,7 @@ import math
 import pygame
 
 from .combat import resolve_projectile_hit
-from .config import AXE_SPRITE_PATH
+from .config import ASSETS_DIR, AXE_SPRITE_PATH
 from .fx import (
     LINA_Q_SPECS,
     Q_WAVE_DRAW_OFFSET_Y,
@@ -990,3 +990,300 @@ class SonicWave:
             image,
             (round(self.x - center), round(self.y - center)),
         )
+
+
+_CREEPY_SPRITE_CACHE: dict[tuple[str, float], pygame.Surface | None] = {}
+
+
+def _creepy_sprite(name: str) -> pygame.Surface | None:
+    """Load a Creepy Shooter bullet frame, cached by path + mtime."""
+    path = ASSETS_DIR / "frames" / "creepy_shooter" / "fx" / name
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    key = (str(path), mtime)
+    if key not in _CREEPY_SPRITE_CACHE:
+        try:
+            _CREEPY_SPRITE_CACHE[key] = pygame.image.load(str(path)).convert_alpha()
+        except pygame.error:
+            _CREEPY_SPRITE_CACHE[key] = None
+    return _CREEPY_SPRITE_CACHE[key]
+
+
+class CreepyBullet:
+    """Creepy Shooter's straight mid-lane bullet, blocked by solids."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 9.0,
+        penetrates_blocks: bool = False,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.direction = 1 if direction >= 0 else -1
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.traveled = 0.0
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.flame_bonus = 0.0
+        self.radius = float(radius)
+        self.penetrates_blocks = bool(penetrates_blocks)
+        self.age = 0.0
+        self.visual_kind = "creepy_bullet"
+        self.hit_color = (80, 230, 225)
+        self.alive = True
+        self.hit = False
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        step = self.speed * dt
+        self.x += step * self.direction
+        self.traveled += step
+        self.rect.center = (round(self.x), round(self.y))
+
+        if self.traveled >= self.max_range:
+            self.alive = False
+            return
+
+        low, high = scene.stage.walls
+        if self.rect.right <= low or self.rect.left >= high:
+            self.alive = False
+            return
+
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
+            for block in scene.stage.blocks:
+                if self.rect.colliderect(block):
+                    self.alive = False
+                    return
+
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
+
+    def draw(self, surface: pygame.Surface) -> None:
+        frame = _creepy_sprite(f"creepy_bullet_{int(self.age / 0.06) % 2:02d}.png")
+        if frame is None:
+            return
+        if self.direction < 0:
+            frame = pygame.transform.flip(frame, True, False)
+        surface.blit(frame, frame.get_rect(center=(round(self.x), round(self.y))))
+
+
+class CreepyHomingBullet:
+    """Lock-on bullet: re-aims at the target every tick and ignores solids."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        speed: float,
+        max_range: float,
+        lifetime: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 14.0,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.lifetime = float(lifetime)
+        self.traveled = 0.0
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.flame_bonus = 0.0
+        self.radius = float(radius)
+        self.penetrates_blocks = True
+        self.age = 0.0
+        self.visual_kind = "creepy_homing_bullet"
+        self.hit_color = (190, 120, 255)
+        self.alive = True
+        self.hit = False
+        self.dir_x = 1.0
+        self.dir_y = 0.0
+        self.direction = 1
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def _aim(self) -> None:
+        if self.target is None or self.target.hp <= 0.0:
+            return
+        target_y = self.target.y - self.target.hurtbox_dims[1] * 0.5
+        dx = self.target.x - self.x
+        dy = target_y - self.y
+        distance = math.hypot(dx, dy)
+        if distance > 1e-6:
+            self.dir_x = dx / distance
+            self.dir_y = dy / distance
+            self.direction = 1 if self.dir_x >= 0.0 else -1
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        if self.age >= self.lifetime:
+            self.alive = False
+            return
+        self._aim()
+        step = self.speed * dt
+        self.x += self.dir_x * step
+        self.y += self.dir_y * step
+        self.traveled += step
+        self.rect.center = (round(self.x), round(self.y))
+
+        if self.traveled >= self.max_range:
+            self.alive = False
+            return
+
+        low, high = scene.stage.walls
+        if self.x < low or self.x > high or self.y < 0.0 or self.y > scene.stage.ground_y:
+            self.alive = False
+            return
+
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
+
+    def draw(self, surface: pygame.Surface) -> None:
+        frame = _creepy_sprite(
+            f"creepy_homing_bullet_{int(self.age / 0.07) % 3:02d}.png"
+        )
+        if frame is None:
+            return
+        angle = -math.degrees(math.atan2(self.dir_y, self.dir_x))
+        rotated = pygame.transform.rotate(frame, angle)
+        surface.blit(rotated, rotated.get_rect(center=(round(self.x), round(self.y))))
+
+
+class CreepyDownBullet:
+    """Creepy Shooter's downward shot from the jump skill."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        ux: float,
+        uy: float,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 12.0,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        speed_norm = math.hypot(ux, uy)
+        if speed_norm < 1e-6:
+            ux, uy = 0.0, 1.0
+        else:
+            ux, uy = ux / speed_norm, uy / speed_norm
+        self.ux = ux
+        self.uy = uy
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.traveled = 0.0
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.flame_bonus = 0.0
+        self.radius = float(radius)
+        self.penetrates_blocks = False
+        self.direction = 1 if ux >= 0.0 else -1
+        self.age = 0.0
+        self.visual_kind = "creepy_down_bullet"
+        self.hit_color = (80, 230, 225)
+        self.alive = True
+        self.hit = False
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        step = self.speed * dt
+        self.x += self.ux * step
+        self.y += self.uy * step
+        self.traveled += step
+        self.rect.center = (round(self.x), round(self.y))
+
+        if self.traveled >= self.max_range:
+            self.alive = False
+            return
+
+        low, high = scene.stage.walls
+        if self.rect.right <= low or self.rect.left >= high:
+            self.alive = False
+            return
+        if self.y >= scene.stage.ground_y:
+            self.alive = False
+            return
+
+        if scene.stage.blocks_enabled:
+            for block in scene.stage.blocks:
+                if self.rect.colliderect(block):
+                    self.alive = False
+                    return
+
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
+
+    def draw(self, surface: pygame.Surface) -> None:
+        frame = _creepy_sprite(f"creepy_bullet_{int(self.age / 0.06) % 2:02d}.png")
+        if frame is None:
+            return
+        angle = -math.degrees(math.atan2(self.uy, self.ux))
+        rotated = pygame.transform.rotate(frame, angle)
+        surface.blit(rotated, rotated.get_rect(center=(round(self.x), round(self.y))))

@@ -75,6 +75,21 @@
       "spawn_offsets": [0, -160, 160, -80, 80],
       "spawn_heights": [180, 320, 240, 380, 280]
     },
+    "creepy_shooter": {
+      "name": "Creepy Shooter",
+      "class": "creepy_shooter",
+      "stats": "creepy_shooter",
+      "spawn": "creepy_shooter_spawn",
+      "stage_variant": "creepy_shooter",
+      "clips": "creepy_shooter_clips",
+      "frame_size": "creepy_shooter_frame_size",
+      "pivot": "creepy_shooter_pivot",
+      "frames_dir": "creepy_shooter",
+      "fallback": "Image/Enemy/creepy-shooter-256.png",
+      "skill_slots": ["creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot"],
+      "separates": true,
+      "decides_match": true
+    },
     "dummy": {
       "name": "Dummy",
       "class": "dummy",

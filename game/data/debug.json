@@ -49,9 +49,62 @@
     "veno_spawn": [600, 620],
     "bat_spawn": [600, 470]
   },
+  "stage_variants": {
+    "creepy_shooter": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [
+        {"kind": "barrier", "rect": [790, 560, 90, 60]},
+        {"kind": "barrier", "rect": [400, 560, 90, 60]},
+        {
+          "kind": "platform",
+          "rect": [601, 220, 479, 78],
+          "surface_y": 220,
+          "sprite": "platform_tropical_long.png",
+          "sprite_rect": [601, 206, 479, 96]
+        },
+        {
+          "kind": "platform",
+          "rect": [170, 268, 314, 78],
+          "surface_y": 268,
+          "sprite": "platform_tropical_short.png",
+          "sprite_rect": [170, 254, 314, 96]
+        }
+      ],
+      "ladders": [
+        {
+          "rect": [708, 220, 64, 400],
+          "top_y": 220,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood.png",
+          "sprite_rect": [676, 220, 128, 400]
+        },
+        {
+          "rect": [295, 268, 64, 352],
+          "top_y": 268,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood_medium.png",
+          "sprite_rect": [247, 268, 160, 352]
+        }
+      ],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [600, 620],
+      "bat_spawn": [600, 470],
+      "creepy_shooter_spawn": [1000, 220]
+    }
+  },
   "roster": {
     "default_character": "lina",
-    "default_enemy": "warrior"
+    "default_enemy": "creepy_shooter"
   },
   "overlay": {
     "hit": [255, 70, 70],

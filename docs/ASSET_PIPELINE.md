@@ -11,13 +11,17 @@
   `Image/`.
 - Lina's approved side-view base is `assets/generated/base/lina_side_base.png` (body height 210px).
   Warrior's approved side-view base is `assets/generated/base/warrior_side_base.png` (body height
-  about 230px, 384x384 canvas, pivot 192,372).
+  about 230px, 384x384 canvas, pivot 192,372). Creepy Shooter's approved side-view base is
+  `assets/generated/base/creepy_shooter_side_base.png` (body 214, 384x384 canvas, pivot 192,372).
 - Lina frames live in `assets/frames/lina/<action>/`; flame-form frames in
   `assets/frames/lina/flame/<action>/`; Warrior frames in `assets/frames/warrior/<action>/`;
-  Bat frames in `assets/frames/bat/<action>/`.
+  Bat frames in `assets/frames/bat/<action>/`; Creepy Shooter frames in
+  `assets/frames/creepy_shooter/<action>/` with bullets/reticle in
+  `assets/frames/creepy_shooter/fx/`.
 - `game/data/animations.json` defines Lina's `clips`/`flame_clips`, Warrior's
-  `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, and Bat's
-  `bat_clips`/`bat_frame_size`/`bat_pivot`.
+  `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, Bat's
+  `bat_clips`/`bat_frame_size`/`bat_pivot`, and Creepy Shooter's
+  `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`.
 
 ## Frame inventory
 
@@ -26,9 +30,11 @@
 - Flame form (43): idle 4, walk 6, jump 2, crouch 1, punch_l/r 4+4, kick_l/r 4+4, Q 4, hurt 2, KO 4, revert 2, climb 2.
 - Warrior (36): idle 4, walk 6, jump 2, axe_slash 6, axe_throw 7, dash 5, hurt 2, KO 4.
 - Bat (14): wing 4 (shared idle/fly), bat_dive 3, bat_sonic 3, hurt 1, stun 1, KO 2.
+- Creepy Shooter (29): idle 2, walk 4, crouch 1, jump 2, hurt 2, KO 2, creepy_shot 2,
+  creepy_homing_shot 4, creepy_roll_shot 6, creepy_jump_shot 4.
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
-  150px.
+  150px. Creepy Shooter: 384x384 RGBA, pivot (192,372), body 214 (roll imported at 0.9x).
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.
 
 ## Normal frame generation
@@ -230,6 +236,48 @@ py tools/contact_sheet.py --action veno_<action> --frames assets/generated/stage
   drifts in body size, use the same one-time body normalization as the wing transition, not
   per-frame repainting.
 
+## Creepy Shooter (2026-10-29; code 2026-10-30)
+
+- Approved side-view base A: `assets/generated/base/creepy_shooter_side_base.png`; canonical source
+  `Image/Enemy/creepy-shooter-256.png`. Source/runtime canvas 384x384, pivot (192,372), body 214;
+  hurtbox 56x210 standing / 56x130 crouching. Only right-facing frames are stored; the runtime
+  mirrors for left. The full rifle and two-handed grip (right hand trigger, left hand foregrip) are
+  preserved in every frame; never crop or shrink the body to fit the canvas.
+- Frame inventory (29): idle 2, walk 4, crouch 1, jump 2, hurt 2, KO 2, `creepy_shot` 2,
+  `creepy_homing_shot` 4, `creepy_roll_shot` 6, `creepy_jump_shot` 4. Runtime folders:
+  `assets/frames/creepy_shooter/idle/`, `walk/`, `crouch/`, `jump/`, `hurt/`, `ko/`,
+  `creepy_shot/`, `creepy_homing_shot/`, `creepy_roll_shot/`, `creepy_jump_shot/`. These 29 files
+  are approved; do not re-import or regenerate them without an explicit request.
+- The roll set is imported at `--body-height 193` (0.9x of 214); sizes are 166/127/188/152/186/211
+  px, so the final standing frame (~211px) matches Lina (~210px). The earlier 1.10x/~234px final
+  frame was rejected as too large. All other actions use `--body-height 214`.
+- Import pattern (same as Warrior; adjust `--action`, `--src`, `--out`, `--expect`):
+
+```text
+py tools/import_frames.py --action creepy_shot --src <raw> --out assets/generated/staged/creepy_shooter/creepy_shot --base assets/generated/base/creepy_shooter_side_base.png --body-height 214 --canvas 384 --pivot-x 192 --pivot-y 372 --expect 2
+py tools/import_frames.py --action creepy_roll_shot --src <raw> --out assets/generated/staged/creepy_shooter/creepy_roll_shot --base assets/generated/base/creepy_shooter_side_base.png --body-height 193 --canvas 384 --pivot-x 192 --pivot-y 372 --expect 6
+```
+
+- Bullet art is procedural (Pillow) via `tools/generate_creepy_bullets.py`:
+  `assets/frames/creepy_shooter/fx/creepy_bullet_00.png` / `_01.png` are a 32x12 cyan/white tracer
+  (2 frames), and `creepy_homing_bullet_00..02.png` are a 40x24 violet body / cyan nose bolt
+  (3 frames). The homing bullet was redesigned from an earlier lock-ring look into a projectile;
+  the runtime rotates it to the travel angle. Contact sheets live under
+  `assets/generated/contact_sheets/creepy_shooter_fx_v1/`.
+- The lock reticle is **user-drawn**, not generated: source frames
+  `assets/generated/contact_sheets/creepy_lock_fx_v4/creepy_lock_00..02.png` (724x724). They are
+  installed unchanged except for a NEAREST downscale to 128x128 at
+  `assets/frames/creepy_shooter/fx/creepy_lock_00..02.png`. Timing is 0.30/0.40/0.30s (large /
+  small red-dot / large); the runtime draws them at the target's chest center during the homing
+  wind-up. `tools/generate_creepy_lock_fx.py` is the superseded procedural version, kept for
+  reference only and not used at runtime.
+- Preview tool: `tools/preview_creepy_ingame.py` renders 01_startup through 09_overlay_panel
+  (straight shot, lock reticle, homing flight/impact, roll tuck/inverted, jump shot, F1/F2) into
+  `assets/generated/contact_sheets/creepy_shooter_ingame_v1/`. Run it headlessly with the SDL dummy
+  driver; it forces `enemy_count_override = 1` for isolated checks.
+- Approval gate: base A, each action contact sheet, both bullet sheets and the final in-game
+  preview were reviewed. The user supplied the lock art directly; do not redraw it.
+
 ## Projectile / skill VFX (2026-10-24)
 
 These are visual-only assets. Damage, hitboxes, timing, cooldowns and AI are unchanged.
@@ -325,8 +373,8 @@ Near-transparent pixels (alpha < 10) are cleared.
 2. Collect the chosen files into `assets/generated/raw/<character>/<action>/`.
 3. Import into `assets/generated/staged/<character>/<action>/` with the character's canvas/pivot.
 4. Build a contact sheet and review it (pose, limb identity, feet alignment, effects).
-5. Copy approved frames to `assets/frames/lina/<action>/`, `assets/frames/lina/flame/<action>/` or
-   `assets/frames/warrior/<action>/`.
+5. Copy approved frames to `assets/frames/lina/<action>/`, `assets/frames/lina/flame/<action>/`,
+   `assets/frames/warrior/<action>/` or `assets/frames/creepy_shooter/<action>/`.
 6. Press F5 in-game after replacing frames; the animation cache invalidates on path + mtime.
 
 Canonical `Image/` files are read-only. Generated candidates, staging folders and contact sheets are

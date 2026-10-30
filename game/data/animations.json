@@ -7,6 +7,8 @@
   "nyra_pivot": [192, 372],
   "veno_frame_size": [160, 160],
   "veno_pivot": [80, 154],
+  "creepy_shooter_frame_size": [384, 384],
+  "creepy_shooter_pivot": [192, 372],
   "clips": {
     "idle": {
       "loop": true,
@@ -371,5 +373,57 @@
     "flame/walk/walk_03.png": -42,
     "flame/walk/walk_04.png": -47,
     "flame/walk/walk_05.png": -44
+  },
+  "creepy_shooter_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png"],
+      "durations": [0.30, 0.30]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["crouch/crouch_00.png"],
+      "durations": [0.50]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png"],
+      "durations": [0.35, 0.35]
+    },
+    "creepy_shot": {
+      "loop": false,
+      "frames": ["creepy_shot/creepy_shot_00.png", "creepy_shot/creepy_shot_01.png"],
+      "durations": [0.18, 0.27]
+    },
+    "creepy_homing_shot": {
+      "loop": false,
+      "frames": ["creepy_homing_shot/creepy_homing_shot_00.png", "creepy_homing_shot/creepy_homing_shot_01.png", "creepy_homing_shot/creepy_homing_shot_02.png", "creepy_homing_shot/creepy_homing_shot_03.png"],
+      "durations": [0.15, 0.85, 0.10, 0.45]
+    },
+    "creepy_roll_shot": {
+      "loop": false,
+      "frames": ["creepy_roll_shot/creepy_roll_shot_00.png", "creepy_roll_shot/creepy_roll_shot_01.png", "creepy_roll_shot/creepy_roll_shot_02.png", "creepy_roll_shot/creepy_roll_shot_03.png", "creepy_roll_shot/creepy_roll_shot_04.png", "creepy_roll_shot/creepy_roll_shot_05.png"],
+      "durations": [0.14, 0.13, 0.13, 0.10, 0.18, 0.22]
+    },
+    "creepy_jump_shot": {
+      "loop": false,
+      "frames": ["creepy_jump_shot/creepy_jump_shot_00.png", "creepy_jump_shot/creepy_jump_shot_01.png", "creepy_jump_shot/creepy_jump_shot_02.png", "creepy_jump_shot/creepy_jump_shot_03.png"],
+      "durations": [0.10, 0.15, 0.70, 0.15]
+    }
   }
 }
