@@ -1,5 +1,9 @@
 # Next Session — 新增 Character 与 Enemy（Handoff）
 
+> **2026-11-01 当前状态**：可玩角色为 **Lina → Nyra → Rhea**（`[` / `]` 循环），默认角色仍为 Lina，
+> 默认敌人为 Creepy Shooter。Rhea 的最终设计/实现见 `docs/NEXT_SESSION_RHEA.md` §7/§13；本文下方
+> 2026-10-21/10-24 的 roster、默认敌人和“Lina ↔ Nyra”记录是历史快照，以 README / DESIGN_DECISIONS 为准。
+>
 > **下一轮 handoff（2026-10-23）**：Veno-Spider / Lina Q 特效改造直接使用 `docs/NEXT_SESSION_VENO_LINA_Q_VFX.md`；Nyra/Veno 全量细节见 `docs/NEXT_SESSION_NYRA_VENO_LINA_Q.md`。
 > **2026-10-24 体型/ VFX / 毒结算状态**：Veno 改为半体型（运行时 160×160、pivot 80,154、hurtbox 75×75、stage_body_width 70、bite hitbox `[12,-60,55,45]`、毒/网 origin 50、AI bite 75 / close 70；Lina 的 punch/Q 高度会打空，kick 仍可命中）。Veno 生成 **3 只**（默认 1 地面 + 2 悬垂，`roster.json` count/offsets/modes）；玩家攻击/弹体可命中任意存活 Veno，全部击杀才 WIN；毒伤叠加按 instruction.docx：同源“剩余 + 新时长”（2s+3s=5s），异源各自独立结算；smoke 新增 `veno_group_ok`、`poison_stack_rules_ok`。Lina Q 改为单张静态像素贴图（普通=参考图的青绿色玻璃球像素贴图（白边/高光/暗右下）+ 像素拖尾，26px，绘制上移 7px 对齐拳头，无代码生成球；flame=Seedream 像素火球，32px），运行时 `assets/frames/lina/q_fx/` 与 `flame/q_fx/`；普通命中/施法为青绿色；Veno 毒改为深绿色毒液，中毒状态改为全身精灵染色、深绿/紫每 0.18s 交替（删矩形、保留毒粒子）；蛛网用 web_05 精确裁切（弹体 64px、命中 150–170px、碰撞半径 30）+ 程序化细丝；hover 蛛丝与 bite 命中弧光已升级；毒伤改为每 0.5s 结算一次（总 dps/持续时间不变）。smoke 新增 `lina_q_fx_missing`、`veno_vfx_missing`、`q_*_fx_ok`、`q_normal_color_ok`、`veno_*_cast/impact_ok`、`veno_bite_hit_fx_ok`、`poison_interval_ok`、`poison_tint_ok`、`veno_web_radius_ok`、`fx_cleanup_ok`。
 >

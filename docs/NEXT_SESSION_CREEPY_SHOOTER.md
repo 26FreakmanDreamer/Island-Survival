@@ -362,13 +362,13 @@ base 构图，不要缩小人物。
 | 技能 4 `creepy_jump_shot` | 10s CD；仅当 platform 可达且站在有效起跳点；自动选最近 platform（surface 220/268 两档跳高）、同一 `jump_shot` 动画；1.10s；约半身高 t=0.10 向下射击；24 伤害；下方 ±45° 锥内瞄准玩家，否则垂直向下；被 block 挡住；speed 900 / range 600 / radius 12；枪口 120/100；无 platform → `force_attack` 返回 False；最右地面起跳点 1136（long platform 右移后可跳） |
 | AI | 近 ≤180 用技能 3；远 ≥320 用技能 1；180–320 用技能 1；直线被 block/platform 挡住或高度差 >60px 用技能 2；技能 2 只在被挡/换层/技能 1 未就绪时使用；被打到地面 → 走向最近 platform 起跳点，技能间隙用 4 回平台，期间用 1/2 攻击；地面 barrier 挡路用 hop（`jump_v×1.15` 垂直、`walk×2.0` 水平，可跨 90px barrier）；在 platform 上被逼近时后滚，滚出边缘会掉下去 |
 | 弹道 | 严格水平、相对射手脚底的中 lane；技能 2 负责跨层与穿透 |
-| 专属场景 | 镜像现有关卡：long platform 右（surface 220，x 601–1080）、short platform 左（surface 268，x 170–484）、barriers x=790 与 x=400、梯子同步镜像；不加额外掩体；Creepy 生成 long platform 右端 (1000, 220)；player (280, 620)，其余敌人 (600, 620)；选中该敌人时自动切换 stage variant，B 开关保留 |
+| 专属场景 | 镜像现有关卡的平台/梯子：long platform 右（surface 220，x 601–1080）、short platform 左（surface 268，x 170–484）、仅右侧 ground barrier x=790（左侧 x=400 已按用户要求于 2026-11-01 删除）、梯子同步镜像；不加额外掩体；Creepy 生成 long platform 右端 (1000, 220)；player (280, 620)，其余敌人 (600, 620)；选中该敌人时自动切换 stage variant，B 开关保留 |
 | 画布 / 身体 | 384×384，pivot (192,372)；body 214；hurtbox 56×210 / 56×130（不含步枪）；stage_body_width 100 |
 | 帧数 | 29：idle 2、walk 4、crouch 1、jump 2、hurt 2、ko 2、`creepy_shot` 2、`creepy_homing_shot` 4、`creepy_roll_shot` 6、`creepy_jump_shot` 4；roll 按 0.9×（body 193）导入 |
 | 子弹贴图 | 普通弹青色曳光 2 帧（32×12）；锁定弹紫青弹体 3 帧（40×24），不再是锁定环；程序化像素贴图，接触表审批；枪口/命中 FX 走 `game/fx.py`；锁定准星使用用户自绘 `creepy_lock_fx_v4` 3 帧，按 128px NEAREST 安装 |
 | 审批 | base → 动作接触表 → 游戏内预览；每阶段停下等用户确认 |
 | 验证 | `--smoke-test` exit 0（全部 `creepy_*` flags True）+ F1/F2 + 游戏内预览 01–09 |
-| 文档 | 已按用户确认更新 README / DESIGN_DECISIONS / DEBUG / ASSET_PIPELINE 与本文件的最终值（2026-10-30） |
+| 文档 | 已按用户确认更新 README / DESIGN_DECISIONS / DEBUG / ASSET_PIPELINE 与本文件的最终值（2026-10-30；2026-11-01 补充左 barrier 删除与梯上受击规则） |
 
 > `creepy_roll_shot` 为 6 帧：crouch 0.14 / tuck 0.13 / 倒立紧蜷 0.13 / 双膝跪地前倾 0.10 / crouch-fire 0.18 / stand 0.22（总 0.90s）。
 > 按 0.9×（`--body-height 193`）导入；最后站立帧约 211px，与 Lina（约 210px）同体格。此前的 1.10×/约 234px 尺寸例外已取消。
@@ -377,12 +377,13 @@ base 构图，不要缩小人物。
 
 - **代码**：`game/creepy_shooter.py::CreepyShooter`；`game/projectile.py` 新增 `CreepyBullet`、`CreepyHomingBullet`、`CreepyDownBullet`；`game/stage.py` 新增 `platform_top_at`、`segment_hits_blocks`；`game/scene.py` 按 `roster.json` 的 `stage_variant` 选择场景并在 `set_enemy` 时重建 Stage（保留 B 开关）。
 - **数据**：`stats.json` 的 `creepy_shooter`；`attacks.json` 的四个 attack；`animations.json` 的 `creepy_shooter_frame_size`/`creepy_shooter_pivot`/`creepy_shooter_clips`；`roster.json` 的 Creepy 条目；`debug.json` 的 `stage_variants.creepy_shooter` 与 `default_enemy`。
-- **场景变体**：long platform rect `[601,220,479,78]`（sprite `[601,206,479,96]`），short platform `[170,268,314,78]`（sprite `[170,254,314,96]`）；barriers `[790,560,90,60]` 与 `[400,560,90,60]`；long ladder `[708,220,64,400]`（sprite `[676,220,128,400]`），short ladder `[295,268,64,352]`（sprite `[247,268,160,352]`）。
+- **场景变体**：long platform rect `[601,220,479,78]`（sprite `[601,206,479,96]`），short platform `[170,268,314,78]`（sprite `[170,254,314,96]`）；仅 right barrier `[790,560,90,60]`（left `[400,560,90,60]` 已于 2026-11-01 删除）；long ladder `[708,220,64,400]`（sprite `[676,220,128,400]`），short ladder `[295,268,64,352]`（sprite `[247,268,160,352]`）。
 - **枪口锚点**：技能 1 为 163/129；技能 2/4 为 143/111 与 120/100；场景按 `attacker.x + direction*origin_forward`、`attacker.y - origin_height` 生成，弹体 y 不再走 `lane_y`。子弹贴图在 `assets/frames/creepy_shooter/fx/`（`creepy_bullet_00/01.png`、`creepy_homing_bullet_00/01/02.png`）。
 - **锁定准星**：用户自绘 `assets/generated/contact_sheets/creepy_lock_fx_v4/creepy_lock_00..02.png`（724×724），以 NEAREST 缩放到 128×128 安装为 `assets/frames/creepy_shooter/fx/creepy_lock_00..02.png`；运行时按 0.30s / 0.70s 两个阈值切换大/小/大（对应 0.30/0.40/0.30s 三帧），绘制在目标胸口中心，仅视觉、不参与命中。`tools/generate_creepy_lock_fx.py` 的旧程序化版本仅保留作对照，运行时不再使用。
 - **素材**：base 为 `assets/generated/base/creepy_shooter_side_base.png`；29 帧在 `assets/frames/creepy_shooter/`（idle/walk/crouch/jump/hurt/ko/`creepy_shot`/`creepy_homing_shot`/`creepy_roll_shot`/`creepy_jump_shot`）；接触表与游戏内预览在 `assets/generated/contact_sheets/`。
-- **验证 flags**：`creepy_present`、`creepy_stage_ok`、`creepy_shot_ok`、`creepy_homing_ok`、`creepy_lock_ok`、`creepy_roll_ok`、`creepy_roll_edge`、`creepy_jump_ok`、`creepy_jump_long/short/right/none`、`creepy_ai_ok`、`creepy_ai_hop`、`creepy_slots_ok`、`creepy_win_ok`、`creepy_cleanup_ok`、`creepy_stage_switch_ok`、`creepy_missing_frames=0`、`creepy_fx_missing=0`。
-- **已知取舍**：技能 1 严格水平，站 platform 上打不到地面玩家是有意设计，跨层交给技能 2；地面 barrier（y 560–620）低于平地中 lane，所以平地 1/3 技能会从 barrier 上方飞过，test 用 `barrier.centery` 直接生成弹体验证阻挡；roll 无 i-frames；技能 2 的弹体在发射后不因施法者 KO 消失。
+- **验证 flags**：`creepy_present`、`creepy_stage_ok`、`creepy_shot_ok`、`creepy_homing_ok`、`creepy_lock_ok`、`creepy_roll_ok`、`creepy_roll_edge`、`creepy_jump_ok`、`creepy_jump_long/short/right/none`、`creepy_ai_ok`、`creepy_ai_hop`、`creepy_slots_ok`、`creepy_win_ok`、`creepy_cleanup_ok`、`creepy_stage_switch_ok`、`creepy_ladder_hit_mid_ok`、`creepy_ladder_hit_platform_ok`、`creepy_ladder_hit_top_ok`、`creepy_ladder_hit_ok`、`creepy_missing_frames=0`、`creepy_fx_missing=0`。
+- **已知取舍**：技能 1 严格水平，站 platform 上打不到地面玩家是有意设计，跨层交给技能 2；右侧地面 barrier（y 560–620）低于平地中 lane，所以平地 1/3 技能会从 barrier 上方飞过，test 用 `barrier.centery` 直接生成弹体验证阻挡；roll 无 i-frames；技能 2 的弹体在发射后不因施法者 KO 消失。2026-11-01 额外验证梯子受击：中段击落不横向推挤、脚底在 platform 内吸附到平台顶、顶端中弹落到平台。
+- **2026-11-01 变更**：删除 Creepy 场景左侧 `[400,560,90,60]` barrier，仅保留右侧 `[790,560,90,60]`；同步更新 `debug.json` 与本文件。
 
 ---
 

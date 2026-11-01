@@ -13,15 +13,20 @@
   Warrior's approved side-view base is `assets/generated/base/warrior_side_base.png` (body height
   about 230px, 384x384 canvas, pivot 192,372). Creepy Shooter's approved side-view base is
   `assets/generated/base/creepy_shooter_side_base.png` (body 214, 384x384 canvas, pivot 192,372).
+  Rhea's approved side base is `assets/generated/base/rhea_side_base.png` and her back base is
+  `assets/generated/base/rhea_back_base.png` (both 1024x1024 source; runtime 384x384, pivot
+  192,372, body 214).
 - Lina frames live in `assets/frames/lina/<action>/`; flame-form frames in
   `assets/frames/lina/flame/<action>/`; Warrior frames in `assets/frames/warrior/<action>/`;
   Bat frames in `assets/frames/bat/<action>/`; Creepy Shooter frames in
   `assets/frames/creepy_shooter/<action>/` with bullets/reticle in
-  `assets/frames/creepy_shooter/fx/`.
+  `assets/frames/creepy_shooter/fx/`; Rhea frames in `assets/frames/rhea/<action>/` with the six
+  star strips in `assets/frames/rhea/fx/`.
 - `game/data/animations.json` defines Lina's `clips`/`flame_clips`, Warrior's
   `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, Bat's
-  `bat_clips`/`bat_frame_size`/`bat_pivot`, and Creepy Shooter's
-  `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`.
+  `bat_clips`/`bat_frame_size`/`bat_pivot`, Creepy Shooter's
+  `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`, and Rhea's
+  `rhea_clips`/`rhea_frame_size`/`rhea_pivot`.
 
 ## Frame inventory
 
@@ -32,9 +37,13 @@
 - Bat (14): wing 4 (shared idle/fly), bat_dive 3, bat_sonic 3, hurt 1, stun 1, KO 2.
 - Creepy Shooter (29): idle 2, walk 4, crouch 1, jump 2, hurt 2, KO 2, creepy_shot 2,
   creepy_homing_shot 4, creepy_roll_shot 6, creepy_jump_shot 4.
+- Rhea (33): idle 2, walk 4, jump 2, crouch 1, hurt 2, KO 3, rhea_slash_r 3, rhea_slash_l 3,
+  rhea_throw 3, rhea_poison_throw 3, rhea_dash 5, climb 2; plus six 64x64 star FX
+  (`rhea_shuriken_00..02`, `rhea_poison_shuriken_00..02`).
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
   150px. Creepy Shooter: 384x384 RGBA, pivot (192,372), body 214 (roll imported at 0.9x).
+  Rhea: 384x384 RGBA, pivot (192,372), body 214.
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.
 
 ## Normal frame generation
@@ -128,19 +137,24 @@ single upper crescent blade; the lower side is a blunt counterweight.
 ## Climb frames (2026-10-28)
 
 - Approved runtime clips: `assets/frames/lina/climb/climb_00.png` and `climb_01.png`,
-  `assets/frames/lina/flame/climb/...`, and `assets/frames/nyra/climb/...`.
+  `assets/frames/lina/flame/climb/...`, `assets/frames/nyra/climb/...` and
+  `assets/frames/rhea/climb/...`.
 - All playable characters use a direct back view, two frames: frame 0 has the character-left hand
   high and right leg high; frame 1 has the right hand high and left leg high. Each frame is 0.20s.
   The clip loops while moving (up 0→1→0, down 1→0→1) and holds its current frame when stopped;
   climbing frames are never horizontally flipped.
 - Lina normal uses the 256×256 canvas/pivot (128,244); Lina flame uses the same canvas with
-  `flame/climb` and `flame_offsets` 0; Nyra uses the 384×384 canvas/pivot (192,372). Nyra's approved
-  back base is `assets/generated/base/nyra_back_base.png`; the single long sword stays sheathed
-  diagonally on her back (hilt above her right shoulder, tip toward lower left), hands free.
-- Runtime draw scale is character-specific: Lina 1.2× and Nyra 1.1×, anchored at the feet pivot;
-  this is visual only, not a hitbox change. The current Nyra frame 00 is 1.02× the frame 01 staging
-  scale to match the torso/silhouette; both frames were aligned by body-center + feet bottom rather
-  than the generic support-foot pivot, because the support leg alternates.
+  `flame/climb` and `flame_offsets` 0; Nyra and Rhea use the 384×384 canvas/pivot (192,372).
+  Nyra's approved back base is `assets/generated/base/nyra_back_base.png`; the single long sword
+  stays sheathed diagonally on her back (hilt above her right shoulder, tip toward lower left),
+  hands free. Rhea's approved back base is `assets/generated/base/rhea_back_base.png`; both hands
+  are free and the two four-blade shuriken stay stowed on the gold-striped rear band.
+- Runtime draw scale is character-specific: Lina 1.2×, Nyra 1.1× and Rhea 1.1×, anchored at the
+  feet pivot; this is visual only, not a hitbox change. The current Nyra frame 00 is 1.02× the
+  frame 01 staging scale to match the torso/silhouette; both frames were aligned by body-center +
+  feet bottom rather than the generic support-foot pivot, because the support leg alternates.
+  Rhea's two climb frames are imported at body height 214 and aligned to the back base's gold band
+  center; they are not re-normalized per frame at runtime.
 - The approved frames are not to be regenerated or re-imported without an explicit request; enemy
   climb art is not part of this set.
 
@@ -183,6 +197,52 @@ py tools/contact_sheet.py --action nyra_<action> --frames assets/generated/stage
 - The lying KO frame can include a neutral gray ground rectangle from the generator even with a
   transparent request. Remove it with `--remove-bg` first; if the rectangle remains, clear neutral
   gray pixels (`110 <= r <= 180`, channel spread < 12) in the ground band before installing.
+
+## Rhea Thorn (2026-11-01)
+
+- Approved side base: `assets/generated/base/rhea_side_base.png`; canonical source
+  `Image/Character/rhea-thorn-256.png`. Canvas 384x384, pivot (192,372), body height 214. The
+  approved back base is `assets/generated/base/rhea_back_base.png`; its gold-striped band and
+  stowed shuriken layout are normalized to the base v1 canvas/pivot and must not be repainted.
+- Visual lock: black high ponytail with a green ribbon, black face mask, gold forehead ornament,
+  dark green/black ninja outfit with gold trim and an anchor shoulder emblem, green scarf, bare
+  midriff, black leggings, green-trimmed black boots with gold buckles/tassels. Four-blade silver
+  shuriken held in the near/right hand; the far/left hand is empty. On the back, two four-blade
+  stars stay stowed behind the dark-green horizontal band with two thin gold stripes. No sword,
+  no long blade, no baked-in FX.
+- Frame inventory (33): idle 2, walk 4, jump 2, crouch 1, hurt 2, KO 3, rhea_slash_r 3,
+  rhea_slash_l 3, rhea_throw 3, rhea_poison_throw 3, rhea_dash 5, climb 2. Durations are listed
+  in `docs/DESIGN_DECISIONS.md`; KO is the approved kneel/transition/lying sequence
+  (0.25/0.20/0.25). `rhea_slash` is an attack id, not a clip; the class selects the r/l clips.
+- Production notes:
+  - The side base was generated from the approved B palette/style and E pose; do not overwrite
+    E's raw image. The back base uses the user's `gold_stripes` image normalized to the base v1
+    canvas/pixels.
+  - `rhea_slash_l` uses the user-supplied approved frames under
+    `assets/generated/contact_sheets/rhea_slash_l_v1/frames/`; normalize them with a 214/216
+    affine scale to feet 372 and foot_x ~192, preserving the source files. Pillow AFFINE rejects
+    LANCZOS; use BICUBIC.
+  - `rhea_throw` uses the approved Pro full-body wind-up/release/follow-through. `rhea_poison_throw`
+    reuses the approved throw release/follow-through for frames 01/02 and a poison-coated
+    four-blade star for frame 00; the projectile flight is drawn by the scene.
+  - `rhea_dash` frames were imported at the fixed 214 scale, then horizontally aligned to the
+    approved side base's face/skin centroid (the fixed pivot is the head/body anchor for dash
+    frames, not the support boot). Do not re-align per frame by feet.
+  - Feet/pivot are at y=372; the Q/RMB star is a separate 64px FX, never baked into the character.
+- Shuriken FX: six 64x64 transparent frames in `assets/frames/rhea/fx/`:
+  `rhea_shuriken_00..02` and `rhea_poison_shuriken_00..02`. The steel star comes from the approved
+  side base; the poison star comes from the approved poison wind-up. Both were isolated as clean
+  four-blade sprites (no hand), centered to an 88% fill and rotated 0°/30°/60°; the runtime draws
+  them at 48px and adds the poison trail programmatically.
+- Import:
+
+```text
+py tools/import_frames.py --action rhea_slash_r --src assets/generated/raw/rhea/slash_r --out assets/generated/staged/rhea/slash_r --base assets/generated/base/rhea_side_base.png --body-height 214 --canvas 384 --pivot-x 192 --pivot-y 372 --expect 3
+py tools/contact_sheet.py --action rhea_slash_r --frames assets/generated/staged/rhea/slash_r --out assets/generated/contact_sheets/rhea_slash_r_v1.png --durations 0.08,0.08,0.09 --cell 384 --pivot-x 192 --pivot-y 372
+```
+
+- Climb: import the two back-view frames from `rhea_back_base.png` at body 214; the runtime uses
+  `RHEA_CLIMB_DRAW_SCALE = 1.1`. Both hands must remain free and the stowed stars/band unchanged.
 
 ## Veno-Spider (2026-10-22)
 
@@ -374,7 +434,8 @@ Near-transparent pixels (alpha < 10) are cleared.
 3. Import into `assets/generated/staged/<character>/<action>/` with the character's canvas/pivot.
 4. Build a contact sheet and review it (pose, limb identity, feet alignment, effects).
 5. Copy approved frames to `assets/frames/lina/<action>/`, `assets/frames/lina/flame/<action>/`,
-   `assets/frames/warrior/<action>/` or `assets/frames/creepy_shooter/<action>/`.
+   `assets/frames/warrior/<action>/`, `assets/frames/creepy_shooter/<action>/` or
+   `assets/frames/rhea/<action>/`; Rhea's separate star FX go to `assets/frames/rhea/fx/`.
 6. Press F5 in-game after replacing frames; the animation cache invalidates on path + mtime.
 
 Canonical `Image/` files are read-only. Generated candidates, staging folders and contact sheets are

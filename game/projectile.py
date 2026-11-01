@@ -533,6 +533,196 @@ class AimedProjectile:
         surface.blit(image, (round(self.x - size * 0.5), round(self.y - size * 0.5)))
 
 
+_SHURIKEN_CACHE: dict[tuple[str, float, int], pygame.Surface | None] = {}
+
+
+def _shuriken_image(visual_kind: str, frame: int) -> pygame.Surface | None:
+    """Load one 64px spin frame from assets/frames/rhea/fx and scale to 48."""
+    stem = (
+        "rhea_poison_shuriken"
+        if visual_kind == "rhea_poison_shuriken"
+        else "rhea_shuriken"
+    )
+    path = ASSETS_DIR / "frames" / "rhea" / "fx" / f"{stem}_{frame % 3:02d}.png"
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    key = (str(path), mtime, frame % 3)
+    if key in _SHURIKEN_CACHE:
+        cached = _SHURIKEN_CACHE[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _SHURIKEN_CACHE[key] = None
+        return None
+    image = pygame.transform.smoothscale(image, (48, 48))
+    _SHURIKEN_CACHE[key] = image
+    return image.copy()
+
+
+class ShurikenProjectile:
+    """Rhea's straight, single-hit shuriken (steel or poison-coated)."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        kind: str = "rhea_shuriken",
+        radius: float = 12.0,
+        status: str | None = None,
+        status_duration: float = 0.0,
+        status_dps_pct: float = 0.0,
+        extends_poison: bool = False,
+        bonus_target_max_hp_pct: float = 0.0,
+        penetrates_blocks: bool = False,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.direction = 1 if direction >= 0 else -1
+        self.ux = float(self.direction)
+        self.uy = 0.0
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.traveled = 0.0
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.flame_bonus = 0.0
+        self.kind = kind
+        self.visual_kind = kind
+        self.radius = float(radius)
+        self.status = status
+        self.status_duration = float(status_duration)
+        self.status_dps_pct = float(status_dps_pct)
+        self.extends_poison = bool(extends_poison)
+        self.bonus_target_max_hp_pct = float(bonus_target_max_hp_pct)
+        self.penetrates_blocks = bool(penetrates_blocks)
+        if kind == "rhea_poison_shuriken":
+            self.hit_color = (120, 230, 130)
+        else:
+            self.hit_color = (235, 240, 255)
+        self.age = 0.0
+        self.alive = True
+        self.hit = False
+        self.close_range_checked = False
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def _close_range_hit(self, scene) -> bool:
+        """Point-blank throws hit an adjacent body before the star travels.
+
+        The spawn point sits 30px in front of Rhea, so a tightly overlapping
+        or slightly crossed target can otherwise be behind the star already.
+        """
+        owner_box = self.owner.hurtbox().inflate(48, 48)
+        for target in scene.targets_for(self.owner):
+            if target.hp <= 0.0 or target.invincible:
+                continue
+            if owner_box.colliderect(target.hurtbox()):
+                self.hit = True
+                self.target = target
+                resolve_projectile_hit(scene, self)
+                self.alive = False
+                return True
+        return False
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        if not self.close_range_checked:
+            self.close_range_checked = True
+            if self._close_range_hit(scene):
+                return
+        self.age += dt
+        step = self.speed * dt
+        self.x += self.direction * step
+        self.traveled += step
+        self.rect.center = (round(self.x), round(self.y))
+
+        if self.traveled >= self.max_range:
+            self.alive = False
+            return
+
+        low, high = scene.stage.walls
+        if self.rect.right <= low or self.rect.left >= high:
+            self.alive = False
+            return
+        if self.y >= scene.stage.ground_y:
+            self.alive = False
+            return
+
+        if not self.penetrates_blocks and scene.stage.blocks_enabled:
+            for block in scene.stage.blocks:
+                if self.rect.colliderect(block):
+                    self.alive = False
+                    return
+
+        if not self.hit:
+            for target in scene.targets_for(self.owner):
+                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
+                    self.hit = True
+                    self.target = target
+                    resolve_projectile_hit(scene, self)
+                    self.alive = False
+                    break
+
+    def draw(self, surface: pygame.Surface) -> None:
+        if self.visual_kind == "rhea_poison_shuriken":
+            trail = pygame.Surface((96, 48), pygame.SRCALPHA)
+            for index in range(1, 5):
+                tx = 48 - self.direction * index * 10
+                alpha = max(20, 95 - index * 20)
+                color = (
+                    (110, 70, 190, alpha)
+                    if index % 2
+                    else (55, 185, 90, alpha)
+                )
+                pygame.draw.circle(
+                    trail, color, (round(tx), 24), max(2, 8 - index)
+                )
+            surface.blit(trail, (round(self.x - 48), round(self.y - 24)))
+
+        image = _shuriken_image(self.visual_kind, int(self.age * 22.0) % 3)
+        if image is not None:
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+
+        # Fallback when the approved spin strip is unavailable.
+        color = (
+            (70, 190, 90)
+            if self.visual_kind == "rhea_poison_shuriken"
+            else (210, 218, 230)
+        )
+        points = []
+        for index in range(8):
+            angle = self.age * 12.0 + index * math.pi / 4.0
+            radius = 14.0 if index % 2 == 0 else 5.0
+            points.append(
+                (
+                    round(self.x + math.cos(angle) * radius),
+                    round(self.y + math.sin(angle) * radius),
+                )
+            )
+        pygame.draw.polygon(surface, color, points)
+
+
 class SonicWave:
     """Bat's sonic wave: fly out, bounce, return to the owner, hit once.
 

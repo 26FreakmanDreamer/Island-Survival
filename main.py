@@ -53,6 +53,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # Isolate the existing single-enemy checks; the group spawn is verified
     # separately at the end of the Veno phase.
     scene.enemy_count_override = 1
+    default_character_ok = scene.character_id == "lina"
     default_enemy_ok = (
         scene.enemy_id == "creepy_shooter"
         and getattr(scene.enemy, "name", "") == "Creepy Shooter"
@@ -999,6 +1000,549 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     nyra_missing = len(nyra.anim.missing_paths())
     nyra_slash_fx_missing = len(missing_slash_fx_frames())
 
+    # --- Phase C2: Rhea Thorn, poison throws and the dash-return ---
+    # The default hit-group guard keeps Nyra's multi-hitbox attacks at one
+    # hit per target while Rhea's dash uses separate out/back groups.
+    scene.set_character("nyra")
+    scene.set_enemy("dummy")
+    scene.reset()
+    default_group_nyra = scene.player
+    default_group_dummy = scene.enemy
+    default_group_nyra.x = 300.0
+    default_group_dummy.x = 380.0
+    default_group_nyra.facing = 1
+    scene.input.buffer.press("punch")
+    for _ in range(6):
+        scene.tick(FIXED_DT)
+    default_hit_group_ok = (
+        default_group_nyra.attack_runtime is not None
+        and set(default_group_nyra.attack_runtime.hit_targets) == {"default"}
+        and abs(default_group_dummy.hp - 980.0) < 0.01
+    )
+
+    def _rhea_setup(enemy_id: str = "dummy", enemy_x: float = 500.0):
+        scene.set_character("rhea")
+        scene.set_enemy(enemy_id)
+        scene.reset()
+        rhea = scene.player
+        enemy = scene.enemy
+        enemy.ai_enabled = False
+        scene.stage.blocks_enabled = False
+        rhea.x = 300.0
+        rhea.y = scene.stage.ground_y
+        rhea.on_ground = True
+        enemy.x = enemy_x
+        enemy.y = scene.stage.ground_y
+        enemy.on_ground = True
+        rhea.facing = 1
+        return rhea, enemy
+
+    rhea_roster_order_ok = (
+        list(scene.store.roster.get("characters", {})) == ["lina", "nyra", "rhea"]
+    )
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    rhea_present = (
+        rhea.name == "Rhea Thorn"
+        and rhea.max_hp == 100.0
+        and rhea.basic_atk == 20.0
+        and not hasattr(rhea, "energy")
+        and rhea.poison_source == "rhea_poison"
+        and abs(rhea.climb_draw_scale - 1.1) < 1e-6
+    )
+    rhea_default_ok = default_character_ok and default_enemy_ok
+    rhea_knockback_ok = (
+        float(
+            scene.store.attacks["rhea_slash"]["events"][0].get("knockback", 0.0)
+        )
+        == 60.0
+        and all(
+            float(event.get("knockback", 0.0)) == 0.0
+            for attack_id in ("rhea_throw", "rhea_poison_throw", "rhea_dash")
+            for event in scene.store.attacks[attack_id].get("events", [])
+            if event.get("type") in ("hitbox", "projectile")
+        )
+    )
+
+    # LMB: 20 damage, right -> left -> right, other attacks never flip it.
+    rhea, rhea_enemy = _rhea_setup("dummy", 380.0)
+    scene.input.buffer.press("punch")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    lmb_clip_1 = rhea.anim.clip_name
+    lmb_right_1 = rhea.slash_right
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    scene.input.buffer.press("punch")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    lmb_clip_2 = rhea.anim.clip_name
+    lmb_right_2 = rhea.slash_right
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    scene.input.buffer.press("punch")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    lmb_clip_3 = rhea.anim.clip_name
+    lmb_right_3 = rhea.slash_right
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    lmb_kb_ok = (
+        rhea_enemy.kb_start == 60.0
+        and rhea_enemy.kb_time > 0.0
+        and rhea_enemy.kb_vx > 0.0
+    )
+    for _ in range(27):
+        scene.tick(FIXED_DT)
+    lmb_damage = 1000.0 - rhea_enemy.hp
+    no_flip_ok = True
+    for attack_id in ("rhea_throw", "rhea_poison_throw", "rhea_dash"):
+        rhea.slash_right = True
+        rhea.start_attack(attack_id, scene, rhea_enemy)
+        no_flip_ok = no_flip_ok and rhea.slash_right
+        rhea.reset()
+    rhea_lmb_ok = (
+        lmb_clip_1 == "rhea_slash_r"
+        and lmb_clip_2 == "rhea_slash_l"
+        and lmb_clip_3 == "rhea_slash_r"
+        and not lmb_right_1
+        and lmb_right_2
+        and not lmb_right_3
+        and abs(lmb_damage - 60.0) < 0.01
+        and lmb_kb_ok
+        and no_flip_ok
+    )
+
+    # Passive: only an existing rhea_poison is extended, once per target and
+    # attack, without a cap; Veno's poison and absent poison stay untouched.
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    rhea_enemy.statuses.clear()
+    rhea.poison_extended_targets.clear()
+    rhea_enemy.statuses.add_poison("rhea_poison", 2.0, 0.0)
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_first = rhea_enemy.statuses.poisons[0].remaining
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_second = rhea_enemy.statuses.poisons[0].remaining
+    rhea.poison_extended_targets.clear()
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_third = rhea_enemy.statuses.poisons[0].remaining
+    rhea_enemy.statuses.clear()
+    rhea.poison_extended_targets.clear()
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_no_create = not rhea_enemy.statuses.poisons
+    rhea_enemy.statuses.add_poison("veno_poison", 2.0, 0.0)
+    rhea.poison_extended_targets.clear()
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_veno = (
+        len(rhea_enemy.statuses.poisons) == 1
+        and rhea_enemy.statuses.poisons[0].source == "veno_poison"
+        and abs(rhea_enemy.statuses.poisons[0].remaining - 2.0) < 1e-6
+    )
+    rhea_enemy.statuses.clear()
+    rhea_enemy.statuses.add_poison("rhea_poison", 100.0, 0.0)
+    rhea.poison_extended_targets.clear()
+    rhea.on_hit_success({"extends_poison": True}, rhea_enemy, 0.0)
+    passive_no_cap = abs(rhea_enemy.statuses.poisons[0].remaining - 101.0) < 1e-6
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 380.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    lmb_extend_actual = (
+        len(rhea_enemy.statuses.poisons) == 1
+        and rhea_enemy.statuses.poisons[0].remaining > 10.0
+    )
+    rhea_passive_ok = (
+        abs(passive_first - 3.0) < 1e-6
+        and abs(passive_second - 3.0) < 1e-6
+        and abs(passive_third - 4.0) < 1e-6
+        and passive_no_create
+        and passive_veno
+        and passive_no_cap
+        and lmb_extend_actual
+    )
+
+    # RMB: 24 damage, steel shuriken, mid lane, and +1s poison extension.
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
+    scene.input.buffer.press("kick")
+    rmb_projectile = None
+    rmb_cast = False
+    rmb_impact = False
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+        if scene.projectiles and rmb_projectile is None:
+            rmb_projectile = scene.projectiles[0]
+        if any(fx.kind == "rhea_shuriken_cast" for fx in scene.fx_effects):
+            rmb_cast = True
+        if any(fx.kind == "rhea_shuriken_impact" for fx in scene.fx_effects):
+            rmb_impact = True
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            break
+    rhea_rmb_ok = (
+        abs(rhea_enemy.hp - 176.0) < 0.01
+        and rmb_projectile is not None
+        and rmb_projectile.kind == "rhea_shuriken"
+        and rmb_projectile.visual_kind == "rhea_shuriken"
+        and abs(rmb_projectile.speed - 850.0) < 1e-6
+        and abs(rmb_projectile.max_range - 900.0) < 1e-6
+        and abs(rmb_projectile.radius - 12.0) < 1e-6
+        and abs(rmb_projectile.y - 500.0) < 1e-6
+        and rmb_cast
+        and rmb_impact
+        and len(rhea_enemy.statuses.poisons) == 1
+        and rhea_enemy.statuses.poisons[0].remaining > 10.0
+    )
+
+    # Q: 8% target max HP at hit time, 5s poison at 3%/s, no passive +1.
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    scene.input.buffer.press("q")
+    q_initial = None
+    q_poison = None
+    q_describe_ok = False
+    q_cast = False
+    q_impact = False
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if any(fx.kind == "rhea_poison_shuriken_cast" for fx in scene.fx_effects):
+            q_cast = True
+        if any(fx.kind == "rhea_poison_impact" for fx in scene.fx_effects):
+            q_impact = True
+        if rhea_enemy.hp < rhea_enemy.max_hp and q_initial is None:
+            q_initial = rhea_enemy.max_hp - rhea_enemy.hp
+            q_poison = list(rhea_enemy.statuses.poisons)
+            q_describe_ok = any(
+                "poison[rhea_poison]" in line
+                for line in rhea_enemy.statuses.describe()
+            )
+            break
+    q_no_passive = (
+        len(q_poison or []) == 1
+        and abs(q_poison[0].remaining - 5.0) < 1e-6
+        and abs(q_poison[0].dps - 6.0) < 1e-6
+    )
+    for _ in range(400):
+        scene.tick(FIXED_DT)
+        if not rhea_enemy.statuses.poisons:
+            break
+    q_total = 200.0 - rhea_enemy.hp
+    rhea_q_ok = (
+        q_initial is not None
+        and abs(q_initial - 40.0) < 0.01
+        and abs(q_total - 70.0) < 0.01
+        and q_cast
+        and q_impact
+        and q_no_passive
+        and q_describe_ok
+        and rhea.q_cd > 0.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("warrior", 500.0)
+    scene.input.buffer.press("q")
+    q300_initial = None
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            q300_initial = rhea_enemy.max_hp - rhea_enemy.hp
+            break
+    rhea_q_300_ok = (
+        q300_initial is not None and abs(q300_initial - 48.0) < 0.01
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("q")
+    q1000_initial = None
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            q1000_initial = rhea_enemy.max_hp - rhea_enemy.hp
+            break
+    rhea_q_dummy_ok = (
+        q1000_initial is not None and abs(q1000_initial - 104.0) < 0.01
+    )
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.add("damage_reduction", 20.0, value=0.5)
+    scene.input.buffer.press("q")
+    qdr_initial = None
+    qdr_dps = None
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            qdr_initial = rhea_enemy.max_hp - rhea_enemy.hp
+            qdr_dps = (
+                rhea_enemy.statuses.poisons[0].dps
+                if rhea_enemy.statuses.poisons
+                else None
+            )
+            break
+    for _ in range(400):
+        scene.tick(FIXED_DT)
+        if not rhea_enemy.statuses.poisons:
+            break
+    qdr_total = 200.0 - rhea_enemy.hp
+    rhea_q_dr_ok = (
+        qdr_initial is not None
+        and abs(qdr_initial - 20.0) < 0.01
+        and abs(qdr_total - 50.0) < 0.01
+        and abs((qdr_dps or 0.0) - 6.0) < 1e-6
+    )
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.clear()
+    rhea_enemy.statuses.add_poison("rhea_poison", 2.0, 0.0)
+
+    class _FakePoisonProjectile:
+        pass
+
+    fake_projectile = _FakePoisonProjectile()
+    fake_projectile.target = rhea_enemy
+    fake_projectile.status = "poison"
+    fake_projectile.status_duration = 5.0
+    fake_projectile.status_dps_pct = 0.03
+    fake_projectile.extends_poison = False
+    rhea.on_projectile_hit(fake_projectile)
+    same_source_stack_ok = (
+        len(rhea_enemy.statuses.poisons) == 1
+        and abs(rhea_enemy.statuses.poisons[0].remaining - 7.0) < 1e-6
+    )
+    rhea_enemy.statuses.clear()
+    rhea_enemy.statuses.add_poison("veno_poison", 2.0, 0.0)
+    rhea.on_projectile_hit(fake_projectile)
+    cross_source_ok = (
+        len(rhea_enemy.statuses.poisons) == 2
+        and any(
+            poison.source == "veno_poison"
+            and abs(poison.remaining - 2.0) < 1e-6
+            for poison in rhea_enemy.statuses.poisons
+        )
+        and any(
+            poison.source == "rhea_poison"
+            and abs(poison.remaining - 5.0) < 1e-6
+            for poison in rhea_enemy.statuses.poisons
+        )
+    )
+    rhea_q_stack_ok = same_source_stack_ok and cross_source_ok
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.hp = 30.0
+    scene.input.buffer.press("q")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp <= 0.0:
+            break
+    rhea_q_kill_ok = (
+        rhea_enemy.hp <= 0.0
+        and not rhea_enemy.statuses.poisons
+        and scene.match_over == "WIN"
+    )
+
+    # Point-blank throws use a body-adjacent check; long throws reach 900px.
+    rhea, rhea_enemy = _rhea_setup("dummy", 290.0)
+    scene.input.buffer.press("kick")
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            break
+    close_rmb_ok = abs(rhea_enemy.hp - 976.0) < 0.01
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 290.0)
+    scene.input.buffer.press("q")
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            break
+    close_q_ok = (
+        abs(rhea_enemy.hp - 896.0) < 0.01
+        and len(rhea_enemy.statuses.poisons) == 1
+    )
+    rhea_close_range_ok = close_rmb_ok and close_q_ok
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 1100.0)
+    scene.input.buffer.press("kick")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        if rhea_enemy.hp < rhea_enemy.max_hp:
+            break
+    rhea_range_ok = (
+        abs(rhea_enemy.hp - 976.0) < 0.01
+        and abs(
+            float(scene.store.attacks["rhea_throw"]["events"][0].get("range", 0.0))
+            - 900.0
+        ) < 1e-6
+        and abs(
+            float(scene.store.attacks["rhea_poison_throw"]["events"][0].get("range", 0.0))
+            - 900.0
+        ) < 1e-6
+    )
+
+    # E: two groups of 14, return to cast_x, pass-through, full armor.
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    dash_start_x = rhea.x
+    dash_max_x = rhea.x
+    scene.input.buffer.press("e")
+    for index in range(80):
+        scene.tick(FIXED_DT)
+        dash_max_x = max(dash_max_x, rhea.x)
+        if index == 45:
+            rhea_enemy.x = dash_start_x
+    dash_damage = 1000.0 - rhea_enemy.hp
+    rhea_dash_ok = (
+        abs(dash_damage - 28.0) < 0.01
+        and abs(rhea.x - dash_start_x) < 1.0
+        and dash_max_x > 850.0
+        and rhea.e_cd > 13.0
+        and rhea.attack_id is None
+        and rhea.facing == 1
+        and abs(rhea_enemy.x - rhea.x) >= 84.5
+    )
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    scene.input.buffer.press("e")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    rhea_e_poison_ok = abs((200.0 - rhea_enemy.hp) - 58.0) < 0.01
+
+    rhea, rhea_enemy = _rhea_setup("warrior", 500.0)
+    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    scene.input.buffer.press("e")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    rhea_e_poison_300_ok = abs((300.0 - rhea_enemy.hp) - 73.0) < 0.01
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    rhea_enemy.statuses.add("damage_reduction", 20.0, value=0.5)
+    scene.input.buffer.press("e")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    e200_dr_damage = 200.0 - rhea_enemy.hp
+
+    rhea, rhea_enemy = _rhea_setup("warrior", 500.0)
+    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    rhea_enemy.statuses.add("damage_reduction", 20.0, value=0.5)
+    scene.input.buffer.press("e")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    e300_dr_damage = 300.0 - rhea_enemy.hp
+    rhea_e_dr_ok = (
+        abs(e200_dr_damage - 29.0) < 0.01
+        and abs(e300_dr_damage - 36.5) < 0.01
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 900.0)
+    scene.input.buffer.press("e")
+    for _ in range(6):
+        scene.tick(FIXED_DT)
+    armor_started = (
+        rhea.statuses.has("super_armor") and rhea.attack_id == "rhea_dash"
+    )
+    armor_hp_before = rhea.hp
+    rhea.take_hit(10.0, 300.0, 0.4, -1, launch=200.0)
+    for kind in ("knockback", "knock_up", "freeze", "stun"):
+        rhea.statuses.add(kind, 1.0)
+    rhea.statuses.add("slow", 1.0, value=0.5)
+    armor_immune = not any(
+        rhea.statuses.has(kind)
+        for kind in ("knockback", "knock_up", "freeze", "stun", "slow")
+    )
+    for _ in range(24):
+        scene.tick(FIXED_DT)
+    armor_mid = rhea.statuses.has("super_armor")
+    rhea.take_hit(10.0, 300.0, 0.4, -1)
+    rhea_e_armor_ok = (
+        armor_started
+        and rhea.attack_id == "rhea_dash"
+        and rhea.state == FighterState.ATTACK
+        and armor_mid
+        and armor_immune
+        and abs(rhea.hp - (armor_hp_before - 20.0)) < 0.01
+        and rhea.hitstun == 0.0
+        and rhea.kb_vx == 0.0
+        and rhea.vy == 0.0
+        and rhea.anim.clip_name == "rhea_dash"
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 900.0)
+    scene.stage.blocks_enabled = True
+    block_dash_max = rhea.x
+    scene.input.buffer.press("e")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+        block_dash_max = max(block_dash_max, rhea.x)
+    rhea_e_block_ok = (
+        block_dash_max <= 351.0 and abs(rhea.x - 300.0) < 1.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 600.0)
+    scene.stage.blocks_enabled = True
+    projectile_block = pygame.Rect(430, 460, 40, 80)
+    scene.stage.blocks.append(projectile_block)
+    scene.input.buffer.press("kick")
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+    rmb_blocked = (
+        rhea_enemy.hp == rhea_enemy.max_hp and not scene.projectiles
+    )
+    rhea.q_cd = 0.0
+    scene.input.buffer.press("q")
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    q_blocked = rhea_enemy.hp == rhea_enemy.max_hp and not scene.projectiles
+    scene.stage.blocks.remove(projectile_block)
+    scene.stage.blocks_enabled = False
+    rhea_projectile_block_ok = rmb_blocked and q_blocked
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 5.0, 0.0)
+    scene.input.buffer.press("q")
+    for _ in range(16):
+        scene.tick(FIXED_DT)
+    had_projectile = bool(scene.projectiles)
+    rhea.q_cd = 5.0
+    rhea.e_cd = 7.0
+    scene.reset()
+    rhea_cleanup_ok = (
+        had_projectile
+        and rhea.q_cd == 0.0
+        and rhea.e_cd == 0.0
+        and not scene.projectiles
+        and not rhea_enemy.statuses.has("poison")
+    )
+
+    scene.set_character("rhea")
+    scene.set_enemy("dummy")
+    scene.reset()
+    rhea = scene.player
+    rhea_ladder = scene.stage.ladders[0]
+    scene.input.clear()
+    rhea.x = float(rhea_ladder.rect.centerx)
+    rhea.y = float(rhea_ladder.bottom_y)
+    rhea.on_ground = True
+    rhea.vy = 0.0
+    scene.input.key_down(pygame.K_w)
+    scene.tick(FIXED_DT)
+    rhea_climb_ok = (
+        rhea.climbing
+        and rhea.anim.clip_name == "climb"
+        and len(rhea.anim.clip["frames"]) == 2
+        and rhea.anim.frame_index == 0
+        and abs(rhea.climb_draw_scale - 1.1) < 1e-6
+    )
+    scene.input.key_up(pygame.K_w)
+    scene.input.clear()
+    rhea_missing = len(rhea.anim.missing_paths())
+    rhea_fx_missing = sum(
+        1
+        for stem in ("rhea_shuriken", "rhea_poison_shuriken")
+        for index in range(3)
+        if not (
+            ASSETS_DIR / "frames" / "rhea" / "fx" / f"{stem}_{index:02d}.png"
+        ).exists()
+    )
+    scene.stage.blocks_enabled = True
+
     # --- Phase D: Veno-Spider skills, statuses, hover AI and match flow ---
     scene.set_character("lina")
     scene.set_enemy("veno")
@@ -1714,8 +2258,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("warrior")
     character_noop_ok = not scene.set_character("lina")
     scene.handle_debug_key(pygame.K_LEFTBRACKET)
-    previous_character_ok = scene.character_id == "nyra"
-    nyra_switch_ai_off_ok = (
+    previous_character_ok = scene.character_id == "rhea"
+    rhea_switch_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
     )
     scene.handle_debug_key(pygame.K_RIGHTBRACKET)
@@ -1775,7 +2319,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and character_noop_ok
         and previous_character_ok
         and next_character_ok
-        and nyra_switch_ai_off_ok
+        and rhea_switch_ai_off_ok
         and b_preserved_ok
         and switch_clears_ok
         and f7_cycle_ok
@@ -1870,12 +2414,18 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     player.vy = 0.0
     scene.input.key_down(pygame.K_w)
     ladder_climb_ok = False
+    last_climb_y = None
     for _ in range(240):
+        if player.climbing:
+            last_climb_y = player.y
         scene.tick(FIXED_DT)
         if player.on_ground and abs(player.y - float(ladder.top_y)) < 0.5:
             ladder_climb_ok = True
             break
     scene.input.key_up(pygame.K_w)
+    ladder_mount_early_ok = (
+        last_climb_y is not None and 250.0 <= last_climb_y <= 258.0
+    )
 
     # S climbs back down; Shift must not.
     ladder_down_ok = False
@@ -1901,6 +2451,35 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         abs(player.y - float(ladder.top_y)) < 0.5 and not player.climbing
     )
     scene.input.key_up(pygame.K_LSHIFT)
+
+    # Jumping off a ladder while the body overlaps a platform must not make
+    # the platform's side push the fighter away.
+    scene.reset()
+    player = scene.player
+    scene.input.clear()
+    player.x = float(ladder.rect.centerx)
+    player.y = 300.0
+    player.on_ground = False
+    player.climbing = True
+    player.climb_ladder = ladder
+    player.state = FighterState.CLIMB
+    if player.anim is not None:
+        player.anim.set_clip("climb", reset=True)
+    scene.input.key_down(pygame.K_SPACE)
+    scene.tick(FIXED_DT)
+    ladder_jump_started = (
+        not player.climbing
+        and player.vy < 0.0
+        and player.ladder_fall
+    )
+    for _ in range(10):
+        scene.tick(FIXED_DT)
+    scene.input.key_up(pygame.K_SPACE)
+    ladder_jump_overlap_ok = (
+        ladder_jump_started
+        and abs(player.x - float(ladder.rect.centerx)) < 5.0
+        and player.y < 300.0
+    )
 
     # Climb animation: back view, 2 frames, up 0->1, down 1->0, hold, facing.
     scene.reset()
@@ -2414,6 +2993,98 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     )
     creepy_slots_ok = all(creepy_slot_checks.values())
 
+    # Ladder hits knock the player off and clear the climb immediately. A
+    # body whose feet are inside a platform rect is treated as grounded, and
+    # the platform behind the ladder cannot shove the falling body sideways.
+    _reset_creepy()
+    ladder = scene.stage.ladders[0]
+    _place_creepy(1000, 220)
+    creepy.facing = -1
+    creepy_player.x = float(ladder.rect.centerx)
+    creepy_player.y = 400.0
+    creepy_player.on_ground = False
+    creepy_player.climbing = True
+    creepy_player.climb_ladder = ladder
+    creepy_player.state = FighterState.CLIMB
+    if creepy_player.anim is not None:
+        creepy_player.anim.set_clip("climb", reset=True)
+    creepy_player.take_hit(30.0, 40.0, 0.15, -1)
+    ladder_mid_climb_cleared = (
+        not creepy_player.climbing
+        and creepy_player.state == FighterState.HURT
+        and creepy_player.anim is not None
+        and creepy_player.anim.clip_name == "hurt"
+    )
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    creepy_ladder_hit_mid_ok = (
+        ladder_mid_climb_cleared
+        and not creepy_player.climbing
+        and abs(creepy_player.x - float(ladder.rect.centerx)) < 20.0
+        and creepy_player.y > 420.0
+        and creepy_player.state in (FighterState.HURT, FighterState.AIR)
+    )
+
+    _reset_creepy()
+    _place_creepy(1000, 220)
+    creepy.facing = -1
+    creepy_player.x = float(ladder.rect.centerx)
+    creepy_player.y = 230.0
+    creepy_player.on_ground = False
+    creepy_player.climbing = True
+    creepy_player.climb_ladder = ladder
+    creepy_player.state = FighterState.CLIMB
+    if creepy_player.anim is not None:
+        creepy_player.anim.set_clip("climb", reset=True)
+    creepy_player.take_hit(30.0, 40.0, 0.15, -1)
+    ladder_platform_snap = (
+        creepy_player.on_ground
+        and abs(creepy_player.y - 220.0) < 0.5
+        and not creepy_player.climbing
+    )
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    creepy_ladder_hit_platform_ok = (
+        ladder_platform_snap
+        and creepy_player.on_ground
+        and abs(creepy_player.y - 220.0) < 0.5
+        and not creepy_player.climbing
+        and creepy_player.state == FighterState.IDLE
+    )
+
+    _reset_creepy()
+    _place_creepy(1000, 220)
+    creepy.facing = -1
+    creepy_player.x = float(ladder.rect.centerx)
+    creepy_player.y = 220.0
+    creepy_player.on_ground = False
+    creepy_player.climbing = True
+    creepy_player.climb_ladder = ladder
+    creepy_player.state = FighterState.CLIMB
+    if creepy_player.anim is not None:
+        creepy_player.anim.set_clip("climb", reset=True)
+    creepy.force_attack(scene, creepy_player, "creepy_shot")
+    ladder_top_hit = False
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+        if creepy_player.hp < creepy_player.max_hp:
+            ladder_top_hit = True
+            break
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    creepy_ladder_hit_top_ok = (
+        ladder_top_hit
+        and abs(creepy_player.y - 220.0) < 0.5
+        and creepy_player.on_ground
+        and not creepy_player.climbing
+        and creepy_player.state == FighterState.IDLE
+    )
+    creepy_ladder_hit_ok = (
+        creepy_ladder_hit_mid_ok
+        and creepy_ladder_hit_platform_ok
+        and creepy_ladder_hit_top_ok
+    )
+
     # KO -> WIN and projectile cleanup on switch.
     _reset_creepy()
     creepy.hp = 1.0
@@ -2466,6 +3137,26 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"nyra_dash_pass_ok={nyra_dash_pass_ok} "
         f"nyra_missing_frames={nyra_missing} "
         f"nyra_slash_fx_missing={nyra_slash_fx_missing} "
+        f"default_character_ok={default_character_ok} "
+        f"default_hit_group_ok={default_hit_group_ok} "
+        f"rhea_roster_order_ok={rhea_roster_order_ok} "
+        f"rhea_present={rhea_present} rhea_default_ok={rhea_default_ok} "
+        f"rhea_knockback_ok={rhea_knockback_ok} "
+        f"rhea_lmb_ok={rhea_lmb_ok} rhea_passive_ok={rhea_passive_ok} "
+        f"rhea_rmb_ok={rhea_rmb_ok} rhea_q_ok={rhea_q_ok} "
+        f"rhea_q_300_ok={rhea_q_300_ok} rhea_q_dummy_ok={rhea_q_dummy_ok} "
+        f"rhea_q_dr_ok={rhea_q_dr_ok} rhea_q_stack_ok={rhea_q_stack_ok} "
+        f"rhea_q_kill_ok={rhea_q_kill_ok} "
+        f"rhea_close_range_ok={rhea_close_range_ok} rhea_range_ok={rhea_range_ok} "
+        f"rhea_dash_ok={rhea_dash_ok} "
+        f"rhea_e_poison_ok={rhea_e_poison_ok} "
+        f"rhea_e_poison_300_ok={rhea_e_poison_300_ok} "
+        f"rhea_e_dr_ok={rhea_e_dr_ok} rhea_e_armor_ok={rhea_e_armor_ok} "
+        f"rhea_e_block_ok={rhea_e_block_ok} "
+        f"rhea_projectile_block_ok={rhea_projectile_block_ok} "
+        f"rhea_cleanup_ok={rhea_cleanup_ok} rhea_climb_ok={rhea_climb_ok} "
+        f"rhea_missing_frames={rhea_missing} rhea_fx_missing={rhea_fx_missing} "
+        f"rhea_switch_ai_off_ok={rhea_switch_ai_off_ok} "
         f"veno_present={veno_present} veno_bite_ok={veno_bite_ok} "
         f"veno_bite_cd_ok={veno_bite_cd_ok} veno_poison_ok={veno_poison_ok} "
         f"veno_poison_stack_ok={veno_poison_stack_ok} "
@@ -2513,6 +3204,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"creepy_jump_none={no_platform_ok} creepy_ai_ok={creepy_ai_ok} "
         f"creepy_ai_hop={ai_hop_ok} "
         f"creepy_slots_ok={creepy_slots_ok} creepy_win_ok={creepy_win_ok} "
+        f"creepy_ladder_hit_ok={creepy_ladder_hit_ok} "
+        f"creepy_ladder_hit_mid_ok={creepy_ladder_hit_mid_ok} "
+        f"creepy_ladder_hit_platform_ok={creepy_ladder_hit_platform_ok} "
+        f"creepy_ladder_hit_top_ok={creepy_ladder_hit_top_ok} "
         f"creepy_cleanup_ok={creepy_cleanup_ok} "
         f"creepy_stage_switch_ok={creepy_stage_switch_ok} "
         f"creepy_missing_frames={creepy_missing} creepy_fx_missing={creepy_fx_missing} "
@@ -2541,6 +3236,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"platform_bottom_bump_ok={platform_bottom_bump_ok} "
         f"platform_toggle_ok={platform_toggle_ok} "
         f"ladder_climb_ok={ladder_climb_ok} ladder_down_ok={ladder_down_ok} "
+        f"ladder_mount_early_ok={ladder_mount_early_ok} "
+        f"ladder_jump_overlap_ok={ladder_jump_overlap_ok} "
         f"ladder_shift_no_down_ok={ladder_shift_no_down_ok} "
         f"lina_climb_anim_ok={lina_climb_anim_ok} "
         f"lina_climb_facing_ok={lina_climb_facing_ok} "
@@ -2591,6 +3288,35 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and nyra_dash_pass_ok
         and nyra_missing == 0
         and nyra_slash_fx_missing == 0
+        and default_character_ok
+        and default_hit_group_ok
+        and rhea_roster_order_ok
+        and rhea_present
+        and rhea_default_ok
+        and rhea_knockback_ok
+        and rhea_lmb_ok
+        and rhea_passive_ok
+        and rhea_rmb_ok
+        and rhea_q_ok
+        and rhea_q_300_ok
+        and rhea_q_dummy_ok
+        and rhea_q_dr_ok
+        and rhea_q_stack_ok
+        and rhea_q_kill_ok
+        and rhea_close_range_ok
+        and rhea_range_ok
+        and rhea_dash_ok
+        and rhea_e_poison_ok
+        and rhea_e_poison_300_ok
+        and rhea_e_dr_ok
+        and rhea_e_armor_ok
+        and rhea_e_block_ok
+        and rhea_projectile_block_ok
+        and rhea_cleanup_ok
+        and rhea_climb_ok
+        and rhea_missing == 0
+        and rhea_fx_missing == 0
+        and rhea_switch_ai_off_ok
         and veno_present
         and veno_bite_ok
         and veno_bite_cd_ok
@@ -2646,6 +3372,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and creepy_ai_ok
         and creepy_slots_ok
         and creepy_win_ok
+        and creepy_ladder_hit_ok
         and creepy_cleanup_ok
         and creepy_stage_switch_ok
         and creepy_missing == 0
@@ -2676,6 +3403,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and platform_toggle_ok
         and ladder_climb_ok
         and ladder_down_ok
+        and ladder_mount_early_ok
+        and ladder_jump_overlap_ok
         and ladder_shift_no_down_ok
         and lina_climb_anim_ok
         and lina_climb_facing_ok

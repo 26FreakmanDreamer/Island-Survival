@@ -23,6 +23,17 @@
       "pivot": "nyra_pivot",
       "frames_dir": "nyra",
       "fallback": "Image/Character/nyra-steel-256.png"
+    },
+    "rhea": {
+      "name": "Rhea Thorn",
+      "class": "rhea",
+      "stats": "rhea",
+      "spawn": "player_spawn",
+      "clips": "rhea_clips",
+      "frame_size": "rhea_frame_size",
+      "pivot": "rhea_pivot",
+      "frames_dir": "rhea",
+      "fallback": "Image/Character/rhea-thorn-256.png"
     }
   },
   "enemies": {

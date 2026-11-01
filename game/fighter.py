@@ -76,6 +76,10 @@ class Fighter:
         self.on_ground = True
         self.climbing = False
         self.climb_ladder = None
+        # A hit that drops the fighter from a ladder ignores block sides
+        # until landing, so a platform behind the ladder cannot shove them
+        # sideways during the fall.
+        self.ladder_fall = False
         # Suppress an immediate re-grab after a deliberate exit (jump-off,
         # attack, hit). Cleared on landing or when the climb keys are released.
         self.climb_suppressed = False
@@ -137,8 +141,21 @@ class Fighter:
             self.kb_vx = self.kb_start * ratio
         else:
             self.kb_vx = 0.0
+        if self.ladder_fall and self.on_ground:
+            self.ladder_fall = False
 
     # --- reactions ----------------------------------------------------------
+    def _platform_surface_at_feet(self) -> float | None:
+        """Platform top under the feet, including while climbing inside it."""
+        if not self.stage.blocks_enabled:
+            return None
+        for block in self.stage.platforms:
+            if block.left <= self.x <= block.right and (
+                block.top - 2.0 <= self.y <= block.bottom
+            ):
+                return float(block.top)
+        return None
+
     def take_hit(
         self,
         damage: float,
@@ -149,6 +166,7 @@ class Fighter:
     ) -> bool:
         if self.invincible or self.hp <= 0.0:
             return False
+        was_climbing = self.climbing
         self._stop_climb()
         self.hp = max(0.0, self.hp - damage)
         self.flash = 0.12
@@ -161,6 +179,9 @@ class Fighter:
             self.kb_vx = 0.0
             self.kb_time = 0.0
             self.vy = 0.0
+            if was_climbing:
+                self.on_ground = False
+                self.ladder_fall = True
             self.marks = 0
             self.mark_burst_time = 0.0
             self.mark_burst_damage = 0.0
@@ -171,6 +192,14 @@ class Fighter:
         self.state = FighterState.HURT
         if self.anim is not None:
             self.anim.set_clip("hurt", reset=True)
+        if was_climbing:
+            surface = self._platform_surface_at_feet()
+            if surface is not None:
+                self.y = surface
+                self.on_ground = True
+                self.vy = 0.0
+            else:
+                self.ladder_fall = True
         if launch > 0.0:
             self.vy = -launch
             self.on_ground = False
@@ -183,6 +212,7 @@ class Fighter:
     def apply_dot(self, amount: float) -> None:
         if self.invincible or self.hp <= 0.0:
             return
+        was_climbing = self.climbing
         self._stop_climb()
         self.hp = max(0.0, self.hp - amount)
         self.flash = max(self.flash, 0.05)
@@ -191,11 +221,22 @@ class Fighter:
             self.kb_vx = 0.0
             self.kb_time = 0.0
             self.vy = 0.0
+            if was_climbing:
+                self.on_ground = False
+                self.ladder_fall = True
             self.marks = 0
             self.mark_burst_time = 0.0
             self.mark_burst_damage = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
+        elif was_climbing:
+            surface = self._platform_surface_at_feet()
+            if surface is not None:
+                self.y = surface
+                self.on_ground = True
+                self.vy = 0.0
+            else:
+                self.ladder_fall = True
 
     # --- hooks used by combat ----------------------------------------------
     def current_flame_bonus(self) -> float:
@@ -317,6 +358,7 @@ class Fighter:
         if input_state.is_held("climb_jump"):
             # Space is the only jump-off key; W keeps climbing.
             self._stop_climb()
+            self.ladder_fall = True
             self.vy = -self.jump_v
             self.on_ground = False
             self.state = FighterState.AIR
@@ -330,6 +372,19 @@ class Fighter:
         if up and not down:
             self.y -= CLIMB_SPEED * dt
             moving = True
+            platform = self._climb_exit_platform(ladder)
+            if platform is not None:
+                threshold = (
+                    platform.top + (platform.bottom - platform.top) * 0.5 - 6.0
+                )
+                if self.y <= threshold:
+                    self.y = float(platform.top)
+                    self._stop_climb()
+                    self.on_ground = True
+                    self.state = FighterState.IDLE
+                    if self.anim is not None:
+                        self.anim.set_clip("idle", reset=True)
+                    return
             if self.y <= ladder.top_y:
                 self.y = float(ladder.top_y)
                 self._finish_climb_top(scene)
@@ -366,6 +421,18 @@ class Fighter:
                 self.anim.set_clip("walk" if moving else "idle")
                 if moving:
                     self.anim.update(dt)
+
+    def _climb_exit_platform(self, ladder):
+        """Top platform the climber can mount before reaching the ladder top."""
+        if not self.stage.blocks_enabled:
+            return None
+        half = self.stage_half_width
+        for block in self.stage.platforms:
+            if abs(block.top - ladder.top_y) > 1.0:
+                continue
+            if block.left - half <= self.x <= block.right + half:
+                return block
+        return None
 
     def _finish_climb_top(self, scene) -> None:
         ladder = self.climb_ladder
@@ -432,6 +499,7 @@ class Fighter:
         self.hp = self.max_hp
         self.state = FighterState.IDLE
         self.state_time = 0.0
+        self.ladder_fall = False
         self._stop_climb()
         self.hitstun = 0.0
         self.flash = 0.0

@@ -9,6 +9,7 @@ from .creepy_shooter import CreepyShooter
 from .dummy import Dummy
 from .lina import Lina
 from .nyra import Nyra
+from .rhea import Rhea
 from .veno import Veno
 from .warrior import Warrior
 
@@ -17,6 +18,7 @@ FIGHTER_CLASSES = {
     "warrior": Warrior,
     "dummy": Dummy,
     "nyra": Nyra,
+    "rhea": Rhea,
     "veno": Veno,
     "bat": Bat,
     "creepy_shooter": CreepyShooter,

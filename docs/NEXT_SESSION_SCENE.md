@@ -7,19 +7,30 @@
 > （每帧 0.20s；上层 W 0→1、下层 S 1→0；停住保持当前帧；不水平翻转）。Lina 绘制缩放 1.2×，
 > Nyra 1.1×；Nyra 的剑固定在背后。下文 §4/§6/§9/§11 中“walk/idle 占位、不新增动画”的记录已被
 > 取代；当前规则以 README、`docs/DESIGN_DECISIONS.md` 的 “Climb animations” 和 `docs/DEBUG.md` 为准。
+>
+> **攀爬/场景更新（2026-11-01）**
+> - Rhea 为第三个可玩角色，climb 两帧背视、双手空手、双手里剑收纳在腰后金条纹绑带；绘制缩放 1.1×。
+> - 有顶平台的梯子改为“提前上平台”：脚底到 `platform.top + (platform.bottom - platform.top)/2 - 6`
+>   即解除攀爬并吸附到平台顶；B 关闭或梯子无平台时仍保持旧的顶端停留。
+> - 梯上受击立即退出攀爬并正常击落；脚底在 platform rect 内则吸附到平台顶；否则坠落。
+>   新增 `ladder_fall`：梯上跳跃/被击落时跳过 platform 侧面与底面碰撞直到落地，避免被平台侧推；
+>   平台顶落点仍有效。没有受击后的自动重抓。
+> - Creepy Shooter 场景删除左侧 `[400,560,90,60]` barrier，仅保留右侧 `[790,560,90,60]`；
+>   默认场景仍为左右两个 barrier。`penetrates_blocks` 也不再全为 false：Creepy 技能 2 为 true。
+> - 新增 smoke：`ladder_mount_early_ok`、`ladder_jump_overlap_ok`、`creepy_ladder_hit_*`。
 
 > **完成状态（2026-10-27）**
 >
 > 实际工作区为 `nyra-veno-sandbox`（`203cdf0`），不是 `main`；`instruction.docx` 没有 `UU` 冲突，
 > 只有已暂存的修改（`M `）。完成内容：`blocks` 统一 `kind: barrier | platform`；platform 全 AABB
-> （顶/侧/底 + B 开启/出生重叠时自动解嵌）；`ladders` 独立且无体积；Lina/Nyra 共享攀爬
+> （顶/侧/底 + B 开启/出生重叠时自动解嵌）；`ladders` 独立且无体积；Lina/Nyra/Rhea 共享攀爬
 > （W 上、S 下、Space 跳离、Shift 只下蹲）；B/F1/F2 更新；`penetrates_blocks` 投射物标记
-> （当前技能全为 false）；smoke 覆盖平台/梯子/出生点/穿透。
+> （Creepy 技能 2 为 true，其余 false）；smoke 覆盖平台/梯子/出生点/穿透。
 >
 > 当前布局以 `game/data/debug.json` 为准：长平台 `[170,220,479,78]`（surface 220）、
 > 短平台 `[796,268,314,78]`（surface 268）、长梯 `[508,220,64,400]`、中梯 `[921,268,64,352]`、
 > 地面 barrier `[400,560,90,60]` / `[700,560,90,60]`、玩家出生 x=280、敌人出生 x=600、
-> 默认敌人 Warrior。平台外侧边缘与墙留 80px，可自由走落（无落地伤害）；短梯完全在短平台下方，
+> 默认敌人 Creepy Shooter。平台外侧边缘与墙留 80px，可自由走落（无落地伤害）；短梯完全在短平台下方，
 > 短平台底部 346，Warrior 可在下方通行。
 >
 > 下文 §1/§4 的“main / UU 冲突 / 无 Bat”等记录已过时；§6 的 Q1–Q11 是当时的 grill 记录。
@@ -364,7 +375,7 @@ instruction 说 block 类“有碰撞箱和体积”，但 160px 高的平台如
 - `barrier_block_ok`：地面移动/攻击前踏被 barrier 挡住。
 - `platform_land_ok`：从上方落到 platform，停在 `surface_y`；不穿模。
 - `platform_side_ok`（若选择实体 platform）：侧面碰撞符合确认的语义。
-- `ladder_climb_ok`：贴梯按 W 上升，到顶站上 platform；S/Shift 可下爬。
+- `ladder_climb_ok`：贴梯按 W 上升；有平台时在平台中点略往上提前吸附上 platform；S/Shift 可下爬。
 - `lina_climb_anim_ok` / `lina_climb_facing_ok` / `lina_flame_climb_anim_ok` /
   `nyra_climb_anim_ok`：两帧背视、0.20s/帧、上楼 0→1、下楼 1→0、停住保持、退出恢复 facing；
   火焰版使用 `flame/climb`，Nyra 剑固定在背后。

@@ -52,6 +52,25 @@
       "crouching": [56, 130]
     }
   },
+  "rhea": {
+    "hp": 100,
+    "basic_atk": 20,
+    "extra_atk": 0,
+    "stage_body_width": 100,
+    "move": {
+      "walk": 260,
+      "jump_v": 760,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "q": 8.0,
+      "e": 15.0
+    },
+    "hurtbox": {
+      "standing": [56, 210],
+      "crouching": [56, 130]
+    }
+  },
   "warrior": {
     "hp": 300,
     "basic_atk": 20,

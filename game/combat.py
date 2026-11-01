@@ -60,7 +60,10 @@ class AttackRuntime:
         self.scene = scene
         self.time = 0.0
         self.finished = False
-        self.hit_targets: set[int] = set()
+        # Hitboxes with the same group share one hit-per-target guard. Rhea's
+        # dash uses separate outbound/return groups; every existing attack
+        # stays in the implicit "default" group.
+        self.hit_targets: dict[str, set[int]] = {}
         self.lunge_done = False
         self.spawned_events: set[int] = set()
         self.cast_x = float(attacker.x)
@@ -96,13 +99,15 @@ class AttackRuntime:
                     else:
                         rect = local_box_to_rect(self.attacker, event["box"])
                     self.scene.debug_hitboxes.append(rect)
+                    group = event.get("hit_group", "default")
+                    hit_targets = self.hit_targets.setdefault(group, set())
                     for target in self.targets:
                         if target.invincible or target.hp <= 0.0:
                             continue
-                        if id(target) in self.hit_targets:
+                        if id(target) in hit_targets:
                             continue
                         if target.hurtbox().colliderect(rect):
-                            self.hit_targets.add(id(target))
+                            hit_targets.add(id(target))
                             resolve_hit(
                                 self.scene, self.attacker, target, self.data, event
                             )
@@ -140,6 +145,9 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
 
     bonus = attacker.current_flame_bonus()
     damage = attack_damage(attacker, attack, event) * (1.0 + bonus)
+    poison_bonus_pct = float(event.get("bonus_vs_poison_max_hp_pct", 0.0))
+    if poison_bonus_pct > 0.0 and target.statuses.has("poison"):
+        damage += target.max_hp * poison_bonus_pct
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
 
     knockback = float(event.get("knockback", 0.0))
@@ -186,7 +194,11 @@ def resolve_projectile_hit(scene, projectile) -> None:
     if target is None or target.invincible or target.hp <= 0.0:
         return
 
-    damage = projectile.damage * (1.0 - target.statuses.damage_reduction())
+    damage = projectile.damage
+    max_hp_pct = float(getattr(projectile, "bonus_target_max_hp_pct", 0.0))
+    if max_hp_pct > 0.0:
+        damage += target.max_hp * max_hp_pct
+    damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
     if damage > 0.0:
         target.take_hit(damage, projectile.knockback, projectile.hitstun, projectile.direction)
         hit_color = getattr(projectile, "hit_color", (120, 230, 255))

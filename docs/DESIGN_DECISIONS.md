@@ -25,7 +25,8 @@ This document records the provisional rules used by the sandbox. Values live in
   reset/rebuild and focus regain, so a key held across those moments keeps working without a re-press.
   Text input is disabled at startup so a Chinese IME does not consume gameplay keys.
 - Ground-only LMB/RMB/Q; E can be used in the air. No air normal attacks.
-- Knockback is 300px/s for the kick and 150px/s for Q, decaying over 0.35s.
+- Knockback is 300px/s for Lina's kick and 150px/s for Q, 160/220/250 for Nyra's wave/thrust/dash,
+  and 60 for Rhea's LMB; Rhea's RMB/Q/E are zero. It decays over 0.35s.
 - Lina's attacks follow the docx basic/extra split: punch `atk` (basic + extra), kick
   `1.2 * basic + 0.8 * extra`, Q `basic + 1.5 * extra`. With the initial basic 20 / extra 0 this is
   20 / 24 / 20 damage. `attacks.json` stores `basic_mult` and `extra_mult`; flame bonus and damage
@@ -69,12 +70,14 @@ This document records the provisional rules used by the sandbox. Values live in
 - The data model includes all nine spec statuses: knockback, burn, poison, slow, knock_up, freeze,
   stun, super_armor, damage_reduction.
 - Burn: 5 HP/s, 3s, refreshes.
-- Poison: 2% max HP/s. Same source reapplies and extends the duration; different sources keep
-  independent instances that each deal damage. Poison is data-only in the first milestone and can be
-  forced from the debug controls.
+- Poison: Veno's glob uses 2% max HP/s for 3s; Rhea's Q uses 3% max HP/s for 5s from the
+  `rhea_poison` source. Same source reapplies and extends the duration; different sources keep
+  independent instances that each deal damage. Poison settles every 0.5s. `StatusSet.extend_poison`
+  only extends an existing source and never creates one; Rhea's LMB/RMB extend `rhea_poison` by 1s,
+  while Q does not trigger the passive.
 - Super armor makes the fighter immune to control effects (knockback, knock_up, freeze, stun,
   slow) while it is active; damage still applies and damage reduction is a separate percentage
-  multiplier. Nyra's Q and E use it during their armor windows.
+  multiplier. Nyra's Q and E and Rhea's E (0.0–1.00s) use it during their armor windows.
 
 - The sandbox naturally triggers burn (flame hits), knockback (kick/Q), and knock-up (Warrior dash);
   stun, freeze, slow, poison, super armor and damage reduction are available through F11.
@@ -82,7 +85,9 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Stage and projectile heights
 
 - 1280x720 logical resolution; background scaled from 1664x936; fixed camera.
-- Ground y=620; walls at x=90 and x=1190. Two ground barriers: x=400..490 and x=700..790.
+- Ground y=620; walls at x=90 and x=1190. The default stage has two ground barriers:
+  x=400..490 and x=700..790. The Creepy Shooter variant keeps only the right barrier
+  x=790..880; its left barrier (400..490) was removed on 2026-11-01 at the user's request.
   Two platforms: x=170..649 at surface y=220 and x=796..1110 at surface y=268; each collision
   rect is 78px tall. Ladders: x=508..572 (long, 400px) and x=921..985 (medium, 352px).
 - Lina spawns at x=280; the dummy, Warrior, Veno and Bat base spawns are at x=600 (Bat base y=470).
@@ -106,12 +111,20 @@ This document records the provisional rules used by the sandbox. Values live in
   inset 80px from the walls so a character can walk off; there is no fall damage.
 - B toggles barrier + platform drawing and collision for observation; ladders have no volume and
   stay visible/climbable. With B off, reaching a ladder top holds the character on the ladder
-  instead of snapping to the platform. The AI also stops jumping when blocks are off. The toggle
+  instead of mounting the platform. The AI also stops jumping when blocks are off. The toggle
   persists across F9 and resets on F5/rebuild.
+- A climber on a ladder with a top platform mounts early once the feet reach
+  `platform.top + (platform.bottom - platform.top) / 2 - 6px` (the platform's vertical midpoint
+  slightly upward), instead of waiting for the ladder's `top_y`. The character snaps to the platform
+  surface, exits the climb and stands; holding/repressing W around the threshold completes the
+  mount. The old hold-at-top behavior remains only when blocks are off or the ladder has no
+  platform.
 - Projectile lane heights are measured upward from the attacker's feet: high 180px, fist 142px,
   mid 120px, low 60px. Lina Q spawns at `attacker.y - 142`, so it is screen y 478 on flat ground
   and y 418 while she stands on a 60px barrier; on a platform the same offset applies from its
-  surface. The ball keeps that spawn height in flight.
+  surface. The ball keeps that spawn height in flight. Rhea's RMB/Q shuriken uses the mid lane,
+  speed 850, range 900 and radius 12; a body-adjacent check (Rhea's hurtbox inflated by 24px)
+  resolves point-blank throws before the star travels.
 - This makes the Q trajectory follow Lina vertically instead of staying on a fixed world lane.
 - Lina's sprite body height is approximately 210px, anchored at the feet-center pivot (128,244) on a
   256x256 canvas. Warrior uses a 384x384 canvas with pivot (192,372) and a body height of about 230px.
@@ -132,25 +145,31 @@ This document records the provisional rules used by the sandbox. Values live in
   (352px) using `ladder_tropical_wood_medium.png` (native 160px width; the long ladder is rendered
   128px wide). Ground barriers are at x=400..490 and x=700..790. No barriers are placed on the
   platforms in this pass. The Creepy Shooter stage variant (`debug.json`
-  `stage_variants.creepy_shooter`) mirrors this layout: long platform 601–1080 at y=220, short
-  platform 170–484 at y=268, long ladder 708–772, medium ladder 295–359, barriers 400–490 and
-  790–880; the Creepy spawn is (1000,220).
+  `stage_variants.creepy_shooter`) mirrors the platform/ladder layout: long platform 601–1080 at
+  y=220, short platform 170–484 at y=268, long ladder 708–772, medium ladder 295–359; its only
+  remaining ground barrier is 790–880 (the left 400–490 barrier was removed 2026-11-01). The
+  Creepy spawn is (1000,220).
 - The short platform bottom is 346px, so a 230px Warrior standing on the ground (head ~390px) and
   a 210px Lina (head ~410px) can walk underneath it. The medium ladder is fully inside the short
   platform's x-span, and both ladders sit under their platforms.
 - Climbing: `InputState` exposes `climb_up` (W) and `climb_down` (S) held actions in addition to
   the normal jump/crouch mapping; `Space` is a separate `climb_jump`. On a ladder, W climbs,
   S descends, Space jumps off, and Shift stays crouch-only. The climb state locks x to the ladder
-  center, ignores solids, and plays the dedicated back-view climb clip described below. Reaching
-  the top snaps to the platform and sets `on_ground`; reaching the bottom returns to the ground.
-  Attacks, hits, stun and KO exit the climb; a short suppression prevents held W from immediately
-  re-grabbing after a deliberate exit. Lina and Nyra share the implementation in `Fighter`;
-  enemies never call it.
-- `penetrates_blocks` is an optional projectile flag on `QWave`, `SwordWave`, `AimedProjectile` and
-  `SonicWave`; every block collision site honours it. It defaults to false and no current skill
-  sets it. The two spec skills that need it (Eira Frostveil's E ice ball and Creepy Shooter's
-  skill-2 lock-on bullet) are not implemented yet. `AxeThrow` and melee hitboxes remain as before
-  (no block occlusion) in this pass.
+  center, ignores solids, and plays the dedicated back-view climb clip described below. A ladder
+  with a top platform mounts at the midpoint threshold described above and sets `on_ground`;
+  reaching the bottom returns to the ground. Attacks, hits, stun and KO exit the climb; a short
+  suppression prevents held W from immediately re-grabbing after a deliberate exit.
+  A ladder hit keeps the knock-off: the climb is cleared immediately and normal knockback/fall
+  applies. If the feet are inside a platform `rect` at the hit, the character snaps to that
+  platform's top and is treated as grounded; otherwise they fall. A `ladder_fall` flag, also set
+  by a Space jump-off, skips platform side and underside collision until landing so a platform
+  behind the ladder cannot shove the falling/jumping body sideways; platform-top landing still
+  applies. There is no automatic re-grab after a ladder hit. Lina, Nyra and Rhea share the
+  implementation in `Fighter`; enemies never call it.
+- `penetrates_blocks` is an optional projectile flag on `QWave`, `SwordWave`, `AimedProjectile`,
+  `SonicWave` and `ShurikenProjectile`; every block collision site honours it. It defaults to
+  false; Creepy Shooter's skill-2 homing bolt sets it true. Eira Frostveil's E ice ball remains
+  unimplemented. `AxeThrow` and melee hitboxes remain as before (no block occlusion).
 - Debug: F1 draws barrier boxes in yellow, platform boxes in cyan, and ladder trigger boxes in
   magenta with green/red top/bottom lines. F2 shows `BARRIERS n PLATFORMS n` and
   `CLIMB up/down/idle`. B toggles barrier+platform rendering/collision; ladders stay visible and
@@ -167,23 +186,27 @@ This document records the provisional rules used by the sandbox. Values live in
   `flame_offsets` are 0 for both flame climb frames. Nyra (`climb/`) has her own two-frame clip.
   Nyra's base and frames keep the single long silver sword sheathed diagonally across her back
   (hilt above her right shoulder, tip toward her lower-left hip); both hands are free. In frame 01
-  the raised right arm passes in front of the hilt but does not grip it.
+  the raised right arm passes in front of the hilt but does not grip it. Rhea (`climb/`) has her
+  own two-frame back-view clip with both hands free and the two four-blade shuriken stowed on the
+  gold-striped back band.
 - Runtime clips live in `game/data/animations.json` under `clips.climb`,
-  `flame_clips.climb` and `nyra_clips.climb`; `game/config.py` requires `climb` for Lina normal,
-  Lina flame and Nyra. `FighterState.CLIMB` plus `Fighter.try_start_climb`/`_update_climb` choose
-  the variant-appropriate clip and start frame; `_stop_climb` restores facing.
+  `flame_clips.climb`, `nyra_clips.climb` and `rhea_clips.climb`; `game/config.py` requires
+  `climb` for Lina normal, Lina flame, Nyra and Rhea. `FighterState.CLIMB` plus
+  `Fighter.try_start_climb`/`_update_climb` choose the variant-appropriate clip and start frame;
+  `_stop_climb` restores facing.
 - The climb sprite is drawn with a character-specific visual scale around the feet pivot:
-  Lina 1.2× (default `CLIMB_DRAW_SCALE`) and Nyra 1.1× (`NYRA_CLIMB_DRAW_SCALE`).
-  `AnimationPlayer.draw(scale=...)` scales the frame and pivot around the feet; only the climb
-  clip is scaled. Lina's canonical bbox is ~253px and her climb frames are ~209/211px; Nyra's
-  canonical bbox is ~243px and her staged climb frames are ~220/216px. Nyra frame 00 is staged
-  1.02× relative to frame 01 to match the silhouette; this is a one-time staging normalization,
-  not per-frame runtime auto-scaling. Combat hurtboxes and stage collision are unchanged; F1
-  shows the unscaled boxes.
-- Smoke covers `lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok` and
-  `nyra_climb_anim_ok` in addition to the existing ladder flags. Enemy climb art/AI is not
-  implemented; the data-driven clip path exists for a future explicitly specified enemy, but no
-  enemy currently uses it.
+  Lina 1.2× (default `CLIMB_DRAW_SCALE`), Nyra 1.1× (`NYRA_CLIMB_DRAW_SCALE`) and Rhea 1.1×
+  (`RHEA_CLIMB_DRAW_SCALE`). `AnimationPlayer.draw(scale=...)` scales the frame and pivot around
+  the feet; only the climb clip is scaled. Lina's canonical bbox is ~253px and her climb frames are
+  ~209/211px; Nyra's canonical bbox is ~243px and her staged climb frames are ~220/216px; Rhea's
+  climb frames are staged at body 214px. Nyra frame 00 is staged 1.02× relative to frame 01 to
+  match the silhouette; this is a one-time staging normalization, not per-frame runtime
+  auto-scaling. Combat hurtboxes and stage collision are unchanged; F1 shows the unscaled boxes.
+- Smoke covers `lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok`,
+  `nyra_climb_anim_ok` and `rhea_climb_ok`, plus `ladder_mount_early_ok` (midpoint mount) and
+  `ladder_jump_overlap_ok` (jump-off ignores platform sides/underside) and the Creepy ladder-hit
+  flags. Enemy climb art/AI is not implemented; the data-driven clip path exists for a future
+  explicitly specified enemy, but no enemy currently uses it.
 
 ## Warrior (Phase 2)
 
@@ -291,6 +314,78 @@ This document records the provisional rules used by the sandbox. Values live in
 - HUD: Nyra has no energy bar; the Q/E cooldown badges are shown for any player with `q_cd`/`e_cd`.
 - Lock-on: `start_attack` calls `scene.face_target_if_locked`, so middle-mouse lock-on turns Nyra
   toward the living enemy at attack start.
+
+## Rhea Thorn (2026-11-01)
+
+- Playable character. Canonical art `Image/Character/rhea-thorn-256.png`; fallback uses the same
+  file. Canvas 384x384, feet-center pivot (192,372), body 214px. Only right-facing frames are
+  stored; the runtime mirrors for left. The back-view climb clip is never horizontally flipped.
+- Frames (33): idle 2, walk 4, jump 2, crouch 1, hurt 2, KO 3, `rhea_slash_r` 3,
+  `rhea_slash_l` 3, `rhea_throw` 3, `rhea_poison_throw` 3, `rhea_dash` 5, climb 2. Durations:
+  idle 0.30/0.30; walk 0.12×4; jump 0.20/0.20; crouch 0.30; hurt 0.10/0.10; KO
+  0.25/0.20/0.25 (kneel → transition → lying head-right); slash clips 0.08/0.08/0.09;
+  `rhea_throw` 0.10/0.08/0.17; `rhea_poison_throw` 0.12/0.10/0.23; `rhea_dash`
+  0.06/0.20/0.20/0.14/0.40 (1.00s); climb 0.20/0.20. `rhea_slash` is an attack id only; the
+  class selects `rhea_slash_r/l`.
+- Stats: HP 100, basic ATK 20, extra ATK 0, `stage_body_width` 100, hurtbox 56×210 standing /
+  56×130 crouching, walk 260, jump_v 760, gravity 2200. No energy resource. Q cooldown 8s,
+  E cooldown 15s; both start ready and are consumed at attack start.
+- LMB `rhea_slash`: `1.0×basic + 1.0×extra` = 20, 0.25s, small lunge 18px at t=0.08;
+  hitbox `[28,-165,70,48]` active t=0.08–0.14; knockback 60 (the only Rhea attack with
+  knockback), hitstun 0.20, hitstop 0.05. The first successful LMB uses the right hand
+  (`rhea_slash_r`), the next uses the left (`rhea_slash_l`), then alternates; RMB/Q/E never
+  change the alternation. Each connecting LMB extends an existing `rhea_poison` by 1s.
+- RMB `rhea_throw`: `1.2×basic + 1.3×extra` = 24, 0.35s, projectile at t=0.14. Steel
+  four-blade `ShurikenProjectile`, mid lane (120px above the feet), speed 850, range 900,
+  radius 12, knockback 0, hitstun 0.15, hitstop 0.04; single hit, dies on hit/range/wall/block.
+  A body-adjacent check (Rhea's hurtbox inflated 24px) resolves the hit at point-blank before
+  the star travels; a successful RMB extends an existing `rhea_poison` by 1s. No cooldown.
+- Q `rhea_poison_throw`: `1.2×basic + 1.2×extra` = 24 plus 8% of the actual target's max HP,
+  resolved at projectile hit time (200 HP → 40, 300 → 48, 1000 → 104), 0.45s, projectile at
+  t=0.18. Poison-coated star (green/purple), same mid lane/speed 850/range 900/radius 12/
+  knockback 0/block rules as RMB. On hit, applies `poison` from source `rhea_poison` for 5.0s
+  at 3% of the target's max HP per second (200 HP → 6/s, 30 total; 300 → 9/s, 45 total;
+  1000 → 30/s, 150 total). Same-source reapplication adds +5s to the remaining time (2s → 7s,
+  not +6s); different sources remain independent. Q does not trigger the LMB/RMB +1s passive.
+  If the initial hit kills the target, no poison is applied. 8s cooldown from attack start.
+- Passive `rhea_poison` extension: LMB/RMB only call `StatusSet.extend_poison("rhea_poison", 1.0)`
+  when the target is alive, not invincible, and already has that source. It never creates poison,
+  does not refresh or change the dps, is capped at one extension per target per attack (the set
+  is cleared at every `start_attack`), has no duration cap, and never affects Veno's poison.
+- E `rhea_dash`: `0.7×basic + 0.8×extra` = 14 per segment, 1.00s total, 15s cooldown.
+  Outbound movement 1100px/s during t=0.06–0.60 (~594px, roughly twice the earlier 300px);
+  return at 1500px/s during t=0.60–1.00 (~600px) back to `cast_x`. Facing is not changed during
+  the attack; the 5-frame clip's fourth frame carries the turn. `pass_through_enemy` skips body
+  separation; walls and solid blocks stop the dash; `scene.push_apart` runs at the end. Two
+  hitbox groups: outbound `[0,-170,90,170]` with `hit_group: "out"` during t=0.06–0.60, one
+  hit per target, plus 15% of the target's max HP if it has poison from any source; return
+  `[-90,-170,90,170]` with `hit_group: "back"` during t=0.60–1.00, one hit per target, no
+  poison bonus. Knockback 0, hitstun 0.25, hitstop 0.06. Super armor covers the full
+  0.0–1.00s (`armor_from: 0.0`, `armor_until: 1.00`). Damage numbers: 200 HP poisoned
+  44+14=58 (50% DR: 22+7=29); 300 HP poisoned 59+14=73 (50% DR: 29.5+7=36.5);
+  unpoisoned 14+14=28.
+- HUD/F2: no energy bar; Q/E cooldown badges reuse the generic HUD. F2 shows `CHAR rhea 3/3`,
+  q/e cooldowns and the target's `poison[rhea_poison]` remaining time; there is no passive
+  gauge or `POISON EXT` counter.
+- Assets/FX: `assets/frames/rhea/` (33 frames; `rhea_dash` face-aligned to a common anchor);
+  `assets/frames/rhea/fx/` has six 64×64 transparent star frames
+  (`rhea_shuriken_00..02`, `rhea_poison_shuriken_00..02`, the 0°/30°/60° spin). Steel and poison
+  projectiles draw a 48px star; the poison one adds a green/purple trail. Cast/impact FX are
+  procedural (steel spark ring, poison splash/ring/particles); E draws two programmatic
+  afterimages during the dash. No FX is baked into character frames.
+- `ShurikenProjectile` carries `kind`, `visual_kind`, `damage`, `bonus_target_max_hp_pct`,
+  `status/status_duration/status_dps_pct`, `extends_poison`, `hit_color`, knockback/hitstun/
+  hitstop and `flame_bonus=0`, so `resolve_projectile_hit` works unchanged apart from the added
+  max-HP bonus. `AttackRuntime.hit_targets` is a `dict[str, set[int]]` keyed by `hit_group`
+  (default `"default"`), preserving existing one-hit behavior for every earlier attack.
+- Smoke flags: `rhea_present`, `rhea_roster_order_ok`, `rhea_default_ok`, `rhea_knockback_ok`,
+  `rhea_lmb_ok`, `rhea_passive_ok`, `rhea_rmb_ok`, `rhea_q_ok`, `rhea_q_300_ok`,
+  `rhea_q_dummy_ok`, `rhea_q_dr_ok`, `rhea_q_stack_ok`, `rhea_q_kill_ok`,
+  `rhea_close_range_ok`, `rhea_range_ok`, `rhea_dash_ok`, `rhea_e_poison_ok`,
+  `rhea_e_poison_300_ok`, `rhea_e_dr_ok`, `rhea_e_armor_ok`, `rhea_e_block_ok`,
+  `rhea_projectile_block_ok`, `rhea_cleanup_ok`, `rhea_climb_ok`,
+  `rhea_missing_frames == 0`, `rhea_fx_missing == 0`, plus `default_hit_group_ok`
+  (Nyra's multi-hitbox attack still hits once).
 
 ## Veno-Spider
 
@@ -456,12 +551,13 @@ This document records the provisional rules used by the sandbox. Values live in
   uses skill 4 when ready. A ground barrier in the path triggers a hop (`vy = -jump_v*1.15`,
   `vx = facing*walk*2.0`) strong enough to clear a 90px barrier. Attacks and decisions are
   throttled by `decision_interval`; the AI never walks and attacks on the same tick.
-- Stage: `debug.json` `stage_variants.creepy_shooter` mirrors the default stage. Long platform
-  `[601,220,479,78]`, short platform `[170,268,314,78]`, ladders `[708,220,64,400]` and
-  `[295,268,64,352]`, ground barriers `[790,560,90,60]` and `[400,560,90,60]`. Player spawn
-  (280,620); Creepy spawns at (1000,220) on the long platform. `roster.json` names the variant and
-  `ArenaScene` selects it by enemy; switching enemies rebuilds the Stage and preserves the B block
-  toggle.
+- Stage: `debug.json` `stage_variants.creepy_shooter` mirrors the default platform/ladder layout.
+  Long platform `[601,220,479,78]`, short platform `[170,268,314,78]`, ladders
+  `[708,220,64,400]` and `[295,268,64,352]`, and only the right ground barrier
+  `[790,560,90,60]`; the left `[400,560,90,60]` barrier was removed on 2026-11-01 at the user's
+  request. Player spawn (280,620); Creepy spawns at (1000,220) on the long platform.
+  `roster.json` names the variant and `ArenaScene` selects it by enemy; switching enemies rebuilds
+  the Stage and preserves the B block toggle.
 - Projectiles: `CreepyBullet` (straight, one hit, dies on range/wall/block/hit, cyan 2-frame
   tracer), `CreepyHomingBullet` (violet 3-frame bolt rotated to travel, one hit, penetrates blocks
   and platforms, 8s lifetime, not owner-KO-bound) and `CreepyDownBullet` (fixed direction set at
@@ -476,8 +572,11 @@ This document records the provisional rules used by the sandbox. Values live in
   `creepy_lock_ok`, `creepy_roll_ok` + `creepy_roll_edge`, `creepy_jump_ok` +
   `creepy_jump_long/short/right/none`, `creepy_ai_ok` + `creepy_ai_hop`, `creepy_slots_ok`,
   `creepy_win_ok`, `creepy_cleanup_ok`, `creepy_stage_switch_ok`, `creepy_missing_frames == 0`
-  and `creepy_fx_missing == 0`. Ground barriers sit below the flat-ground mid lane, so the shot
-  test spawns a bullet at `barrier.centery` to verify block collision.
+  and `creepy_fx_missing == 0`. Ladder-hit smoke: `creepy_ladder_hit_mid_ok` (knocked off,
+  climb cleared immediately, no platform side push), `creepy_ladder_hit_platform_ok` (feet inside
+  the platform snap to its top), `creepy_ladder_hit_top_ok` (top shot lands on the platform) and
+  the combined `creepy_ladder_hit_ok`. The remaining ground barrier sits below the flat-ground
+  mid lane, so the shot test spawns a bullet at `barrier.centery` to verify block collision.
 
 ## Projectile / skill VFX (2026-10-24)
 
@@ -532,11 +631,11 @@ This document records the provisional rules used by the sandbox. Values live in
   key, spawn key, animation table keys, frame folder, canonical fallback image, and (for enemies)
   `skill_slots`, `separates` and `decides_match`.
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
-  longer constructs Lina/Nyra/Warrior/Veno/Dummy directly. Playable classes keep Lina's
-  `update(dt, input_state, target, scene)` signature; Lina and Nyra are installed.
+  longer constructs Lina/Nyra/Rhea/Warrior/Veno/Dummy directly. Playable classes keep Lina's
+  `update(dt, input_state, target, scene)` signature; Lina, Nyra and Rhea are installed.
 - F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → Creepy Shooter →
   training Dummy); the current default enemy is Creepy Shooter. `[` / `]`
-  cycle the playable roster (Lina ↔ Nyra). Switching performs a full match reset: both fighters
+  cycle the playable roster (Lina ↔ Nyra ↔ Rhea). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
   cleared. The B block toggle (barriers + platforms; ladders unaffected) is preserved; the enemy AI is forced off whenever fighters are rebuilt
@@ -554,6 +653,6 @@ This document records the provisional rules used by the sandbox. Values live in
 ## Out of scope in the current sandbox
 
 Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
-Lina/Nyra, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Dummy and their AI, group balancing
+Lina/Nyra/Rhea, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Dummy and their AI, group balancing
 beyond the Veno 3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
 dummy is a debug tool, not a spec enemy.

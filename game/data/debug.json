@@ -62,7 +62,6 @@
       "land_margin": 8,
       "blocks": [
         {"kind": "barrier", "rect": [790, 560, 90, 60]},
-        {"kind": "barrier", "rect": [400, 560, 90, 60]},
         {
           "kind": "platform",
           "rect": [601, 220, 479, 78],

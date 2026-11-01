@@ -61,6 +61,14 @@ class StatusSet:
                 return
         self.poisons.append(PoisonInstance(source, duration, dps))
 
+    def extend_poison(self, source: str, duration: float) -> bool:
+        """Extend an existing poison instance; never creates a new one."""
+        for poison in self.poisons:
+            if poison.source == source:
+                poison.remaining += duration
+                return True
+        return False
+
     def has(self, kind: str) -> bool:
         if kind == "poison":
             return bool(self.poisons)

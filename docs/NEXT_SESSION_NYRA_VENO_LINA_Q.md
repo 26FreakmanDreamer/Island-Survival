@@ -1,5 +1,9 @@
 # Next Session — Nyra / Veno 细节调整 + Lina Q 特效改造
 
+> **2026-11-01 当前状态**：可玩角色为 **Lina → Nyra → Rhea**，默认角色 Lina、默认敌人 Creepy
+> Shooter。本文是 Nyra/Veno/Lina Q 的历史 handoff；文中的 “Lina ↔ Nyra” roster 和旧默认阵容记录
+> 已过期，当前规则以 README / DESIGN_DECISIONS 与 `NEXT_SESSION_RHEA.md` §7/§13 为准。
+>
 > 日期：2026-10-23
 > 用途：新 session 的 handoff。先读本文件，再按文末 prompt 开始。
 > **只做 Veno-Spider / Lina Q 特效时**：优先使用聚焦版 `docs/NEXT_SESSION_VENO_LINA_Q_VFX.md`；本文件保留 Nyra/Veno 全量上下文。

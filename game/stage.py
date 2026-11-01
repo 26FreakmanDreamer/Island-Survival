@@ -372,6 +372,10 @@ class Stage:
 
         if not self.blocks_enabled:
             return
+        if getattr(fighter, "ladder_fall", False):
+            # Dropped from a ladder: the platform behind the ladder must not
+            # shove the body sideways while it falls past the platform.
+            return
 
         body = self.body_rect(fighter)
         for block in self.blocks:
@@ -413,8 +417,9 @@ class Stage:
                         fighter.vy = 0.0
                         landed = True
 
-            # Full AABB: a rising body stops against the underside.
-            if fighter.vy < 0.0:
+            # Full AABB: a rising body stops against the underside. A fighter
+            # released from a ladder (jump/knock-off) ignores it until landing.
+            if fighter.vy < 0.0 and not getattr(fighter, "ladder_fall", False):
                 height = fighter.hurtbox_dims[1]
                 half = self.body_half(fighter)
                 previous_top = previous_y - height

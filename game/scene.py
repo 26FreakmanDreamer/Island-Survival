@@ -29,6 +29,7 @@ from .projectile import (
     CreepyDownBullet,
     CreepyHomingBullet,
     QWave,
+    ShurikenProjectile,
     SonicWave,
     SwordWave,
 )
@@ -604,6 +605,35 @@ class ArenaScene:
                 x + ux * 10.0, y + uy * 10.0, (220, 255, 200), 3,
                 speed=90.0, life=(0.10, 0.18), gravity=90.0,
             )
+        elif visual_kind == "rhea_shuriken":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (228, 236, 255), life=0.12,
+                    start_radius=4.0, end_radius=20.0, width=2,
+                    sparks=3, spark_color=(255, 248, 215),
+                    kind="rhea_shuriken_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (238, 242, 255), 4,
+                speed=140.0, life=(0.08, 0.16),
+            )
+        elif visual_kind == "rhea_poison_shuriken":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (90, 205, 115), life=0.14,
+                    start_radius=4.0, end_radius=22.0, width=2,
+                    sparks=4, spark_color=(180, 115, 235),
+                    kind="rhea_poison_shuriken_cast",
+                )
+            )
+            self.particles.emit_mist(
+                x + ux * 8.0, y + uy * 8.0, color=(65, 175, 85), count=5
+            )
+            self.particles.emit_burst(
+                x + ux * 6.0, y + uy * 6.0, (160, 95, 220), 4,
+                speed=120.0, life=(0.10, 0.18),
+            )
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
                 RingBurstFx(
@@ -700,6 +730,34 @@ class ArenaScene:
             )
             self.particles.emit_burst(
                 x, y, (255, 224, 90), 3, speed=120.0, life=(0.10, 0.20)
+            )
+        elif visual_kind == "rhea_shuriken":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (232, 240, 255), life=0.16,
+                    start_radius=6.0, end_radius=30.0, width=2,
+                    sparks=5, spark_color=(255, 240, 190),
+                    kind="rhea_shuriken_impact",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (238, 242, 255), 9, speed=190.0
+            )
+        elif visual_kind == "rhea_poison_shuriken":
+            self.fx_effects.append(PoisonSplashFx(x, y, kind="rhea_poison_impact"))
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (90, 205, 115), life=0.20,
+                    start_radius=6.0, end_radius=34.0, width=2,
+                    sparks=4, spark_color=(180, 115, 235),
+                    kind="rhea_poison_impact_ring",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (90, 200, 110), 8, speed=170.0
+            )
+            self.particles.emit_burst(
+                x, y, (160, 95, 220), 5, speed=150.0
             )
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
@@ -843,6 +901,36 @@ class ArenaScene:
                 status=event.get("status"),
                 status_duration=float(event.get("status_duration", 0.0)),
                 status_dps_pct=float(event.get("status_dps_pct", 0.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+        elif projectile_kind in ("rhea_shuriken", "rhea_poison_shuriken"):
+            projectile = ShurikenProjectile(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 30.0)),
+                y=lane_y,
+                direction=direction,
+                speed=float(event.get("speed", 850.0)),
+                max_range=float(event.get("range", 700.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                kind=projectile_kind,
+                radius=float(
+                    event.get("hitbox_radius", event.get("radius", 12.0))
+                ),
+                status=event.get("status"),
+                status_duration=float(event.get("status_duration", 0.0)),
+                status_dps_pct=float(event.get("status_dps_pct", 0.0)),
+                extends_poison=bool(event.get("extends_poison", False)),
+                bonus_target_max_hp_pct=float(
+                    event.get("bonus_target_max_hp_pct", 0.0)
+                ),
                 penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
         elif projectile_kind == "sonic_wave":

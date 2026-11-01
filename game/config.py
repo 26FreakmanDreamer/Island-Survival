@@ -18,10 +18,11 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "creepy_shooter", "combat")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "combat")
 REQUIRED_ATTACKS = (
     "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
+    "rhea_slash", "rhea_throw", "rhea_poison_throw", "rhea_dash",
     "veno_bite", "veno_poison", "veno_web", "bat_dive", "bat_sonic",
     "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
 )
@@ -38,6 +39,11 @@ REQUIRED_NYRA_CLIPS = (
     "idle", "walk", "jump", "crouch", "hurt", "ko",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash", "climb",
 )
+REQUIRED_RHEA_CLIPS = (
+    "idle", "walk", "jump", "crouch", "hurt", "ko",
+    "rhea_slash_r", "rhea_slash_l", "rhea_throw", "rhea_poison_throw",
+    "rhea_dash", "climb",
+)
 REQUIRED_VENO_CLIPS = (
     "idle", "walk", "hover", "jump", "hurt", "ko",
     "veno_bite", "veno_poison", "veno_web",
@@ -53,11 +59,12 @@ REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "veno", "bat", "creepy_shooter")
-PLAYABLE_CLASSES = ("lina", "nyra")
-ANIMATED_CLASSES = ("lina", "warrior", "nyra", "veno", "bat", "creepy_shooter")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter")
+PLAYABLE_CLASSES = ("lina", "nyra", "rhea")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "veno", "bat", "creepy_shooter")
 PROJECTILE_KINDS = (
     "q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave",
+    "rhea_shuriken", "rhea_poison_shuriken",
     "creepy_bullet", "creepy_homing_bullet", "creepy_down_bullet",
 )
 
@@ -184,6 +191,21 @@ class JsonStore:
         for key in ("standing", "crouching"):
             if key not in nyra.get("hurtbox", {}):
                 raise ValueError(f"stats.json nyra.hurtbox missing '{key}'")
+        rhea = stats.get("rhea", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move", "cooldowns", "hurtbox",
+        ):
+            if key not in rhea:
+                raise ValueError(f"stats.json rhea missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in rhea.get("move", {}):
+                raise ValueError(f"stats.json rhea.move missing '{key}'")
+        for key in ("q", "e"):
+            if key not in rhea.get("cooldowns", {}):
+                raise ValueError(f"stats.json rhea.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in rhea.get("hurtbox", {}):
+                raise ValueError(f"stats.json rhea.hurtbox missing '{key}'")
         veno = stats.get("veno", {})
         for key in (
             "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
@@ -312,6 +334,13 @@ class JsonStore:
         for key, clip in nyra_clips.items():
             if len(clip.get("frames", [])) != len(clip.get("durations", [])):
                 raise ValueError(f"animations.json nyra clip '{key}' frame/duration count mismatch")
+        rhea_clips = animations.get("rhea_clips", {})
+        for key in REQUIRED_RHEA_CLIPS:
+            if key not in rhea_clips:
+                raise ValueError(f"animations.json missing rhea clip '{key}'")
+        for key, clip in rhea_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(f"animations.json rhea clip '{key}' frame/duration count mismatch")
         veno_clips = animations.get("veno_clips", {})
         for key in REQUIRED_VENO_CLIPS:
             if key not in veno_clips:
@@ -336,7 +365,8 @@ class JsonStore:
                     f"animations.json creepy_shooter clip '{key}' frame/duration count mismatch"
                 )
         for key in (
-            "nyra_frame_size", "nyra_pivot", "veno_frame_size", "veno_pivot",
+            "nyra_frame_size", "nyra_pivot", "rhea_frame_size", "rhea_pivot",
+            "veno_frame_size", "veno_pivot",
             "bat_frame_size", "bat_pivot",
             "creepy_shooter_frame_size", "creepy_shooter_pivot",
         ):

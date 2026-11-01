@@ -22,9 +22,19 @@ against the Dummy and checks wave/thrust damage, 4-hit mark detonation (`nyra_wa
 (`nyra_q_slash_range_ok`), Q/E super armor (`nyra_q_armor_ok`, `nyra_e_armor_ok`), E dash distance
 (`nyra_dash_distance_ok`), the six-frame slash FX existence (`nyra_slash_fx_missing`), E dash
 damage/cooldowns, per-target mark independence (`nyra_marks_per_target_ok`) and reset/death
-clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase D switches to Lina vs
-Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z slots,
-win and `veno_missing_frames`. Phase E switches to Bat and checks the five-Bat group (selected with
+clearing, lock-on and the pass-through dash (`nyra_dash_pass_ok`). Phase C2 checks Rhea against the
+Dummy/Creepy Shooter/Warrior: LMB clip alternation and the +1s passive (`rhea_lmb_ok`,
+`rhea_passive_ok`), steel/poison shuriken damage, 900 range and the point-blank body check
+(`rhea_rmb_ok`, `rhea_q_ok`, `rhea_range_ok`, `rhea_close_range_ok`), Q's 8% actual-max-HP bonus,
+5s/3% poison and same-source +5s (`rhea_q_300_ok`, `rhea_q_dummy_ok`, `rhea_q_dr_ok`,
+`rhea_q_stack_ok`, `rhea_q_kill_ok`), zero knockback on RMB/Q/E plus LMB's 60
+(`rhea_knockback_ok`), E's two groups, return to `cast_x`, 1.00s full armor and 15% poison bonus
+(`rhea_dash_ok`, `rhea_e_poison_ok`, `rhea_e_poison_300_ok`, `rhea_e_dr_ok`, `rhea_e_armor_ok`,
+`rhea_e_block_ok`), projectile/block/cleanup checks and `rhea_missing_frames` / `rhea_fx_missing`.
+`default_hit_group_ok` also verifies Nyra's multi-hitbox attack still hits once. Phase D switches to
+Lina vs Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z
+slots, win and `veno_missing_frames`. Phase E switches to Bat and checks the five-Bat group
+(selected with
 F7; the startup default is Creepy Shooter), five spawn/cruise heights, free flight 40–420, dive 10
 (height-gated), V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the
 0.65s cast lock, hurt/stun staying airborne, KO landing, win, the F7 order, the five-body group
@@ -34,17 +44,23 @@ shot (30, block collision), the 1s lock wind-up and three-frame reticle, the hom
 penetration, 20 once, 8s lifetime, survives owner KO), the back-roll (140px, 24, no i-frames, 10s,
 falling off a platform edge), the jump shot (220/268 surfaces, right takeoff 1136, 24 downward,
 no-platform rejection), barrier hopping (`creepy_ai_hop`), AI priority, V/C/X/Z mapping, WIN,
-cleanup, stage switching, and `creepy_missing_frames` / `creepy_fx_missing`.
+cleanup, stage switching, ladder hits (`creepy_ladder_hit_mid_ok`, `creepy_ladder_hit_platform_ok`,
+`creepy_ladder_hit_top_ok`, `creepy_ladder_hit_ok`) and `creepy_missing_frames` /
+`creepy_fx_missing`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
-semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the two-frame back-view
-climb clips (`lina_climb_anim_ok`, `lina_climb_facing_ok`, `lina_flame_climb_anim_ok`), ladders not
-blocking projectiles (`ladder_no_block_ok`), Nyra climbing (`nyra_climb_ok`, `nyra_climb_anim_ok`),
-spawn clearance (`platform_spawn_clear_ok`), the `penetrates_blocks` flag
-(`penetration_flag_ok`) and the default enemy (`default_enemy_ok`). The climb checks verify the
-`climb` clip name, both frames, up 0→1 / down 1→0, holding the current frame when stopped, the
-restored facing after jump-off, and the flame variant using its flame climb art;
-`flame_offset_ok` includes the two new flame climb frames.
+semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the early midpoint mount
+(`ladder_mount_early_ok`), jump-off platform-overlap immunity (`ladder_jump_overlap_ok`), the
+two-frame back-view climb clips (`lina_climb_anim_ok`, `lina_climb_facing_ok`,
+`lina_flame_climb_anim_ok`), ladders not blocking projectiles (`ladder_no_block_ok`), Nyra climbing
+(`nyra_climb_ok`, `nyra_climb_anim_ok`), Rhea climbing (`rhea_climb_ok`), spawn clearance
+(`platform_spawn_clear_ok`), the `penetrates_blocks` flag (`penetration_flag_ok`) and the default
+enemy (`default_enemy_ok`). The climb checks verify the `climb` clip name, both frames, up 0→1 /
+down 1→0, holding the current frame when stopped, the restored facing after jump-off, and the flame
+variant using its flame climb art; `flame_offset_ok` includes the two new flame climb frames.
+`ladder_mount_early_ok` checks the feet reach the platform midpoint threshold (last climbing y≈255
+on the default long platform) before snapping to y=220; `ladder_jump_overlap_ok` jumps from a
+ladder inside a platform and verifies x stays at the ladder center.
 It also checks the projectile VFX dispatch (`q_cast_fx_ok`, `q_impact_fx_ok`, `q_normal_color_ok`,
 `q_flame_color_ok`, `q_flame_cast_ok`, `veno_bite_hit_fx_ok`, `veno_poison_cast_ok`,
 `veno_poison_impact_ok`, `veno_web_cast_ok`, `veno_web_impact_ok`, `bat_dive_hit_fx_ok`,
@@ -64,8 +80,8 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   magenta with green/red top/bottom lines. The green box is the combat hurtbox; grounded stage
   movement uses a wider invisible body (`stage_body_width`), so Lina stops with her boots short of
   a barrier/platform before the green box touches it. Climb sprites are draw-scaled around the
-  feet pivot (Lina 1.2×, Nyra 1.1×); the F1 boxes and combat hurtboxes are not scaled, so the
-  climb sprite intentionally looks larger than the green box.
+  feet pivot (Lina 1.2×, Nyra 1.1×, Rhea 1.1×); the F1 boxes and combat hurtboxes are not scaled,
+  so the climb sprite intentionally looks larger than the green box.
 - **F2 panel**: FPS/tick/sim time, current character/enemy ids and roster positions, result, block
   counts (`BARRIERS n PLATFORMS n LADDERS n`), `CLIMB up/down/idle`, and lock-on state, Lina
   state/HP/energy/Q/E cooldowns, flame timer/hits/next bonus, animation
@@ -74,7 +90,8 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   enemy's four skill slots with remaining cooldowns (`S1 axe_slash 0.0s ... S4 -`), enemy AI
   flag/attack/armor, last hit, input history/buffer, missing frames, last reload status/error.
   For Nyra the panel shows `Q ... E ...` without an energy line and adds the primary enemy's
-  `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`.
+  `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`. For Rhea it shows `CHAR rhea 3/3`,
+  Q/E cooldowns and the target's `poison[rhea_poison]` line without an energy or passive gauge.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
   (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
 `creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns. The
@@ -96,12 +113,12 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
 | Key | Action |
 |---|---|
 | F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → training Dummy → …) |
-| [ / ] | Cycle the playable character roster (Lina ↔ Nyra) |
+| [ / ] | Cycle the playable character roster (Lina ↔ Nyra ↔ Rhea) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
 | F10 | Fill energy and force the flame transform |
 | F11 | Cycle forced status on the current enemy (burn, poison, stun, freeze, slow, super armor, damage reduction) |
-| F12 | Damage Lina by 10, then 999 when low; shows hurt/KO |
+| F12 | Damage the current player by 10, then 999 when low; shows hurt/KO |
 | V / C / X / Z | Trigger the enemy's skill slots 1/2/3/4; undefined slots are no-ops and show `-` in F2 |
 | Middle mouse | Toggle attack lock-on (default off; resets off on character/enemy switch) |
 | B | Toggle barrier + platform collision/visibility; ladders stay visible and climbable (HUD shows BLOCKS OFF) |
@@ -119,7 +136,7 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
    reset and leaves AI off. Startup and every reset (F5/F9/R) also leave AI off. F8 isolates damage
    (AI off) or toggles dummy invincibility; F9 resets a scenario with AI off.
 5. Use F10 to test the full flame-form animation set and flame bonus tiers.
-6. Use F11 to inspect status visuals and timers; F12 to test Lina's hurt/KO frames.
+6. Use F11 to inspect status visuals and timers; F12 to test the active player's hurt/KO frames.
 7. Warrior checks: V/C/X start axe slash/dash/throw and Z is a safe no-op; F1 shows the active
    hitbox; F2 shows the four slots, cooldowns, the `armor_until` window and AI flag. Use F8 to stop
    the AI while testing hitboxes. C launches Lina (air jump frames; 1.5s `knock_up` including
@@ -141,6 +158,14 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
    t=0.06-0.36s (~330px), passes through the enemy but stops at blocks/walls; at the end the bodies
    are pushed apart. F2 shows `Q/E` cooldowns and `MARKS n/3`; lock-on (middle mouse) turns Nyra at
    attack start.
+   Rhea checks: `[` / `]` now cycles Lina → Nyra → Rhea. LMB alternates `rhea_slash_r/l`, deals 20
+   and has 60 knockback; RMB is a 24-damage steel star (900 range, point-blank body check); Q is a
+   24 + 8% max-HP poison star with 5s / 3%-per-second poison (8s cooldown, same-source +5s). Watch
+   F2 for `poison[rhea_poison]` and the Q/E badges. LMB/RMB on an already-poisoned target add +1s;
+   Q and E do not. E is a 1.00s dash-return (outbound ~594px, return to `cast_x`), 14 + 14 damage,
+   +15% max HP on the first segment only, full 0–1.00s armor and 15s cooldown. The six star FX are
+   `assets/frames/rhea/fx/rhea_shuriken_00..02` and `rhea_poison_shuriken_00..02`; E draws two
+   procedural afterimages.
 9. Veno checks: F7 to Veno spawns the **3-body group** (`roster.json` count/offsets/modes:
    one ground + two hovering by default); F8 toggles AI for all three. Veno is a half-size body
    (160×160 runtime frames, 75×75 hurtbox, `stage_body_width` 70, bite range 75); its mouth origin
@@ -179,8 +204,12 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
     40–420 (preferred 240, bob 24, vertical speed 300). Hurt/stun keep it airborne; only KO falls
     and switches to `ko_01`. All five Bats must die for WIN.
 11. Creepy Shooter checks: the startup default (and the F7 step after Bat) selects it on the
-    mirrored stage variant — long platform 601–1080 at y=220, short 170–484 at y=268, barriers
-    400–490 and 790–880, spawn (1000,220). F8 toggles AI. V fires the straight shot (30, 1s); it is
+    mirrored stage variant — long platform 601–1080 at y=220, short 170–484 at y=268, only the
+    right ground barrier 790–880 (the left 400–490 was removed 2026-11-01), spawn (1000,220).
+    Ladder hits are also covered: a mid-ladder shot clears the climb and knocks off without a
+    platform side push; a hit with the feet inside a platform snaps to its top; a top shot lands
+    on the platform (`creepy_ladder_hit_mid_ok`, `_platform_ok`, `_top_ok`). F8 toggles AI. V fires
+    the straight shot (30, 1s); it is
     strictly horizontal, so a platform shot cannot hit a ground player. C starts the 1s lock
     wind-up: the three-frame reticle appears on the player, and a hit during the wind-up cancels the
     bolt but leaves the 8s cooldown. An uninterrupted bolt homes without limit, penetrates
@@ -192,23 +221,29 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
     muzzle, not the waist. The AI uses skill 1 across a clear level, skill 2 across a blocked line
     or level difference >60px, skill 3 inside 180px, and skill 4 to return to a platform; it hops
     90px ground barriers (`jump_v×1.15`, `walk×2.0` horizontal). F1 shows the collision boxes; F2
-    shows the four cooldowns. Ground barriers sit below the flat-ground mid lane, so test block
-    collision from the platform or with the smoke's direct `barrier.centery` bullet.
+    shows the four cooldowns. The remaining ground barrier sits below the flat-ground mid lane, so
+    test block collision from the platform or with the smoke's direct `barrier.centery` bullet.
 12. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
     triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
     jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left
     hand/right leg high, frame 1 the right hand/left leg high; moving loops it, stopping holds the
-    frame, and it is not horizontally flipped. Lina normal, Lina flame and Nyra each have their own
-    clip; Nyra's sword stays sheathed diagonally on her back. Platform tops/sides/undersides are
-    solid; walking off an outer edge falls (no fall damage). F2 shows
-    `BARRIERS/PLATFORMS/LADDERS` counts, `CLIMB`, and the current animation clip/frame. Use B to
-    remove barriers/platforms from drawing/collision; ladders stay visible/climbable, and B-off at
-    a ladder top holds the character on the ladder instead of snapping to the platform. The toggle
-    persists across F9 and resets on F5/rebuild.
+    frame, and it is not horizontally flipped. Lina normal, Lina flame, Nyra and Rhea each have
+    their own clip; Nyra's sword stays sheathed diagonally on her back and Rhea's two shuriken stay
+    stowed on her back band. Platform tops/sides/undersides are solid; walking off an outer edge
+    falls (no fall damage). A climb with a top platform mounts early at the platform midpoint minus
+    6px (default long platform: last climb y≈255 → snap y=220). A hit while climbing clears the
+    climb and applies knockback; if the feet are inside a platform it snaps to the platform top,
+    otherwise the body falls. Ladder jumps/falls ignore platform sides/underside until landing, so
+    the platform behind the ladder cannot shove the body sideways; platform-top landing still
+    applies. F2 shows `BARRIERS/PLATFORMS/LADDERS` counts, `CLIMB`, and the current animation
+    clip/frame. Use B to remove barriers/platforms from drawing/collision; ladders stay
+    visible/climbable, and B-off at a ladder top holds the character on the ladder instead of
+    mounting the platform. The toggle persists across F9 and resets on F5/rebuild.
 13. Edit `game/data/*.json` and press F5 to tune values without restarting.
 14. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
     cache keys on path + mtime. Climb frames are `assets/frames/lina/climb/`,
-    `assets/frames/lina/flame/climb/` and `assets/frames/nyra/climb/`. Projectile FX sprites use the
+    `assets/frames/lina/flame/climb/`, `assets/frames/nyra/climb/` and `assets/frames/rhea/climb/`.
+    Rhea's star strips live in `assets/frames/rhea/fx/`. Projectile FX sprites use the
     same rule: `assets/frames/lina/q_fx/`, `assets/frames/lina/flame/q_fx/` and
     `assets/frames/veno/veno_web_fx/`. Changing `LINA_Q_SPECS` sizes/durations, the climb draw
     scales (`CLIMB_DRAW_SCALE`, `NYRA_CLIMB_DRAW_SCALE`) or any effect duration in `game/fx.py`
