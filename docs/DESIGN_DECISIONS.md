@@ -90,9 +90,10 @@ This document records the provisional rules used by the sandbox. Values live in
   x=790..880; its left barrier (400..490) was removed on 2026-11-01 at the user's request.
   Two platforms: x=170..649 at surface y=220 and x=796..1110 at surface y=268; each collision
   rect is 78px tall. Ladders: x=508..572 (long, 400px) and x=921..985 (medium, 352px).
-- Lina spawns at x=280; the dummy, Warrior, Veno and Bat base spawns are at x=600 (Bat base y=470).
-  Creepy Shooter spawns at (1000, 220) on its stage variant. The current default enemy is Creepy
-  Shooter; F7 selects the others.
+- Lina spawns at x=280; the dummy and Warrior base spawns are at x=600. Veno and Bat use their
+  own stage variants with base x=820 (Bat y=470); roster offsets and `spawn_jitter` move the
+  group (see §Multi-body enemy rules). Creepy Shooter spawns at (1000, 220) on its stage variant.
+  The current default enemy is Creepy Shooter; F7 selects the others.
 - Fighters keep a minimum center distance equal to the sum of their stage body half-widths
   (Lina 50 + Warrior 60 = 110px). The enemy yields first on his current side; if a wall/barrier/platform
   blocks that side, he is not flipped across the player — Lina is pushed to the free side instead.
@@ -387,6 +388,56 @@ This document records the provisional rules used by the sandbox. Values live in
   `rhea_missing_frames == 0`, `rhea_fx_missing == 0`, plus `default_hit_group_ok`
   (Nyra's multi-hitbox attack still hits once).
 
+## Multi-body enemy rules (2026-11-02)
+
+Reusable contract for any roster enemy with `count > 1`; Veno (3) and Bat (5) are the current
+users. Per-enemy sections keep their stats and AI details; this section owns group spawn and
+attack-pacing rules.
+
+### Spawn
+- The base point is the stage variant's `veno_spawn` / `bat_spawn`; `roster.json` supplies
+  `count`, `spawn_offsets`, `spawn_modes` / `spawn_heights`, and `spawn_jitter`.
+- Groups spawn on the right half of the 1280px arena (x >= 640) whenever the layout allows; the
+  player keeps the left side.
+- Current values: Veno base `[820, 620]`, offsets `[-100, 0, 120]`, modes
+  `[ground, hover, hover]`, `spawn_jitter: 40` -> roughly 680-980. Bat base `[820, 470]`,
+  offsets `[0, -160, 160, -80, 80]`, heights `[180, 320, 240, 380, 280]`,
+  `spawn_jitter: 40` -> roughly 620-1020. The leftmost Bat may occasionally cross x=640 by up
+  to 20px; that is accepted.
+- `spawn_jitter` is an independent per-member random offset applied on every reset / set_enemy.
+  The isolated `enemy_count_override=1` debug/smoke path uses the base spawn without
+  offsets or jitter.
+- Spawn jitter is spawn-only; it does not change AI movement (Veno keeps its approach/hover
+  behavior; Bat uses random waypoints since 2026-11-02).
+
+### Attack pacing
+- Per-instance cooldowns stay independent. The group rule is an additional constraint.
+- Same-skill group gap: before an AI starts `attack_id`, it checks the other living members'
+  `last_attack_at[attack_id]`; if any start is within `group_skill_gaps[attack_id]`, it waits
+  and re-evaluates. Different skills may overlap.
+- Apply the gap to every group skill. Current values: Veno bite 0.8s, poison 1.2s, web 1.2s;
+  Bat dive 0.8s, sonic 1.2s.
+- Opening delay: `opening_delay` in `stats.json` `ai` (0.5s for Veno/Bat) suppresses proactive
+  attacks for the first 0.5s after reset. Movement, hover transitions, approach and mode changes
+  are allowed. The first attack can start at 0.5s; later same-skill attackers queue behind the gap.
+- The gate uses `scene.sim_time`; dead members are ignored; a single living member has no group
+  constraint. `force_attack` (debug/smoke) bypasses the opening delay and group gap, but records
+  the start time for later AI checks.
+- Data: `roster.json` `count` / `spawn_offsets` / `spawn_modes` / `spawn_heights` /
+  `spawn_jitter`; `stats.json` `ai.group_skill_gaps` / `ai.opening_delay`.
+- Implementation hooks: `Fighter.last_attack_at`, `Fighter.group_skill_recent()`,
+  `Fighter.note_attack_started()`; `Scene._place_enemies()` applies `spawn_jitter`; Veno/Bat
+  `start_attack()` records the timestamp; `_think()` checks the gap before starting a skill.
+- Verification: group AI must show same-skill start timestamps at least the configured gap apart
+  (one tick tolerance); `platform_spawn_clear_ok`, `veno_group_ok` and `bat_group_ok` stay green.
+  Because per-member jitter can make two Bats share an x, `bat_group_spawn_ok` checks 5 bodies,
+  airborne state, distinct y, height spread, at least 4/5 on the right half, and an x spread of
+  at least 240px instead of five distinct x values.
+
+Status: implemented 2026-11-02. `veno_group_gap_ok` and `bat_group_gap_ok` observe real group AI
+starts and assert the same-skill gaps; `bat_group_spawn_ok` now tolerates per-member jitter while
+still checking the right-half majority and spread.
+
 ## Veno-Spider
 
 - Enemy. Canonical art `Image/Enemy/veno-spider-128.png`; fallback uses the same canonical file.
@@ -425,7 +476,9 @@ This document records the provisional rules used by the sandbox. Values live in
   hop over a barrier/platform when both ranged skills are cooling down. While hovering it prioritizes poison,
   then web; it descends when the player is within 70px, when both ranged skills are cooling down
   (after 0.5s of hover), or when hit while airborne. While descending it drifts toward the player
-  if beyond bite range. An attack keeps the current mode and altitude.
+  if beyond bite range. An attack keeps the current mode and altitude. Each bite/poison/web check
+  also passes through the group same-skill gap; a blocked check waits and re-evaluates on the next
+  decision tick.
 - The lower 50px projectile origins mean the smaller Veno's poison/web are more easily blocked by
   barriers/platforms; the smoke damage/status tests disable block collision to isolate the
   projectile logic. This is a consequence of scaling the mouth to the half-size body.
@@ -437,17 +490,23 @@ This document records the provisional rules used by the sandbox. Values live in
   multiplied by a green tint `(70,255,110)` or a purple tint `(220,100,255)`, alternating every
   0.18s; green poison particles are still emitted every 2 ticks. Stun draws rotating yellow stars
   above the head. F11 can force either status on any enemy for inspection.
-- Group spawn: `roster.json` sets Veno `count` 3, `spawn_offsets` `[-100, 0, 120]` and
-  `spawn_modes` `["ground", "hover", "hover"]`. Selecting Veno creates three half-size Venos
-  (default positions 500/600/720 with the x=600 spawn; one ground + two hanging). `scene.enemies` holds the group;
+- Group spawn: `roster.json` sets Veno `count` 3, `spawn_offsets` `[-100, 0, 120]`,
+  `spawn_modes` `["ground", "hover", "hover"]` and `spawn_jitter` 40. The 2026-11-02 rule sets the
+  `veno` stage variant base to `[820, 620]`, so the group spawns at 720/820/940 ±40 (roughly
+  680-980), all on the right half; one ground + two hanging. `scene.enemies` holds the group;
   `scene.enemy` is the nearest living primary for HUD/lock-on/player targeting. The player's melee
   hitboxes test every living enemy (`AttackRuntime.targets`), projectiles hit the first living
   enemy they collide with, and each Veno runs its own AI. Enemies also separate from each other.
   Every Veno owns its own bite/poison/web cooldown timers (`bite_cd`, `poison_cd`, `web_cd`) and
-  its own poison source, so one spider's skill use or poison never affects another. Nyra's marks
-  are likewise stored per target. The match is won only when all three are dead; the smoke forces
-  `enemy_count_override=1` for the isolated single-enemy checks and verifies the 3-body group,
-  per-instance cooldowns and all-dead WIN separately.
+  its own poison source, so one spider's cooldowns or poison never overwrite another's. Nyra's
+  marks are likewise stored per target. The match is won only when all three are dead; the smoke
+  forces `enemy_count_override=1` for the isolated single-enemy checks and verifies the 3-body
+  group, per-instance cooldowns and all-dead WIN separately.
+- Group attack pacing: before a Veno starts a skill, it checks the same-skill gap against the
+  other living Venos (bite 0.8s, poison 1.2s, web 1.2s). A 0.5s opening delay applies after
+  reset; movement, ascent and hover transitions still run. Per-instance cooldowns are unchanged,
+  and different skills may overlap. `force_attack` bypasses both the opening delay and the group
+  gap. See §Multi-body enemy rules (2026-11-02).
 - Poison stacking (instruction.docx 战斗系统): reapplying poison from the **same source** adds the
   new duration to the remaining time (2s remaining + 3s = 5s); a **different source** creates an
   independent instance (both tick and both deal damage). Each Veno instance uses a unique
@@ -470,25 +529,41 @@ This document records the provisional rules used by the sandbox. Values live in
   stored; the runtime mirrors for left. `bat_dive`/`bat_sonic` are non-looping 0.75s/0.65s clips.
 - Stats: HP 50, basic ATK 10, extra ATK 0, `stage_body_width` 56, move walk 300, jump_v 0,
   gravity 2200. Gravity is used only for the KO fall; flight never applies it.
-- Flight: mode `fly`; no gravity; x clamped to the arena walls; altitude 40-420 above ground
-  (y = ground_y - height), preferred 240 with a sine bob of 24 at 1.5 rad/s; vertical speed 300.
-  The five-Bat group spawns and cruises at 180/320/240/380/280px, so the group occupies different
-  heights. The body respects barrier/platform AABBs; at cruise heights it passes above ground
-  barriers, while low flight or a downward path can meet the actual barrier/platform volume.
+- Flight: mode `fly`; no gravity; x clamped to the arena walls; altitude 40-477 above ground
+  (y = ground_y - height); a sine bob of 24 at 1.5 rad/s rides on the current flight target
+  (high random 400-477 or low 70); vertical speed 300. `preferred_height` 240 remains only as
+  the reset `cruise_height` fallback, not the free-flight destination. The 477 ceiling keeps
+  the sprite on screen: the runtime pivot is y=143, so at height 477 the sprite top is screen
+  y=0 (observed minimum y≈146, sprite top≈3).
+  The 2026-11-02 rule sets the `bat` stage variant base to `[820, 470]`, with roster offsets
+  `[0, -160, 160, -80, 80]` and `spawn_jitter` 40, so it spawns around x=620-1020 (mostly right
+  half) and uses the five spawn heights 180/320/240/380/280 only as initial altitudes.
+- Free-flight cycle: each Bat maintains a shuffled 5-flight bag with **3 high and 2 low** flights
+  (random order, reshuffled after five). A free flight lasts 5s; a low flight adds a 2s stay at
+  the low side. high flights pick a random target height in **400-477** (screen y 143-220); low
+  flights use height **70** (screen y 550). The initial flight timer is staggered by spawn index:
+  5/6/7/8/9s. During free flight the Bat picks a random horizontal waypoint inside the walls
+  (half-width + 20px margin, about x=160-1120), refreshing every 0.9-1.4s or within 18px; it no
+  longer parks at the old standoff point. Sonic is allowed only on a high flight; dive is allowed
+  on either side. The body respects barrier/platform AABBs; the high side flies above ground
+  barriers, while the low side and dive can meet their volume.
 - Cooldowns are per instance: dive 2.0s, sonic 10.0s, set at attack start. The dive is deterministic:
   it fires when ready and `_dive_can_reach` confirms the dive hitbox can reach the target from the
   current altitude; otherwise the Bat keeps flying. The sonic is the only randomly-timed skill: a
-  random 0-2.5s opening cooldown plus a 50% per-decision cast gate. A 0.55s group stagger prevents
-  another living Bat from opening the same skill. When the sonic is available, the random gate
-  decides whether to cast it; if skipped, the dive fires when reachable; otherwise the Bat keeps
-  flying/repositions to standoff 220. The sonic uses the [120,700] range; `decision_interval` 0.15
-  throttles attack decisions.
+  random 0-2.5s opening cooldown plus a 50% per-decision cast gate. A same-skill group gap (sonic
+  1.2s, dive 0.8s) prevents another living Bat from opening the same skill; a 0.5s opening delay
+  applies after reset, and different skills may overlap. Sonic is offered only when
+  `flight_side == "high"`; low flights cannot start it, while the dive is available on either
+  side. When the sonic is available, the random gate decides whether to cast it; if skipped, the
+  dive fires when reachable; otherwise the Bat keeps moving between its random waypoints (the old
+  standoff 220 is no longer used for movement). The sonic uses the [120,700] range;
+  `decision_interval` 0.15 throttles attack decisions. See §Multi-body enemy rules (2026-11-02).
 - Dive: 0.75s; the direction is locked at attack start toward the target's mid-hurtbox (no homing);
   520px/s during t=0.05-0.30; hitbox `[0,-70,90,70]` active t=0.12-0.34 follows the body; 10 damage,
   knockback 160, hitstun 0.25, hitstop 0.06, plus a small purple dive hit FX.
 - Sonic: 0.65s cast lock; the projectile spawns at t=0.24 from 46px forward / 30px above the Bat's
   feet, aimed at the target's mid-hurtbox at spawn (no homing); speed 420, range 3000 as a leak cap,
-  timeout 8s; 12 damage, 1s stun, knockback 0, hitstun 0.1, hitstop 0.05. Its hitbox is a forward
+  timeout 8s; 12 damage, **0.8s stun**, knockback 0, hitstun 0.1, hitstop 0.05. Its hitbox is a forward
   circle (+8px along travel, radius 24) matching the Wi-Fi arc silhouette; walls, top/ground and
   barrier/platform AABBs bounce it into the return phase; hitting the player deals damage and
   latches the one-hit guard. On return it tracks the owner's current position, vanishes within
@@ -499,9 +574,12 @@ This document records the provisional rules used by the sandbox. Values live in
   and a short trail), no baked frames; `RingBurstFx` cast and impact flashes use the same palette.
 - Match selection: `debug.json` `default_enemy` is `creepy_shooter`; the Bat group is selected with
   F7 and its roster `count` is 5. F7 order is Warrior -> Veno -> Bat -> Creepy Shooter -> Dummy.
-  Five spawn offsets and five
-  spawn heights (180/320/240/380/280) are used. Hurt/stun stay airborne; only KO falls to the ground
-  and switches to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly` and `HOVER` altitude.
+  The `bat` variant base is `[820, 470]`; five spawn offsets (`0/-160/160/-80/80`), five spawn
+  heights (180/320/240/380/280) and per-member `spawn_jitter` 40 are used; the heights are the
+  initial altitudes and the free-flight side targets take over. Hurt/stun stay airborne; only KO
+  falls to the ground and switches to `ko_01`. `show_health_bar` is true; F2 shows `MODE fly`,
+  `HOVER` altitude and `FLIGHT <high|low> <remaining>s target <height>h wx <waypoint> stay <s>
+  bag <H>H/<L>L`.
 - `skill_slots` is `["bat_dive","bat_sonic",null,null]`; `separates` and `decides_match` are true;
   `force_attack` works airborne and clears both timers.
 
@@ -578,6 +656,101 @@ This document records the provisional rules used by the sandbox. Values live in
   the combined `creepy_ladder_hit_ok`. The remaining ground barrier sits below the flat-ground
   mid lane, so the shot test spawns a bullet at `barrier.centery` to verify block collision.
 
+## Mech-Crab (2026-11-03)
+
+- Enemy. Canonical art `Image/Enemy/mech-crab-512.png`; fallback uses the same file. Approved
+  front-facing base `assets/generated/base/mech_crab_front_base.png`; frames 640x640, pivot
+  (320,628), body 230, hurtbox 160x150, `stage_body_width` 170. The crab faces the camera and walks
+  sideways on six legs (three per side) plus two claws; only the front view is stored and the
+  runtime mirrors it for left/right facing.
+- Frames (47 + 3 FX): idle 4, walk 4, jump 2, hurt 2, KO 4 (`ko_00`, `ko_01`, `ko_03`, `ko_04`),
+  `mech_laser` 9, `mech_charge` 7, `mech_claw_slam` 7, `mech_leap_slam` 8. Clip durations:
+  `[0.30]*4` idle, `[0.15]*4` walk, `[0.20]*2` jump, `[0.10]*2` hurt, KO
+  `[0.25,0.20,0.25,0.30]`, laser `[0.25]*4+[0.50]*3+[0.15]*2`, charge
+  `[0.25]*4+[0.275]*2+[0.25]`, claw `[0.1667,0.1667,0.1666,0.075,0.075,0.125,0.125]`,
+  leap `[0.20]*4+[0.2167,0.2167,0.2166,0.20]`. The attack clip totals match the attack
+  warning/active/recovery windows. The laser origin is 160px above the feet (measured from the
+  approved base); the core is 32.4px wide and the beam 26px (0.8x).
+- Stats: HP 400, basic ATK 30, extra ATK 0; walk 120, jump_v 700, gravity 2200. Cooldowns from
+  attack start: laser 6s, charge 5s, claw 5s, leap 8s. Every skill ends with a 1s global
+  `skill_gap`. AI: `laser_min_range` 160, `laser_range` 900, `charge_min_range` 220,
+  `charge_range` 520, `claw_range` 150, `leap_min_range` 180, `leap_range` 620,
+  `level_tolerance` 100, `decision_interval` 0.15.
+- Super armor: each skill's `armor_until` is its full duration. `take_hit` under `super_armor`
+  subtracts HP, flashes, and at HP 0 enters KO and clears the attack/beam/reticle/armor; it never
+  enters HURT or applies knockback, launch, stun or other control. Damage-over-time still ticks.
+- Skill 1 `mech_laser`: 2.8s action, 1.0s warning, 1.5s active, 0.3s recovery; 1.2x ATK = 36.
+  At t=1.0 a `MechLaserBeam` spawns at the core and starts straight up (angle 0), turns toward the
+  target's hurtbox center at 90 deg/s along the shortest arc, and is removed at t=2.5. The crab
+  stays at its cast x/y throughout. The beam range is 900 and is clipped by enabled block AABBs
+  with `Rect.clipline`; the target hurtbox is inflated by the 26px beam width for segment
+  collision. Each target is hit at most once per cast. The beam draws a red core, orange glow and
+  white-hot center above the fighters.
+- Skill 2 `mech_charge`: 1.8s action, 1.0s warning, 0.55s active, 0.25s recovery; 1.5x ATK = 45.
+  `facing` is locked at attack start. The `dash` event moves at 700px/s during t=1.0-1.55 through
+  `Stage.move_x` (walls stop it); the matching hitbox `[20,-150,140,150]` deals 45 once with 140
+  knockback. Dust puffs trail the rear during the dash.
+- Skill 3 `mech_claw_slam`: 0.9s action, 0.5s warning, 0.15s active, 0.25s recovery; 1.0x ATK = 30,
+  knockback 100 and 1.2s stun. The player-side claw is the enlarged one; the frame set mirrors with
+  `facing`. The hitbox `[30,-140,200,140]` is active t=0.5-0.65; a 130px-forward ring/spark impact
+  fires at t=0.5. `on_hit_success` applies the attack's `stun`.
+- Skill 4 `mech_leap_slam`: 1.65s action, 0.8s warning, 0.65s active, 0.2s recovery; 2.0x ATK = 60,
+  AoE radius 100, arc height 180. The fixed landing point is chosen once at attack start:
+  `_surface_below` picks the highest platform top at or below the target's feet within the landing
+  margin, otherwise the ground; x is clamped to the walls and platform edges. During the flight the
+  crab interpolates x/y with a sine arc, ignores terrain collision and body separation, and is not
+  invulnerable. On landing it resolves one AoE hit at the target point and spawns a ring + dust
+  impact.
+- Leap reticle: user-drawn, not generated. Source frames
+  `assets/generated/contact_sheets/mech_crab_lock_anim_v1_00..02.png` (724x724, transparent) are
+  baked to 205x205 (0.8x of the earlier 256px baseline) with a premultiplied LANCZOS downscale at
+  `assets/frames/mech_crab/fx/mech_crab_lock_00..02.png`; `mech_crab.py` caches them by path +
+  mtime. Timing is 0.22/0.18/0.40s from the supplied GIF; the last frame holds through the 0.65s
+  flight and the reticle disappears on landing. It is drawn at the fixed target point and has no
+  hitbox. The largest ring is ~82px radius against the 100px AoE. This replaced the earlier
+  procedural red ring + X.
+- Health bar: `MechCrab.health_bar_lift = 230.0` (the visual body height).
+  `Fighter.draw_health_bar` and `hud.py` use it when set, otherwise the hurtbox height. At the
+  ground this puts the bar at y=360 and the name label at y=344, 80px above the old
+  hurtbox-based position and clear of the shell. Other fighters are unchanged because the class
+  default is None.
+- Stage: `debug.json` `stage_variants.mech_crab` has no barriers. Long platform
+  `[170,268,479,78]` (surface 268), short platform `[796,220,314,78]` (surface 220), ladders
+  `[508,268,64,352]` (medium) and `[921,220,64,400]` (long). Player spawn (280,620); Mech-Crab
+  spawn (1000,620). Selecting the enemy rebuilds the Stage and preserves the B block toggle; the
+  background and BGM are unchanged.
+- Match selection: `debug.json` `default_enemy` remains `creepy_shooter`; F7 order is
+  Warrior -> Veno -> Bat -> Creepy Shooter -> Mech-Crab -> Shadow Ninja -> Dummy. `skill_slots` is
+  `["mech_laser","mech_charge","mech_claw_slam","mech_leap_slam"]`; `separates` and
+  `decides_match` are true; the roster count is one. `force_attack` clears all four cooldowns and
+  the gap, rejects KO/HURT/ATTACK/airborne, and requires a known skill.
+- AI: skips decisions until `decision_interval` elapses. It faces the player (8px deadzone), then
+  prioritizes: leap when the player is on another level (`|dy| > 100`) inside the leap range; claw
+  within 150px on the same level; charge at 220-520px on the same level; laser whenever ready at
+  160-900px with line of sight from the core and a target angle within 135 deg of vertical; leap
+  again at 180-620px as a fallback; otherwise walk sideways. It never uses basic attacks or
+  ladders and does not start a skill while `skill_gap > 0`.
+- Smoke flags: `mech_crab_present`, `mech_crab_stage_ok`, `mech_crab_armor_ok`,
+  `mech_crab_laser_ok`, `mech_crab_charge_ok`, `mech_crab_claw_ok`, `mech_crab_leap_ok`,
+  `mech_crab_gap_ok`, `mech_crab_slots_ok`, `mech_crab_win_ok`, `mech_crab_cleanup_ok`,
+  `mech_crab_ai_ok`, `mech_crab_missing_frames == 0` and `mech_crab_fx_missing == 0`.
+
+## Shadow Ninja (normal form, 2026-11-06)
+
+- Enemy entry `shadow_ninja`; F7 selects it after Mech-Crab and before the Dummy. The startup default remains Creepy Shooter.
+- Normal form only: `skill_slots = ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", null]`; Z is a no-op, F2 shows `-`, and the AI never transforms. The phantom form (skill 4) is deferred to a later session.
+- HP/ATK copy the current player at battle start: `_rebuild_fighters` and `reset()` call `sync_from_player`; `max_hp`, `basic_atk`, `extra_atk` and `atk` are copied and `walk_speed = player.walk_speed * 1.5`. There is no per-tick copy. Current characters are 100 HP / 20 ATK / 260 walk → 100 / 20 / 390.
+- 384×384 canvas, pivot (192,372), body 214; hurtbox 56×210 standing / 56×130 crouching; `stage_body_width` 100.
+- Skill 1 `shadow_kunai_slash`: 0.35s action, 0.5s cooldown from cast, 1.0 atk, high hitbox `[20,-195,130,55]` (bottom 140px above the feet). A standing player is hit; a crouching player is below the box and dodges.
+- Skill 2 `shadow_kunai_throw`: 0.45s action, 5s cooldown, low lane 60px, 1.2atk, 1s stun, one mark; no block penetration. The projectile is a separate `ShadowKunaiProjectile`; its two-frame 32×32 FX is horizontal, non-rotating, with one brighter frame. Animation frame 02 is the release frame, and the character frame has no kunai baked in.
+- Skill 3 `shadow_dash`: 0.45s action, 8s cooldown, 1600px/s during t=0.06–0.45 (~640px); 1.5atk, single hit, one mark. `ignore_separation` passes through the player, while walls, barriers and platforms still collide. The low hitbox `[0,-80,90,80]` lets a full jump (peak ~131px) clear with ~51px margin; standing and crouching players are hit.
+- Passive: skills 1/2/3 add one mark to the player, max 3. The 4th hit resolves its own skill damage first, then extra 1.0×atk (after damage reduction), a 1s stun (super armor is immune to the stun; damage still applies), then resets to 1 mark (0 on KO). Marks do not decay; KO/reset clears them. Independent `shadow_marks` / `shadow_mark_burst_*` fields keep Nyra's blue marks separate; three purple pips are drawn above the player. A skill-2 4th hit refreshes the stun to 1s total rather than stacking to 2s.
+- AI: opening delay 0.6s; close range 170, far range 520, decision interval 0.12, skill gap 0.2, low HP 40%. Close: throw → slash; if throw is on cooldown and HP is low, dash away. Far: throw, then track its own kunai and dash when it is within 160px, or dash when no kunai exists. Very far: walk. It crouches against high attacks/projectiles and jumps against low/mid threats (`jump_cooldown` 0.8s, `crouch_hold` 0.35s), and hops onto barriers when one blocks the path. It never uses skill 4.
+- Scene: flat `stage_variants.shadow_ninja` with no blocks or ladders; player `[280,620]`, ninja `[1000,620]`. Future stages with barriers use the generic barrier-hop AI.
+- Animation: 35 frames — idle 4, walk 6, jump 2, crouch 1, hurt 2, KO 4, each skill 5, stun 1 — plus the two-frame kunai FX. The approved animation details are in `docs/SHADOW_NINJA_ANIMATION_DESIGN.md`.
+- Debug: F1 shows the hurtboxes, skill 1/3 hitboxes and the low lane; F2 shows the four slots (slot 4 `-`), cooldowns, current clip/frame and `SHADOW MARKS n/3`.
+- Smoke: the Shadow Ninja phase covers presence/stats/slots, slash, throw, dash, marks (including super armor), AI, crouch/jump/barrier hop, win/cleanup and the missing-frame/FX counts; all `shadow_ninja_*` flags are in the final conjunction.
+
 ## Projectile / skill VFX (2026-10-24)
 
 - Visual-only pass. `q`, `veno_poison` and `veno_web` keep their damage, hitbox, duration, speed,
@@ -634,7 +807,7 @@ This document records the provisional rules used by the sandbox. Values live in
   longer constructs Lina/Nyra/Rhea/Warrior/Veno/Dummy directly. Playable classes keep Lina's
   `update(dt, input_state, target, scene)` signature; Lina, Nyra and Rhea are installed.
 - F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → Creepy Shooter →
-  training Dummy); the current default enemy is Creepy Shooter. `[` / `]`
+  Mech-Crab → Shadow Ninja → training Dummy); the current default enemy is Creepy Shooter. `[` / `]`
   cycle the playable roster (Lina ↔ Nyra ↔ Rhea). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are

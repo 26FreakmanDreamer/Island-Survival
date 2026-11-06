@@ -353,11 +353,12 @@ class Stage:
             round(height),
         )
 
-    def move_x(self, fighter, dx: float) -> None:
+    def move_x(self, fighter, dx: float, ignore_blocks: bool = False) -> None:
         """Move horizontally and resolve walls and block sides.
 
         Also used by attack lunges, which previously changed x directly and
-        could embed the character inside a block.
+        could embed the character inside a block. `ignore_blocks` keeps the
+        wall clamp but lets a phase dash pass through barriers/platforms.
         """
         half = self.body_half(fighter)
         fighter.x += dx
@@ -370,7 +371,11 @@ class Stage:
             fighter.x = high - half
             fighter.kb_vx = 0.0
 
-        if not self.blocks_enabled:
+        if (
+            not self.blocks_enabled
+            or ignore_blocks
+            or getattr(fighter, "ignore_terrain", False)
+        ):
             return
         if getattr(fighter, "ladder_fall", False):
             # Dropped from a ladder: the platform behind the ladder must not
@@ -390,10 +395,17 @@ class Stage:
             fighter.kb_vx = 0.0
             body = self.body_rect(fighter)
 
-    def move_fighter(self, fighter, dt: float, apply_gravity: bool = True) -> None:
+    def move_fighter(
+        self,
+        fighter,
+        dt: float,
+        apply_gravity: bool = True,
+        ignore_blocks: bool = False,
+    ) -> None:
         """AABB movement against walls, ground and block top/side/bottom."""
+        ignore = ignore_blocks or getattr(fighter, "ignore_terrain", False)
         total_vx = fighter.vx + fighter.kb_vx
-        self.move_x(fighter, total_vx * dt)
+        self.move_x(fighter, total_vx * dt, ignore_blocks=ignore)
 
         previous_y = fighter.y
         if not fighter.on_ground and apply_gravity:
@@ -409,7 +421,7 @@ class Stage:
             fighter.vy = 0.0
             landed = True
 
-        if self.blocks_enabled:
+        if self.blocks_enabled and not ignore:
             for block in self.blocks:
                 if fighter.vy >= 0 and previous_y <= block.top + 1 and fighter.y >= block.top:
                     if block.left - self.land_margin <= fighter.x <= block.right + self.land_margin:

@@ -585,6 +585,8 @@ class ShurikenProjectile:
         status_dps_pct: float = 0.0,
         extends_poison: bool = False,
         bonus_target_max_hp_pct: float = 0.0,
+        bonus_vs_poison_max_hp_pct: float = 0.0,
+        bonus_vs_poison_source: str | None = None,
         penetrates_blocks: bool = False,
     ) -> None:
         self.owner = owner
@@ -610,6 +612,8 @@ class ShurikenProjectile:
         self.status_dps_pct = float(status_dps_pct)
         self.extends_poison = bool(extends_poison)
         self.bonus_target_max_hp_pct = float(bonus_target_max_hp_pct)
+        self.bonus_vs_poison_max_hp_pct = float(bonus_vs_poison_max_hp_pct)
+        self.bonus_vs_poison_source = bonus_vs_poison_source
         self.penetrates_blocks = bool(penetrates_blocks)
         if kind == "rhea_poison_shuriken":
             self.hit_color = (120, 230, 130)
@@ -721,6 +725,104 @@ class ShurikenProjectile:
                 )
             )
         pygame.draw.polygon(surface, color, points)
+
+
+_SHADOW_KUNAI_CACHE: dict[tuple[str, float, int], pygame.Surface | None] = {}
+
+
+def _shadow_kunai_image(frame: int) -> pygame.Surface | None:
+    """Load one 3-frame shadow-kunai strip entry, if it has been installed."""
+    path = (
+        ASSETS_DIR / "frames" / "shadow_ninja" / "fx"
+        / f"shadow_kunai_{frame % 2:02d}.png"
+    )
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    key = (str(path), mtime, frame % 2)
+    if key in _SHADOW_KUNAI_CACHE:
+        cached = _SHADOW_KUNAI_CACHE[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _SHADOW_KUNAI_CACHE[key] = None
+        return None
+    _SHADOW_KUNAI_CACHE[key] = image
+    return image.copy()
+
+
+class ShadowKunaiProjectile(ShurikenProjectile):
+    """Shadow Ninja's straight low kunai: single hit, 3-frame purple spin."""
+
+    scene = None
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 10.0,
+        status: str | None = None,
+        status_duration: float = 0.0,
+        penetrates_blocks: bool = False,
+    ) -> None:
+        super().__init__(
+            owner=owner,
+            target=target,
+            x=x,
+            y=y,
+            direction=direction,
+            speed=speed,
+            max_range=max_range,
+            damage=damage,
+            knockback=knockback,
+            hitstun=hitstun,
+            hitstop=hitstop,
+            kind="shadow_kunai",
+            radius=radius,
+            status=status,
+            status_duration=status_duration,
+            penetrates_blocks=penetrates_blocks,
+        )
+        self.visual_kind = "shadow_kunai"
+        self.hit_color = (205, 150, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        image = _shadow_kunai_image(int(self.age * 18.0) % 2)
+        if image is not None:
+            if self.direction < 0:
+                image = pygame.transform.flip(image, True, False)
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+
+        # Fallback until the approved FX strip exists: a small purple kunai.
+        tip = (round(self.x + self.direction * 14.0), round(self.y))
+        back = (round(self.x - self.direction * 10.0), round(self.y))
+        pygame.draw.polygon(
+            surface,
+            (190, 120, 255),
+            [tip, (round(self.x), round(self.y - 6)), back,
+             (round(self.x), round(self.y + 6))],
+        )
+        pygame.draw.circle(
+            surface,
+            (240, 220, 255),
+            (round(self.x - self.direction * 12.0), round(self.y)),
+            3,
+        )
 
 
 class SonicWave:

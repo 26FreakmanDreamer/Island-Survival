@@ -1,0 +1,32 @@
+{
+  "version": "v5",
+  "status": "pending_user_review",
+  "runtime_integrated": false,
+  "reason": "User approved the previous 01 pose and requested one new frame between 00 and that pose.",
+  "source_frames": [
+    "crooked_witch_heal_v3_00.png",
+    "crooked_witch_heal_v5_01.png",
+    "crooked_witch_heal_v4_01.png",
+    "crooked_witch_heal_v2_02.png",
+    "crooked_witch_heal_v2_03.png",
+    "crooked_witch_heal_v1_04.png"
+  ],
+  "inserted_frame_index": 1,
+  "approved_existing_frame": "crooked_witch_heal_v4_01.png",
+  "detached_staff_prop": "crooked_witch_heal_staff_prop_v1.png",
+  "heal_fx": "../crooked_witch_heal_fx/crooked_witch_heal_fx_v1_sheet.png",
+  "hold_frames": [
+    3,
+    4
+  ],
+  "hold_duration_s": 5.0,
+  "fx_cycle_s": 1.0,
+  "pulse_count": 5,
+  "preview_frame_duration_s": 0.2,
+  "preview_total_duration_s": 5.8,
+  "sheet": "crooked_witch_heal_v5_sheet.png",
+  "transition": "crooked_witch_heal_v5_transition.png",
+  "composite_sheet": "crooked_witch_heal_v5_composite_sheet.png",
+  "preview": "crooked_witch_heal_v5_preview.gif",
+  "prompt_summary": "Using approved base, frame 00 and approved v4 frame 01, add intermediate pose: outer/near hand beside front half of hip, inner/far hand just forward at waist with palm up. Keep body, size, transparency, separate floating staff and all other animation and heal FX frames unchanged."
+}

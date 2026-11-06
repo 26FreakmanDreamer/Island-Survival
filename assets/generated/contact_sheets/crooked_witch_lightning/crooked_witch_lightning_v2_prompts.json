@@ -1,0 +1,7 @@
+{
+  "tool": "built-in image_gen",
+  "edit_target": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v1_02_source.png",
+  "approved_base": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "prompt_set": "Preserve exact action, pose, staff angle, body and boot position, identity and scale. Change only depth order: torso behind sleeve, sleeve behind continuous staff shaft, staff beneath near-right gripping fingers. Full body and single staff on a square transparent canvas; no VFX, background, shadow, text, duplicate parts or interpenetration.",
+  "corrected_frame": 2
+}

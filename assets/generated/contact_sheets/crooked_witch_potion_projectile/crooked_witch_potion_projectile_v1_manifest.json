@@ -1,0 +1,20 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-05",
+  "runtime_integrated": false,
+  "frames": [
+    "crooked_witch_potion_projectile_v1_00.png",
+    "crooked_witch_potion_projectile_v1_01.png",
+    "crooked_witch_potion_projectile_v1_02.png"
+  ],
+  "sheet": "crooked_witch_potion_projectile_v1_sheet.png",
+  "preview": "crooked_witch_potion_projectile_v1_preview.gif",
+  "preview_cycle_frames": [
+    0,
+    1,
+    2,
+    1
+  ],
+  "suggested_cycle_s": 0.52,
+  "action": "sealed bottle travels with gentle rotation and luminous liquid"
+}

@@ -1,0 +1,20 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-05",
+  "runtime_integrated": false,
+  "frames": [
+    "crooked_witch_potion_break_v1_00.png",
+    "crooked_witch_potion_break_v1_01.png",
+    "crooked_witch_potion_break_v1_02.png",
+    "crooked_witch_potion_break_v1_03.png"
+  ],
+  "sheet": "crooked_witch_potion_break_v1_sheet.png",
+  "preview": "crooked_witch_potion_break_v1_preview.gif",
+  "preview_frame_durations_s": [
+    0.09,
+    0.09,
+    0.11,
+    0.15
+  ],
+  "action": "bottle cracks, glass shatters, poison splashes, fragments fade"
+}

@@ -1,0 +1,26 @@
+{
+  "action": "ko",
+  "version": "v2",
+  "status": "user_approved",
+  "user_approval_date": "2026-11-04",
+  "tool": "built-in image_gen",
+  "reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "pose_reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_ko\\crooked_witch_ko_v1_02.png",
+  "revised_frame": 3,
+  "source_frames": [
+    "crooked_witch_ko_v1_00.png",
+    "crooked_witch_ko_v1_01.png",
+    "crooked_witch_ko_v1_02.png",
+    "crooked_witch_ko_v2_03.png"
+  ],
+  "frame_durations_s": [
+    0.15,
+    0.2,
+    0.2,
+    0.2
+  ],
+  "action_duration_s": 0.75,
+  "preview_final_hold_s": 1,
+  "runtime_integrated": false,
+  "prompt": "Precise sprite revision for the Crooked Witch, one full-size sprite, exact same 1254x1254 square transparent canvas. Image 1 is crooked_witch_base_v4_02, primary identity, costume and proportion reference. Image 2 is the pose reference. Preserve silver hair, ornate purple-and-gold costume, cream ruffles, crooked hat, brown boots, exact same face, eye shape and full crystal staff. True clear transparent alpha around the isolated sprite, no haze, ground, shadow, particles or glow. For this explicitly released-staff KO pose, the staff remains on the ground apart from the hand; the requested local head turn overrides the default standing face direction.\nPreserve the exact same character identity, body height, head size, shoulder width,\r\nlimb proportions, weapon size, camera distance, foot position and lighting as the reference.\r\nRight-facing three-quarter side view, full body and the entire weapon inside the frame,\r\nflat transparent background, no shadow, no text, no border, no scenery.\r\n\r\nCentering and framing are positioning choices only: never zoom, scale, stretch or shrink the\r\ncharacter to center it or to fit the full body/weapon. This applies whether the weapon is raised,\r\nlowered or held horizontally. If the weapon makes the silhouette taller or wider, keep the\r\ncharacter and weapon scale fixed and expand the canvas/margins or adjust the framing instead.\r\nIf the canonical runtime frame still cannot contain the full weapon at the fixed scale, stop and\r\nask the user; do not shrink the character or crop the weapon.\r\n\r\nCorrect near/far layering: the near arm and near leg are in front of the torso; the far arm\r\nand far leg stay behind it. The weapon is held by the same hand with a believable grip around\r\nthe haft; fingers wrap the haft, and the hand/weapon do not intersect the torso, head, legs,\r\nhair or clothing. No interpenetration, no merged or extra limbs, no floating parts, and no\r\nduplicated weapon.\r\n\r\nOnly change the pose: Draw the very next settled KO pose from image 2 (KO 02). Keep the same diagonal fall orientation, same-sized head and boots, head/hat at screen-left, boots to screen-right, near RIGHT arm in the foreground toward lower-left, and the same staff already released in front. Lower her leftward shoulder and head as she settles onto her side; preserve the natural stagger of the two legs. Let the staff lie almost horizontal with its LARGE purple crystal crown at lower-left, tail to lower-right. Turn her HEAD toward that crystal crown: the nose and closed eyelid face diagonally DOWN-LEFT toward the nearby crystal, not right toward her boots. Change the NEAR RIGHT hand from image 2's spread palm to a visibly relaxed CLOSED hand: four fingers gently curl into the palm together, thumb outside, small loose fist, no fingers splayed and no weapon contact. Keep this curled hand near its previous lower-left location by the crystal end, anatomically connected to the same foreground sleeve. Far left arm stays hidden behind her body. One full-length 1070px staff, separated from hair/body/hand; full attached hat and full boots, all within canvas. Image 1 is the approved identity/scale and outfit reference; image 2 is the animation pose reference..\r\n"
+}

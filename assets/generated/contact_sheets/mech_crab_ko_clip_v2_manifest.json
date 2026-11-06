@@ -1,0 +1,33 @@
+{
+  "title": "mech_crab_ko \u2014 clip frames (02 removed)",
+  "columns": 4,
+  "cell": 640,
+  "pivot": [
+    320,
+    628
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/staged/mech_crab/ko/ko_00.png",
+        "label": "ko_00",
+        "duration": "0.25"
+      },
+      {
+        "path": "assets/generated/staged/mech_crab/ko/ko_01.png",
+        "label": "ko_01",
+        "duration": "0.20"
+      },
+      {
+        "path": "assets/generated/staged/mech_crab/ko/ko_03.png",
+        "label": "ko_03",
+        "duration": "0.25"
+      },
+      {
+        "path": "assets/generated/staged/mech_crab/ko/ko_04.png",
+        "label": "ko_04",
+        "duration": "0.30"
+      }
+    ]
+  ]
+}

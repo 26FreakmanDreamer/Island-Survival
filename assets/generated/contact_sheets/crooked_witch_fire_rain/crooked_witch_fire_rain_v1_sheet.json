@@ -1,0 +1,78 @@
+{
+  "title": "Crooked Witch Fire Rain actor v1",
+  "reference_base": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "canvas": [
+    1536,
+    1536
+  ],
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "source_translation": [
+    141,
+    190
+  ],
+  "pivot": [
+    768,
+    1360
+  ],
+  "frames": [
+    {
+      "index": 0,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_00.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_00_source.png",
+      "pose": "00 gather",
+      "duration_ms": 180
+    },
+    {
+      "index": 1,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_01.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_01_source.png",
+      "pose": "01 raise",
+      "duration_ms": 180
+    },
+    {
+      "index": 2,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_02.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_02_source.png",
+      "pose": "02 overhead",
+      "duration_ms": 160
+    },
+    {
+      "index": 3,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_03.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_03_source.png",
+      "pose": "03 hold A",
+      "duration_ms": 400
+    },
+    {
+      "index": 4,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_04.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_04_source.png",
+      "pose": "04 hold B + pulse",
+      "duration_ms": 400
+    },
+    {
+      "index": 5,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_05.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_rain\\crooked_witch_fire_rain_v1_05_source.png",
+      "pose": "lower staff to approved fly pose",
+      "duration_ms": 200,
+      "reused_from": "crooked_witch_fly_v3_02.png"
+    }
+  ],
+  "hold_loop": [
+    3,
+    4
+  ],
+  "hold_round_duration_ms": 800,
+  "hold_repeat_count": 10,
+  "pulse_at_end_of_frame": 4,
+  "pulse_tip_on_canvas": [
+    1181,
+    198
+  ],
+  "fireball_spawn": "target current x at each pulse, then vertical fall",
+  "runtime_integrated": false
+}

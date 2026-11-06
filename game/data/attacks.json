@@ -192,7 +192,8 @@
     "hitstop": 0.05,
     "extends_poison": true,
     "events": [
-      {"t": 0.08, "until": 0.14, "type": "hitbox", "box": [28, -165, 70, 48], "knockback": 60}
+      {"t": 0.08, "until": 0.14, "type": "hitbox", "box": [28, -165, 70, 110], "knockback": 60,
+       "bonus_vs_poison_max_hp_pct": 0.03, "bonus_vs_poison_source": "rhea_poison"}
     ]
   },
   "rhea_throw": {
@@ -208,7 +209,8 @@
     "events": [
       {"t": 0.14, "type": "projectile", "id": "rhea_throw", "projectile": "rhea_shuriken",
        "lane": "mid", "speed": 850, "range": 900, "origin_forward": 30,
-       "hitbox_radius": 12, "knockback": 0, "extends_poison": true}
+       "hitbox_radius": 12, "knockback": 0, "extends_poison": true,
+       "bonus_vs_poison_max_hp_pct": 0.03, "bonus_vs_poison_source": "rhea_poison"}
     ]
   },
   "rhea_poison_throw": {
@@ -229,21 +231,40 @@
     ]
   },
   "rhea_dash": {
-    "basic_mult": 0.7,
-    "extra_mult": 0.8,
-    "duration": 1.00,
+    "basic_mult": 0.8,
+    "extra_mult": 1.2,
+    "duration": 0.60,
     "lunge": 0,
     "lunge_time": 0.0,
     "energy_gain": 0,
     "hitstun": 0.25,
     "hitstop": 0.06,
     "armor_from": 0.0,
-    "armor_until": 1.00,
+    "armor_until": 0.60,
     "pass_through_enemy": true,
+    "ignore_terrain": true,
     "events": [
       {"t": 0.06, "until": 0.60, "type": "hitbox", "hit_group": "out",
-       "box": [0, -170, 90, 170], "knockback": 0, "bonus_vs_poison_max_hp_pct": 0.15},
-      {"t": 0.60, "until": 1.00, "type": "hitbox", "hit_group": "back",
+       "box": [0, -170, 90, 170], "knockback": 0,
+       "bonus_vs_poison_max_hp_pct": 0.15,
+       "bonus_vs_poison_source": "rhea_poison"}
+    ]
+  },
+  "rhea_dash_return": {
+    "basic_mult": 0.7,
+    "extra_mult": 0.8,
+    "duration": 0.12,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.25,
+    "hitstop": 0.06,
+    "armor_from": 0.0,
+    "armor_until": 0.12,
+    "pass_through_enemy": true,
+    "ignore_terrain": true,
+    "events": [
+      {"t": 0.0, "until": 2.0, "type": "hitbox", "hit_group": "back",
        "box": [-90, -170, 90, 170], "knockback": 0}
     ]
   },
@@ -317,7 +338,7 @@
       {"t": 0.24, "type": "projectile", "id": "bat_sonic", "projectile": "sonic_wave",
        "origin_height": 30, "origin_forward": 46, "speed": 420, "range": 3000,
        "hitbox_forward": 8, "hitbox_radius": 24,
-       "status": "stun", "status_duration": 1.0}
+       "status": "stun", "status_duration": 0.8}
     ]
   },
   "creepy_shot": {
@@ -379,6 +400,135 @@
       {"t": 0.10, "type": "projectile", "id": "creepy_jump_shot", "projectile": "creepy_down_bullet",
        "speed": 900, "range": 600, "hitbox_radius": 12,
        "origin_height": 120, "origin_forward": 100, "knockback": 60}
+    ]
+  },
+  "mech_laser": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 2.80,
+    "warning": 1.0,
+    "active": 1.5,
+    "recovery": 0.3,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.05,
+    "armor_from": 0.0,
+    "armor_until": 2.80,
+    "beam_speed_deg": 90.0,
+    "beam_range": 900.0,
+    "beam_width": 26.0,
+    "beam_origin_height": 160.0,
+    "events": []
+  },
+  "mech_charge": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 1.80,
+    "warning": 1.0,
+    "active": 0.55,
+    "recovery": 0.25,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.30,
+    "hitstop": 0.07,
+    "armor_from": 0.0,
+    "armor_until": 1.80,
+    "events": [
+      {"t": 1.0, "until": 1.55, "type": "dash", "speed": 700},
+      {"t": 1.0, "until": 1.55, "type": "hitbox", "box": [20, -150, 140, 150], "knockback": 140, "hit_fx": "mech_charge_hit"}
+    ]
+  },
+  "mech_claw_slam": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.90,
+    "warning": 0.5,
+    "active": 0.15,
+    "recovery": 0.25,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.30,
+    "hitstop": 0.08,
+    "armor_from": 0.0,
+    "armor_until": 0.90,
+    "stun": 1.2,
+    "events": [
+      {"t": 0.5, "until": 0.65, "type": "hitbox", "box": [30, -140, 200, 140], "knockback": 100, "hit_fx": "mech_claw_hit"}
+    ]
+  },
+  "mech_leap_slam": {
+    "basic_mult": 2.0,
+    "extra_mult": 2.0,
+    "duration": 1.65,
+    "warning": 0.8,
+    "active": 0.65,
+    "recovery": 0.2,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.35,
+    "hitstop": 0.08,
+    "armor_from": 0.0,
+    "armor_until": 1.65,
+    "aoe_radius": 100.0,
+    "arc_height": 180.0,
+    "events": []
+  },
+  "shadow_kunai_slash": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.35,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": [
+      {"t": 0.14, "until": 0.24, "type": "hitbox", "box": [20, -195, 130, 55], "knockback": 80, "hit_fx": "shadow_slash_hit"}
+    ]
+  },
+  "shadow_kunai_throw": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.45,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {
+        "t": 0.22,
+        "type": "projectile",
+        "id": "shadow_kunai_throw",
+        "projectile": "shadow_kunai",
+        "lane": "low",
+        "speed": 900,
+        "range": 900,
+        "origin_forward": 30,
+        "hitbox_radius": 10,
+        "knockback": 0,
+        "status": "stun",
+        "status_duration": 1.0
+      }
+    ]
+  },
+  "shadow_dash": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.45,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.3,
+    "hitstop": 0.08,
+    "events": [
+      {"t": 0.06, "until": 0.45, "type": "dash", "speed": 1600},
+      {"t": 0.06, "until": 0.45, "type": "hitbox", "box": [0, -80, 90, 80], "knockback": 120, "hit_fx": "shadow_dash_hit"}
     ]
   }
 }

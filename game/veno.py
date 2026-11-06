@@ -60,6 +60,11 @@ class Veno(Fighter):
         self.ranged_range = float(ai["ranged_range"])
         self.decision_interval = float(ai["decision_interval"])
         self.hover_min_time = float(ai["hover_min_time"])
+        self.group_skill_gaps = {
+            str(key): float(value)
+            for key, value in ai.get("group_skill_gaps", {}).items()
+        }
+        self.opening_delay = float(ai.get("opening_delay", 0.0))
 
         self.bite_cd = 0.0
         self.poison_cd = 0.0
@@ -72,6 +77,7 @@ class Veno(Fighter):
         self.hover_time = 0.0
         self.hover_phase = 0.0
         self.decision_cd = 0.0
+        self.opening_cd = 0.0
         self.attack_runtime: AttackRuntime | None = None
         self.attack_id: str | None = None
         self.reset()
@@ -101,6 +107,7 @@ class Veno(Fighter):
         self.poison_cd = max(0.0, self.poison_cd - dt)
         self.web_cd = max(0.0, self.web_cd - dt)
         self.decision_cd = max(0.0, self.decision_cd - dt)
+        self.opening_cd = max(0.0, self.opening_cd - dt)
 
         if self.state == FighterState.KO:
             self.vx = 0.0
@@ -205,7 +212,16 @@ class Veno(Fighter):
                 self._set_hover_anim()
                 self.anim.update(dt)
                 return
-            if distance <= self.bite_range and self.bite_cd <= 0.0:
+            if (
+                distance <= self.bite_range
+                and self.bite_cd <= 0.0
+                and self.opening_cd <= 0.0
+                and not self.group_skill_recent(
+                    scene,
+                    "veno_bite",
+                    self.group_skill_gaps.get("veno_bite", 0.0),
+                )
+            ):
                 self.start_attack("veno_bite", scene, target)
                 return
             if self._block_ahead(scene):
@@ -242,10 +258,20 @@ class Veno(Fighter):
                 self.vy = self.hover_descend_speed
                 return
             if self.poison_cd <= 0.0 and distance <= self.ranged_range:
-                self.start_attack("veno_poison", scene, target)
+                if self.opening_cd <= 0.0 and not self.group_skill_recent(
+                    scene,
+                    "veno_poison",
+                    self.group_skill_gaps.get("veno_poison", 0.0),
+                ):
+                    self.start_attack("veno_poison", scene, target)
                 return
             if self.web_cd <= 0.0 and distance <= self.ranged_range:
-                self.start_attack("veno_web", scene, target)
+                if self.opening_cd <= 0.0 and not self.group_skill_recent(
+                    scene,
+                    "veno_web",
+                    self.group_skill_gaps.get("veno_web", 0.0),
+                ):
+                    self.start_attack("veno_web", scene, target)
                 return
             if self.poison_cd > 0.0 and self.web_cd > 0.0 and self.hover_time >= 0.5:
                 self.mode = "descend"
@@ -323,6 +349,7 @@ class Veno(Fighter):
             self.poison_cd = self.poison_cd_max
         elif attack_id == "veno_web":
             self.web_cd = self.web_cd_max
+        self.note_attack_started(scene, attack_id)
 
     def _update_attack(self, dt: float) -> None:
         self.vx = 0.0
@@ -438,6 +465,7 @@ class Veno(Fighter):
         self.hover_time = 0.0
         self.hover_phase = 0.0
         self.decision_cd = 0.0
+        self.opening_cd = self.opening_delay
         self.attack_runtime = None
         self.attack_id = None
         if self.anim is not None:

@@ -35,9 +35,10 @@ Dummy/Creepy Shooter/Warrior: LMB clip alternation and the +1s passive (`rhea_lm
 Lina vs Veno-Spider and checks bite, poison dps/stacking, web stun, hover ascent/descent, V/C/X/Z
 slots, win and `veno_missing_frames`. Phase E switches to Bat and checks the five-Bat group
 (selected with
-F7; the startup default is Creepy Shooter), five spawn/cruise heights, free flight 40–420, dive 10
-(height-gated), V/C/X/Z slots, sonic 12 + 1s stun, out/return/wall/barrier/platform bounce, the
-0.65s cast lock, hurt/stun staying airborne, KO landing, win, the F7 order, the five-body group
+F7; the startup default is Creepy Shooter), five initial altitudes, the 5-flight 3-high/2-low
+cycle in 40–477 with random waypoints and a 2s low stay, dive 10 (height-gated), V/C/X/Z slots,
+sonic 12 + 0.8s stun (high flights only), out/return/wall/barrier/platform bounce, the 0.65s cast
+lock, hurt/stun staying airborne, KO landing, win, the F7 order, the five-body group
 spawn/independent cooldowns/WIN and the sonic-only random stagger.
 Phase F switches to Creepy Shooter and checks the mirrored stage variant, HP/ATK/slots, the straight
 shot (30, block collision), the 1s lock wind-up and three-frame reticle, the homing bolt (platform
@@ -47,6 +48,21 @@ no-platform rejection), barrier hopping (`creepy_ai_hop`), AI priority, V/C/X/Z 
 cleanup, stage switching, ladder hits (`creepy_ladder_hit_mid_ok`, `creepy_ladder_hit_platform_ok`,
 `creepy_ladder_hit_top_ok`, `creepy_ladder_hit_ok`) and `creepy_missing_frames` /
 `creepy_fx_missing`.
+Phase G switches to Mech-Crab and checks the no-barrier stage variant (long platform 170–649 at
+surface 268, short 796–1110 at 220, spawn 1000,620), HP 400/ATK 30 and the four skill slots, full
+super armor through every skill (damage still applies and HP 0 still KOs), the core laser (1.0s
+warning, 1.5s active at 90°/s, 36 once per target, platform blocking, stationary caster), the
+locked-direction charge (5s cooldown, 1.0s warning, 45), the player-side claw slam (30 + 1.2s
+stun), the leap slam (8s cooldown, 0.8s warning, fixed reticle, terrain-ignoring flight, 60 in a
+100px AoE, platform landing), the 1s skill gap, V/C/X/Z mapping, WIN, cleanup, AI priority and
+`mech_crab_missing_frames` / `mech_crab_fx_missing`.
+Phase H switches to Shadow Ninja and checks its flat stage variant (spawn 1000,620), HP/ATK copied
+from the current character, 1.5× walk, the four slots with an empty slot 4, the 0.35s/0.5s high
+slash (standing hit, crouching dodge), the 5s low kunai (1.2atk, 1s stun, one mark, no block
+penetration), the 8s dash (~640px, player pass-through, low jump-dodgeable hitbox), the independent
+mark stack (1→2→3→detonate→1, extra atk + 1s stun, KO/reset clears, super armor only blocks the
+stun), the close/far/low-HP AI, crouch/jump defense, barrier hop, WIN/cleanup and
+`shadow_ninja_missing_frames` / `shadow_ninja_fx_missing`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the early midpoint mount
@@ -94,9 +110,13 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   Q/E cooldowns and the target's `poison[rhea_poison]` line without an energy or passive gauge.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
   (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
-`creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns. The
-lock reticle is draw-only. Poison and stun appear in the status list. The three mark pips above each
-  living enemy, the green poison pulse and the stun stars are draw-only.
+`creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns;
+for Mech-Crab they show `mech_laser`, `mech_charge`, `mech_claw_slam` and `mech_leap_slam`; for
+Shadow Ninja they show `shadow_kunai_slash`, `shadow_kunai_throw`, `shadow_dash` and `-`, and the
+panel adds `SHADOW MARKS n/3 BURST ... LAST ...` for the player-side marks. Both lock reticles are
+draw-only. Poison and stun appear in the status list. The three mark pips above each living enemy,
+the three purple pips above the player during a Shadow Ninja fight, the green poison pulse and the
+stun stars are draw-only.
 
 ## Simulation controls
 
@@ -112,7 +132,7 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → training Dummy → …) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → Mech-Crab → Shadow Ninja → training Dummy → …) |
 | [ / ] | Cycle the playable character roster (Lina ↔ Nyra ↔ Rhea) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
@@ -190,19 +210,28 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
    use the same teal/orange family. The normal form has no code-generated ball.
 10. Bat checks: the five-Bat group is selected with F7 (`count: 5`; the startup default is Creepy
     Shooter).
-    With the x=600 spawn it uses x offsets `[0,-160,160,-80,80]` and altitudes
-    `180/320/240/380/280`; they keep those as cruise heights. F7 selects Bat after Veno, and F8
-    starts the AI. V dives (locked direction, 10 damage, 2s); it
-    only fires when `_dive_can_reach` confirms the dive hitbox can reach the player from the current
-    altitude, otherwise the Bat keeps flying. C casts the sonic (0.65s lock, 12 + 1s stun, 10s); the
-    sonic is the only randomly-timed skill (random 0-2.5s opening cooldown + 50% cast gate), and a
-    0.55s group stagger prevents same-skill overlaps. X/Z are no-ops. The sonic spawns at the mouth
-    (46px forward / 30px above the feet), uses a forward circle hitbox (+8px, r24), bounces off
-    arena walls and barrier/platform AABBs, returns to the Bat's current position and hits at most
-    once. Use B to compare block on/off; ladders are unaffected. F1 shows the 100×66 hurtbox and the dive hitbox
-    following the body; F2 shows `MODE fly`, `HOVER` altitude, slots and cooldowns. Flight range is
-    40–420 (preferred 240, bob 24, vertical speed 300). Hurt/stun keep it airborne; only KO falls
-    and switches to `ko_01`. All five Bats must die for WIN.
+    The base is x=820 with per-member `spawn_jitter: 40`. It uses x offsets
+    `[0,-160,160,-80,80]` and initial altitudes `180/320/240/380/280`. F7 selects Bat after Veno,
+    and F8 starts the AI. Each Bat keeps a shuffled 5-flight bag (3 high / 2 low); a free flight
+    lasts 5s, a low flight adds a 2s stay; high targets random 400–477 (screen y 143–220), low
+    target is screen y=550; the initial timers are staggered 5/6/7/8/9s. During free flight it
+    picks a random x waypoint (about 160–1120) every 0.9–1.4s or within 18px, so it keeps moving.
+    V dives (locked direction, 10 damage, 2s); it only fires when `_dive_can_reach` confirms the
+    dive hitbox can reach the player from the current altitude, otherwise the Bat keeps flying.
+    C casts the sonic (0.65s lock, 12 + **0.8s stun**, 10s); the sonic is available only on high
+    flights and is the only randomly-timed skill (random 0-2.5s opening cooldown + 50% cast gate).
+    A same-skill group gap (sonic 1.2s / dive 0.8s) plus a 0.5s opening delay prevents same-skill
+    overlaps (see DESIGN_DECISIONS §Multi-body enemy rules). X/Z are no-ops. The sonic spawns at
+    the mouth (46px forward / 30px above the feet), uses a forward circle hitbox (+8px, r24),
+    bounces off arena walls and barrier/platform AABBs, returns to the Bat's current position and
+    hits at most once. Use B to compare block on/off; ladders are unaffected. F1 shows the 100×66
+    hurtbox and the dive hitbox following the body; F2 shows `MODE fly`, `HOVER` altitude,
+    `FLIGHT <high|low> <remaining>s target <height>h wx <waypoint> stay <s> bag <H>H/<L>L`, slots
+    and cooldowns. Flight range is 40–477 (preferred 240 only as the reset cruise-height fallback,
+    bob 24, vertical speed 300); the 477 cap keeps the sprite on screen. Hurt/stun keep it
+    airborne; only KO falls and switches to `ko_01`. All five Bats must die for WIN. Smoke: `bat_flight_cycle_ok` (3H/2L bag, high/low
+    heights, 2s low stay, no low-flight sonic, 20-damage punch reach, x span ≥80), `bat_group_gap_ok`
+    (12s observation window), `bat_sonic_ok` (0.8s stun).
 11. Creepy Shooter checks: the startup default (and the F7 step after Bat) selects it on the
     mirrored stage variant — long platform 601–1080 at y=220, short 170–484 at y=268, only the
     right ground barrier 790–880 (the left 400–490 was removed 2026-11-01), spawn (1000,220).
@@ -223,7 +252,27 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
     90px ground barriers (`jump_v×1.15`, `walk×2.0` horizontal). F1 shows the collision boxes; F2
     shows the four cooldowns. The remaining ground barrier sits below the flat-ground mid lane, so
     test block collision from the platform or with the smoke's direct `barrier.centery` bullet.
-12. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
+12. Mech-Crab checks: F7 selects it after Creepy Shooter (the startup default remains Creepy
+    Shooter) on its no-barrier variant — long platform 170–649 at 268, short 796–1110 at 220, spawn
+    (1000,620). It has no basic attack; V/C/X/Z are laser/charge/claw/leap. Every skill is
+    super-armored for its full duration, so hits only reduce HP and flash; HP 0 still KOs and
+    clears the beam/reticle. F1 shows the 160×150 hurtbox, the laser segment and the fixed landing
+    point; F2 shows the four cooldowns, current attack/clip/frame and `skill_gap`. The leap reticle
+    is a user-drawn three-frame image (0.22/0.18/0.40s, last frame held in flight) at the landing
+    point. The HP bar/name use `health_bar_lift` and sit above the shell. Smoke flags:
+    `mech_crab_*` plus `mech_crab_fx_missing == 0`.
+12b. Shadow Ninja checks: F7 selects it after Mech-Crab (the startup default remains Creepy
+    Shooter) on the flat variant (no blocks/ladders, spawn 1000,620). HP/ATK follow the current
+    character and walk is 1.5×; switching Lina/Nyra/Rhea or F9 keeps them in sync. V/C/X/Z are
+    slash/throw/dash/empty; Z is a no-op. F1 shows the 56×210 standing / 56×130 crouching hurtbox,
+    the high slash box, the low dash box and the low lane. F2 shows the four slots (S4 `-`), the
+    three cooldowns, current clip/frame and `SHADOW MARKS n/3`. Four consecutive hits (slash or
+    throw) stack 1→2→3→detonate→1 with extra atk damage + 1s stun; the purple pips are above the
+    player and coexist with Nyra's blue marks. The kunai is blocked by barriers/platforms; jump
+    over it. A full jump clears the dash low hitbox; crouch does not. The AI crouches against high
+    attacks, jumps against low/mid threats, hops barriers, tracks its own kunai into a dash, and
+    never uses skill 4. Smoke flags: `shadow_ninja_*` plus `shadow_ninja_fx_missing == 0`.
+13. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
     triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
     jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left
     hand/right leg high, frame 1 the right hand/left leg high; moving loops it, stopping holds the
@@ -239,8 +288,8 @@ lock reticle is draw-only. Poison and stun appear in the status list. The three 
     clip/frame. Use B to remove barriers/platforms from drawing/collision; ladders stay
     visible/climbable, and B-off at a ladder top holds the character on the ladder instead of
     mounting the platform. The toggle persists across F9 and resets on F5/rebuild.
-13. Edit `game/data/*.json` and press F5 to tune values without restarting.
-14. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
+14. Edit `game/data/*.json` and press F5 to tune values without restarting.
+15. If a frame looks wrong, replace the PNG under `assets/frames/<character>/` and press F5; the frame
     cache keys on path + mtime. Climb frames are `assets/frames/lina/climb/`,
     `assets/frames/lina/flame/climb/`, `assets/frames/nyra/climb/` and `assets/frames/rhea/climb/`.
     Rhea's star strips live in `assets/frames/rhea/fx/`. Projectile FX sprites use the

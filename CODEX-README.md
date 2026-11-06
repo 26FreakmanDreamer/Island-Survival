@@ -13,6 +13,7 @@
 - 今后新绘制角色动画时，单帧图、效果图、预览 GIF 等输出文件默认放在 `assets/generated/contact_sheets/`。本次已制作的人物素材保留现有位置，不为套用这条新规则而搬迁。除非用户另行指定，先在默认目录交付素材与预览；只有用户明确要求接入游戏时，才处理游戏运行用的帧目录。
 - 命名前先查看该目录中同一角色、同一动作的现有文件，沿用其角色名、动作名、帧号、版本号及用途后缀的写法。例如 `nyra_walk_v1.png`、`warrior_dash_v4.png`、`warrior_dash_candidates.png`。新版本使用新的版本号或清楚的用途后缀，不覆盖已有版本。
 - 角色形象来源和绘制约束遵循 `AGENTS.md`；每次生成图像前读取 `docs/IMAGE_GENERATION_RULES.md`。
+- Crooked Witch 已确认 base 为 `assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png`；后续图像均以此为主要参考，保持该图眼形及右手近侧持杖关系。Base 各版本统一保存在 `crooked_witch_base/`，只以文件名版本号区分，不新建版本文件夹。完整动画方案见 `docs/CROOKED_WITCH_ANIMATION_DESIGN.md`。
 
 ## UI 素材
 

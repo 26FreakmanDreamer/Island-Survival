@@ -1,0 +1,28 @@
+{
+  "title": "Crooked Witch TELEPORT_IN v1 - actor frames / base v4_02",
+  "columns": 3,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_in\\crooked_witch_teleport_in_v1_00.png",
+        "label": "00 silhouette pose",
+        "duration": "0.10"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_in\\crooked_witch_teleport_in_v1_01.png",
+        "label": "01 opening",
+        "duration": "0.10"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_in\\crooked_witch_teleport_in_v1_02.png",
+        "label": "02 idle",
+        "duration": "0.10"
+      }
+    ]
+  ]
+}

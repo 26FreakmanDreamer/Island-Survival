@@ -1,0 +1,28 @@
+{
+  "action": "walk",
+  "version": "v3",
+  "tool": "built-in image_gen",
+  "reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "pose_reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_05.png",
+  "revised_frame": 5,
+  "source_frames": [
+    "crooked_witch_walk_v1_00.png",
+    "crooked_witch_walk_v1_01.png",
+    "crooked_witch_walk_v1_02.png",
+    "crooked_witch_walk_v1_03.png",
+    "crooked_witch_walk_v1_04.png",
+    "crooked_witch_walk_v3_05.png"
+  ],
+  "frame_durations_s": [
+    0.16,
+    0.16,
+    0.16,
+    0.16,
+    0.16,
+    0.16
+  ],
+  "loop_duration_s": 0.96,
+  "status": "user_approved",
+  "user_approval_date": "2026-11-04",
+  "prompt": "Precise depth ordering revision of one game sprite on exact same 1254x1254 transparent canvas. Image 1 v4_02 is the primary character, approved eye, style, clothing, staff and scale reference. Image 2 is the final walk frame 05 to edit. Image 3 is walk frame 00 and shows the correct foreground staff overlap. Keep the head, expression, hat, hair, robe, feet, overall framing and pose of image 2. All background truly transparent. No haze, ground, shadow, or effects.\nPreserve the exact same character identity, body height, head size, shoulder width,\r\nlimb proportions, weapon size, camera distance, foot position and lighting as the reference.\r\nRight-facing three-quarter side view, full body and the entire weapon inside the frame,\r\nflat transparent background, no shadow, no text, no border, no scenery.\r\n\r\nCentering and framing are positioning choices only: never zoom, scale, stretch or shrink the\r\ncharacter to center it or to fit the full body/weapon. This applies whether the weapon is raised,\r\nlowered or held horizontally. If the weapon makes the silhouette taller or wider, keep the\r\ncharacter and weapon scale fixed and expand the canvas/margins or adjust the framing instead.\r\nIf the canonical runtime frame still cannot contain the full weapon at the fixed scale, stop and\r\nask the user; do not shrink the character or crop the weapon.\r\n\r\nCorrect near/far layering: the near arm and near leg are in front of the torso; the far arm\r\nand far leg stay behind it. The weapon is held by the same hand with a believable grip around\r\nthe haft; fingers wrap the haft, and the hand/weapon do not intersect the torso, head, legs,\r\nhair or clothing. No interpenetration, no merged or extra limbs, no floating parts, and no\r\nduplicated weapon.\r\n\r\nOnly change the pose: WALK final frame 05. Edit reference image 2 only at the staff and the overlap with the lifted right leg. Match the depth ordering shown in reference image 3 (walk frame 00): the near-side staff is visibly IN FRONT OF the forward-stepping right leg from waist down. The complete bronze shaft must be continuously visible from the gripping right hand to the bottom crystal tip. At the crossing with the lifted thigh/knee/boot around y780–925, the staff overlays and occludes a narrow strip of the leg; the shin and knee never cover the shaft. Draw the lower shaft and purple inset crystal as the same uninterrupted pole, not embedded in the boot, not a gap or a second staff. Keep the original staff almost in its original projected x-position and angle so the return to frame 00 is smooth. Preserve image 2's lifted forward right boot position and original stride silhouette; do not move the leg to solve the overlap. Right hand retains its exact near-side grip, left hangs empty at far hip..\r\n"
+}

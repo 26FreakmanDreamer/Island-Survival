@@ -1,0 +1,21 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-05",
+  "runtime_integrated": false,
+  "frames": [
+    "crooked_witch_poison_pool_v1_00.png",
+    "crooked_witch_poison_pool_v1_01.png",
+    "crooked_witch_poison_pool_v1_02.png",
+    "crooked_witch_poison_pool_v1_03.png"
+  ],
+  "sheet": "crooked_witch_poison_pool_v1_sheet.png",
+  "preview": "crooked_witch_poison_pool_v1_preview.gif",
+  "entry_frame": 0,
+  "loop_frames": [
+    1,
+    2
+  ],
+  "exit_frame": 3,
+  "lifetime_s": null,
+  "action": "shallow bubbling poison puddle appears only after miss, landing, or path end"
+}

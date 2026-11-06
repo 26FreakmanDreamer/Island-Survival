@@ -1,0 +1,26 @@
+{
+  "tool": "built-in image_gen",
+  "prompt_set": "Preserve crooked_witch_base_v4_02 identity, eye shape, costume, staff and camera; right-facing 3/4 view; near right hand alone grips staff; far left arm behind torso; exact body and weapon scale; full figure and staff; square transparent canvas; no VFX, background, shadow, text, extra limbs or interpenetration.",
+  "pose_prompts": [
+    {
+      "frame": 0,
+      "pose": "turn shoulder, gather staff",
+      "source_kind": "reused approved frame"
+    },
+    {
+      "frame": 1,
+      "pose": "bend elbow, charge low",
+      "source_kind": "imagegen generated"
+    },
+    {
+      "frame": 2,
+      "pose": "point crystal down-right",
+      "source_kind": "imagegen generated"
+    },
+    {
+      "frame": 3,
+      "pose": "return staff to idle",
+      "source_kind": "reused approved frame"
+    }
+  ]
+}

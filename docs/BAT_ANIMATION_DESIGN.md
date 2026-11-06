@@ -1,7 +1,7 @@
 # Bat Side-View Animation Design
 
 > 日期：2026-10-25
-> 状态：**动画设计已批准，14 帧已安装到 `assets/frames/bat/`**。2026-10-26 已完成代码/数值接入（`game/bat.py`、`SonicWave`、数据和 smoke；最终沙盒值：atk 10、5 只、飞行 40–420、sonic-only 随机、俯冲高度门槛）；14 帧未改动。
+> 状态：**动画设计已批准，14 帧已安装到 `assets/frames/bat/`**。2026-10-26 已完成代码/数值接入（`game/bat.py`、`SonicWave`、数据和 smoke；最终沙盒值：atk 10、5 只、飞行 40–477、5 段飞行 3 高 2 低随机、sonic 仅高空、俯冲高度门槛）；14 帧未改动。
 > 范围：只覆盖 Bat 角色动画与素材；不包含 `game/` 代码、`game/data/` 数值、默认阵容或声波弹体实现。
 > 下阶段代码/数据 handoff：`docs/NEXT_SESSION_BAT_FULL.md`。
 
@@ -155,32 +155,34 @@ assets/frames/bat/ko/ko_00..01.png
 
 已完成：
 
-- `game/bat.py`：自由飞行、standoff AI、俯冲、0.65s 声波施法锁定、2s/10s 每实例冷却、hurt/stun 空中保持、KO 落地帧切换、reset/facing。
+- `game/bat.py`：自由飞行、随机航点 AI、5 段飞行（3 高 2 低，高空随机 400–477 / 低空 550 且停 2s）、俯冲、0.65s 声波施法锁定（仅高空）、2s/10s 每实例冷却、0.8s 声波眩晕、hurt/stun 空中保持、KO 落地帧切换、reset/facing。
 - `game/projectile.py::SonicWave`：去程/回程、左右墙/顶部/地面/真实 block 矩形反弹、命中一次、穿过玩家、追踪 owner 当前位置、owner 死亡 0.5s、超时/泄漏上限。
-- `game/data/stats.json`、`attacks.json`、`animations.json`、`roster.json`、`debug.json` 的 bat 条目；默认对局 **5 Bats**（`count: 5`，`spawn_offsets` + `spawn_heights`）。
+- `game/data/stats.json`、`attacks.json`、`animations.json`、`roster.json`、`debug.json` 的 bat 条目；选择 Bat 时生成 **5 Bats**（`count: 5`，`spawn_offsets` + `spawn_heights`）。
 - `game/config.py`、`game/roster.py`、`game/scene.py`（飞行生成/高度、sonic 分支、cast/impact/dive-hit FX）、`main.py` smoke。
 - 声波程序化 **Wi-Fi 三层弧 + 发射点 + 拖尾**；前向圆 hitbox（+8px / r24）；俯冲命中 FX。
-- 5 只编组：独立冷却、`bat_group_*` smoke、sonic-only 随机错峰、俯冲高度门槛。
+- 5 只编组：独立冷却、`bat_group_*` smoke、sonic-only 随机错峰、俯冲高度门槛；sonic 只在 `flight_side == "high"` 时可用。
+- 2026-11-02 多体规则（右半生成 + `spawn_jitter: 40`、sonic 1.2s / dive 0.8s 同技能组间隔、0.5s 开场缓冲）已实现；规则见 `docs/DESIGN_DECISIONS.md` §Multi-body enemy rules。
+- 2026-11-02 飞行周期（5 段飞行袋 3 高 2 低、高空 400–477、低空 550 停 2s、初始计时 5/6/7/8/9s、随机 x 航点约 160–1120 每 0.9–1.4s、最高 477 不出屏）已实现；`bat_flight_cycle_ok` 同时验证高度、停留、低空禁用 sonic、可被 20 伤害拳击中和 x 跨度。
 - `README.md`、`docs/DESIGN_DECISIONS.md`、`docs/DEBUG.md`、`docs/ASSET_PIPELINE.md` 的代码相关更新。
 
 仍待：
 
-- 5 只 Bat 的实际平衡/手感（atk 10、冷却、巡航高度、sonic 随机概率仍可调）。
+- 5 只 Bat 的实际平衡/手感（atk 10、冷却、飞行周期/高度、sonic 随机概率仍可调）。
 - Bat Cave 背景（默认不接入）。
 
 ## 9. 验证
 
 - 安装后 `assets/frames/bat/` 共 **14** 个 PNG。
 - `.venv/Scripts/python.exe main.py --smoke-test` → **exit 0**；Bat 与现有 flags 全部通过。
-- 游戏默认对局生成 **5 只 Bat**，出生高度/巡航高度为 180/320/240/380/280px。
-- 5 只 AI 实测：sonic 随机+群体错峰，俯冲只在 hitbox 能触及玩家时释放；无同技能 0.55s 内重叠。
+- 选择 Bat 时生成 **5 只 Bat**，初始高度为 180/320/240/380/280px，初始飞行计时 5/6/7/8/9s；之后按 5 段飞行袋 3 高 2 低循环。
+- 5 只 AI 实测：sonic 随机+群体错峰且只在高空释放，俯冲只在 hitbox 能触及玩家时释放；自由飞行中每只按随机 x 航点持续移动；同技能组间隔为 sonic 1.2s / dive 0.8s，另有 0.5s 开场缓冲，`bat_group_gap_ok` 验证实际起手时间戳。
 - 未 commit；未动 `Image/`、`instruction.docx`、`UI Resources/`、其他敌人。
 
 ## 10. 风险 / 待确认
 
 - hurtbox `100×66` 是否偏大/偏小，需 F1/F2 调试框确认。
 - 运行时画布 192、pivot `(115,143)` 与 source 384 的 downscale 由 `animations.json` 统一；不要在代码里另做缩放。
-- 5 只 Bat 的声波压力已用 sonic-only 随机、0.55s 群体错峰和俯冲高度门槛缓解，但仍需实测平衡。
-- 巡航高度 180–380 时 Lina 的地面拳/踢大多够不到；需要跳跃或趁俯冲时攻击。若手感不对，优先调 `spawn_heights`/`flight.preferred_height`，不改帧。
+- 5 只 Bat 的声波压力已用 sonic-only 随机、sonic 仅高空、sonic 1.2s / dive 0.8s 同技能间隔、0.5s 开场缓冲和俯冲高度门槛缓解，仍待实测平衡。
+- 高空 400–477 和初始高度 180–380 时 Lina 的地面拳/踢够不到；低空 550（停 2s）和俯冲时可用 20 伤害拳击中。若手感不对，优先调 `flight_cycle` 参数，不改帧。
 - 声波弹体、VFX 与施法/命中帧的 handoff 已按 t=0.24 对齐；hitbox 为前向圆 +8/r24。
 - 若后续动作帧身体大小漂移，沿用 v8 B 的一次性归一化方法，不要逐帧修图。

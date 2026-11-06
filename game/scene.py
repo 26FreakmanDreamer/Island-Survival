@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import random
 
 import pygame
 
@@ -29,6 +30,7 @@ from .projectile import (
     CreepyDownBullet,
     CreepyHomingBullet,
     QWave,
+    ShadowKunaiProjectile,
     ShurikenProjectile,
     SonicWave,
     SwordWave,
@@ -144,10 +146,12 @@ class ArenaScene:
             offsets: list = []
             modes: list = []
             heights: list = []
+            jitter = 0.0
         else:
             offsets = list(self.enemy_spec.get("spawn_offsets", []))
             modes = list(self.enemy_spec.get("spawn_modes", []))
             heights = list(self.enemy_spec.get("spawn_heights", []))
+            jitter = float(self.enemy_spec.get("spawn_jitter", 0.0))
         # Flying enemies always spawn airborne. This branch deliberately sits
         # outside the enemy_count_override suppression so isolated smoke
         # checks still get a flier rather than a grounded Bat.
@@ -156,6 +160,8 @@ class ArenaScene:
         for index, enemy in enumerate(self.enemies):
             offset = float(offsets[index]) if index < len(offsets) else 0.0
             x = base_x + offset
+            if jitter > 0.0:
+                x += random.uniform(-jitter, jitter)
             is_flying = flying_spec or bool(getattr(enemy, "flying", False))
             half = (
                 enemy.hurtbox_width * 0.5
@@ -210,6 +216,10 @@ class ArenaScene:
                     enemy.anim.set_clip("hover")
             elif enemy.anim is not None:
                 enemy.anim.set_clip("idle")
+            if hasattr(enemy, "flight_remaining") and hasattr(
+                enemy, "flight_stagger"
+            ):
+                enemy.flight_remaining += index * enemy.flight_stagger
 
     def _pick_primary(self) -> None:
         living = [enemy for enemy in self.enemies if enemy.hp > 0.0]
@@ -244,6 +254,14 @@ class ArenaScene:
         self.input.clear()
         self._force_ai_off()
         self._resolve_stage_overlaps()
+        self._sync_enemy_stats_from_player()
+
+    def _sync_enemy_stats_from_player(self) -> None:
+        """Let enemies that mirror the player's stats copy them at battle start."""
+        for enemy in self.enemies:
+            sync = getattr(enemy, "sync_from_player", None)
+            if sync is not None:
+                sync(self.player, full_heal=True)
 
     def _resolve_stage_overlaps(self) -> None:
         """Push fighters out of solids after a rebuild or B re-enable."""
@@ -368,6 +386,7 @@ class ArenaScene:
         self._pick_primary()
         self._force_ai_off()
         self._resolve_stage_overlaps()
+        self._sync_enemy_stats_from_player()
         self.projectiles = []
         self.slash_effects = []
         self.fx_effects = []
@@ -458,6 +477,8 @@ class ArenaScene:
         for enemy in self.enemies:
             if enemy.hp <= 0.0 or not enemy.entry.get("separates", False):
                 continue
+            if getattr(enemy, "ignore_separation", False):
+                continue
             player_body = self.stage.body_rect(self.player)
             enemy_body = self.stage.body_rect(enemy)
             if not player_body.colliderect(enemy_body):
@@ -489,11 +510,13 @@ class ArenaScene:
             self.store.stats["combat"].get("separation_speed", 600.0)
         ) * dt
         for index, first in enumerate(self.enemies):
-            if first.hp <= 0.0:
+            if first.hp <= 0.0 or getattr(first, "ignore_separation", False):
                 continue
             first_body = self.stage.body_rect(first)
             for second in self.enemies[index + 1:]:
-                if second.hp <= 0.0:
+                if second.hp <= 0.0 or getattr(
+                    second, "ignore_separation", False
+                ):
                     continue
                 if not first_body.colliderect(self.stage.body_rect(second)):
                     continue
@@ -634,6 +657,19 @@ class ArenaScene:
                 x + ux * 6.0, y + uy * 6.0, (160, 95, 220), 4,
                 speed=120.0, life=(0.10, 0.18),
             )
+        elif visual_kind == "shadow_kunai":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (175, 105, 255), life=0.12,
+                    start_radius=4.0, end_radius=22.0, width=2,
+                    sparks=4, spark_color=(240, 220, 255),
+                    kind="shadow_kunai_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (205, 150, 255), 4,
+                speed=140.0, life=(0.08, 0.16),
+            )
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
                 RingBurstFx(
@@ -759,6 +795,16 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (160, 95, 220), 5, speed=150.0
             )
+        elif visual_kind == "shadow_kunai":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (185, 110, 255), life=0.18,
+                    start_radius=6.0, end_radius=34.0, width=2,
+                    sparks=5, spark_color=(240, 220, 255),
+                    kind="shadow_kunai_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (205, 150, 255), 8, speed=180.0)
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
                 RingBurstFx(
@@ -818,6 +864,90 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (235, 220, 255), 4, speed=140.0,
                 life=(0.08, 0.16), gravity=120.0,
+            )
+        elif kind == "shadow_slash_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (190, 115, 255), life=0.14,
+                    start_radius=6.0, end_radius=30.0, width=2,
+                    sparks=4, spark_color=(240, 220, 255),
+                    kind="shadow_slash_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (205, 150, 255), 6, speed=160.0,
+                life=(0.08, 0.18), gravity=120.0,
+            )
+        elif kind == "shadow_dash_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (170, 90, 255), life=0.18,
+                    start_radius=10.0, end_radius=42.0, width=4,
+                    sparks=6, spark_color=(240, 220, 255),
+                    kind="shadow_dash_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (195, 125, 255), 8, speed=190.0,
+                life=(0.10, 0.22), gravity=180.0,
+            )
+        elif kind == "mech_laser_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (255, 90, 60), life=0.16,
+                    start_radius=8.0, end_radius=34.0, width=3,
+                    sparks=4, spark_color=(255, 220, 170),
+                    kind="mech_laser_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (255, 150, 90), 5, speed=150.0,
+                life=(0.08, 0.18), gravity=120.0,
+            )
+        elif kind == "mech_charge_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (240, 170, 80), life=0.18,
+                    start_radius=10.0, end_radius=42.0, width=4,
+                    sparks=5, spark_color=(255, 225, 170),
+                    kind="mech_charge_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (220, 180, 140), 7, speed=180.0,
+                life=(0.10, 0.22), gravity=220.0,
+            )
+        elif kind == "mech_claw_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (255, 120, 50), life=0.20,
+                    start_radius=12.0, end_radius=52.0, width=5,
+                    sparks=7, spark_color=(255, 230, 180),
+                    kind="mech_claw_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (235, 195, 145), 8, speed=200.0,
+                life=(0.10, 0.24), gravity=260.0,
+            )
+        elif kind == "mech_leap_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (255, 140, 60), life=0.24,
+                    start_radius=16.0, end_radius=70.0, width=6,
+                    sparks=10, spark_color=(255, 235, 190),
+                    kind="mech_leap_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (230, 195, 150), 11, speed=250.0,
+                life=(0.12, 0.30), gravity=300.0,
             )
 
     def spawn_slash_effect(
@@ -931,8 +1061,37 @@ class ArenaScene:
                 bonus_target_max_hp_pct=float(
                     event.get("bonus_target_max_hp_pct", 0.0)
                 ),
+                bonus_vs_poison_max_hp_pct=float(
+                    event.get("bonus_vs_poison_max_hp_pct", 0.0)
+                ),
+                bonus_vs_poison_source=event.get("bonus_vs_poison_source"),
                 penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
+        elif projectile_kind == "shadow_kunai":
+            projectile = ShadowKunaiProjectile(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 30.0)),
+                y=lane_y,
+                direction=direction,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 900.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(
+                    event.get("hitbox_radius", event.get("radius", 10.0))
+                ),
+                status=event.get("status"),
+                status_duration=float(event.get("status_duration", 0.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+            projectile.scene = self
         elif projectile_kind == "sonic_wave":
             origin_height = float(event.get("origin_height", 30.0))
             origin_forward = float(event.get("origin_forward", 46.0))
@@ -1244,6 +1403,46 @@ class ArenaScene:
                     ring, (round(enemy.x - center), round(base_y - center))
                 )
 
+    def _draw_shadow_mark_fx(self, surface: pygame.Surface) -> None:
+        """Shadow Ninja's purple marks live on the player, not the enemy."""
+        if not any(
+            getattr(enemy, "is_shadow_ninja", False) for enemy in self.enemies
+        ):
+            return
+        player = self.player
+        if player.hp <= 0.0:
+            return
+        marks = int(getattr(player, "shadow_marks", 0))
+        burst = float(getattr(player, "shadow_mark_burst_time", 0.0))
+        base_y = player.y - player.hurtbox_dims[1] - 70.0
+        for index in range(3):
+            x = player.x + (index - 1) * 16.0
+            filled = index < marks
+            color = (190, 120, 255) if filled else (72, 52, 96)
+            points = [
+                (round(x), round(base_y - 6)),
+                (round(x + 6), round(base_y)),
+                (round(x), round(base_y + 6)),
+                (round(x - 6), round(base_y)),
+            ]
+            pygame.draw.polygon(surface, color, points)
+            if filled:
+                pygame.draw.polygon(surface, (240, 220, 255), points, 1)
+        if burst > 0.0:
+            progress = max(0.0, min(1.0, 1.0 - burst / 0.4))
+            radius = 10 + round(38 * progress)
+            alpha = max(0, round(200 * (1.0 - progress)))
+            ring = pygame.Surface(
+                (radius * 2 + 8, radius * 2 + 8), pygame.SRCALPHA
+            )
+            center = ring.get_width() // 2
+            pygame.draw.circle(
+                ring, (190, 120, 255, alpha), (center, center), radius, 3
+            )
+            surface.blit(
+                ring, (round(player.x - center), round(base_y - center))
+            )
+
     def draw(self, surface: pygame.Surface) -> None:
         self.stage.draw(surface)
         self._draw_knock_up_effects(surface)
@@ -1264,6 +1463,7 @@ class ArenaScene:
             effect.draw(surface)
         self._draw_status_fx(surface, self.player)
         self._draw_mark_fx(surface)
+        self._draw_shadow_mark_fx(surface)
         self.hud.draw(surface, self)
         if self.show_overlay:
             self.overlay.draw(surface, self)

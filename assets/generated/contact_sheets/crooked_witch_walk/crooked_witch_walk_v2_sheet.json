@@ -1,0 +1,45 @@
+{
+  "title": "Crooked Witch WALK v2 - approved poses, 0.16s each / 0.96s loop",
+  "columns": 3,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_00.png",
+        "label": "00 right contact",
+        "duration": "0.16"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_01.png",
+        "label": "01 right support",
+        "duration": "0.16"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_02.png",
+        "label": "02 left passing",
+        "duration": "0.16"
+      }
+    ],
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_03.png",
+        "label": "03 left contact",
+        "duration": "0.16"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_04.png",
+        "label": "04 left support",
+        "duration": "0.16"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_walk\\crooked_witch_walk_v1_05.png",
+        "label": "05 right passing",
+        "duration": "0.16"
+      }
+    ]
+  ]
+}

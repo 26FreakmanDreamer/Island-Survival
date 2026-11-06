@@ -46,8 +46,8 @@
     "player_spawn": [280, 620],
     "dummy_spawn": [600, 620],
     "warrior_spawn": [600, 620],
-    "veno_spawn": [600, 620],
-    "bat_spawn": [600, 470]
+    "veno_spawn": [820, 620],
+    "bat_spawn": [820, 470]
   },
   "stage_variants": {
     "creepy_shooter": {
@@ -96,9 +96,149 @@
       "player_spawn": [280, 620],
       "dummy_spawn": [600, 620],
       "warrior_spawn": [600, 620],
-      "veno_spawn": [600, 620],
-      "bat_spawn": [600, 470],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470],
       "creepy_shooter_spawn": [1000, 220]
+    },
+    "warrior": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [
+        {"kind": "barrier", "rect": [400, 560, 90, 60]},
+        {"kind": "barrier", "rect": [790, 560, 90, 60]},
+        {
+          "kind": "platform",
+          "rect": [400, 220, 479, 78],
+          "surface_y": 220,
+          "sprite": "platform_tropical_long.png",
+          "sprite_rect": [400, 206, 479, 96]
+        }
+      ],
+      "ladders": [
+        {
+          "rect": [608, 220, 64, 400],
+          "top_y": 220,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood.png",
+          "sprite_rect": [576, 220, 128, 400]
+        }
+      ],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470]
+    },
+    "bat": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [],
+      "ladders": [],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470]
+    },
+    "veno": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [],
+      "ladders": [],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470]
+    },
+    "mech_crab": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [
+        {
+          "kind": "platform",
+          "rect": [170, 268, 479, 78],
+          "surface_y": 268,
+          "sprite": "platform_tropical_long.png",
+          "sprite_rect": [170, 254, 479, 96]
+        },
+        {
+          "kind": "platform",
+          "rect": [796, 220, 314, 78],
+          "surface_y": 220,
+          "sprite": "platform_tropical_short.png",
+          "sprite_rect": [796, 206, 314, 96]
+        }
+      ],
+      "ladders": [
+        {
+          "rect": [508, 268, 64, 352],
+          "top_y": 268,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood_medium.png",
+          "sprite_rect": [460, 268, 160, 352]
+        },
+        {
+          "rect": [921, 220, 64, 400],
+          "top_y": 220,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood.png",
+          "sprite_rect": [889, 220, 128, 400]
+        }
+      ],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470],
+      "mech_crab_spawn": [1000, 620]
+    },
+    "shadow_ninja": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [],
+      "ladders": [],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470],
+      "shadow_ninja_spawn": [1000, 620]
     }
   },
   "roster": {

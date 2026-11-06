@@ -1,0 +1,57 @@
+{
+  "title": "crooked_witch_lightning v2 / sleeve-staff occlusion correction",
+  "status": "awaiting_user_review",
+  "reference_base": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "canvas": [
+    1536,
+    1254
+  ],
+  "alignment": "translation only; no resizing or repainting",
+  "release_frame": 2,
+  "total_duration_s": 0.6,
+  "runtime_integrated": false,
+  "corrected_frame": 2,
+  "correction": "staff shaft in front of sleeve; gripping fingers in front of staff; original action preserved",
+  "frames": [
+    {
+      "frame": 0,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_00.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_00_source.png",
+      "pose": "turn shoulder, gather staff",
+      "duration_s": 0.15,
+      "translation_x_px": 107,
+      "translation_y_px": 0,
+      "reused_from_v1": true
+    },
+    {
+      "frame": 1,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_01.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_01_source.png",
+      "pose": "raise elbow, charge",
+      "duration_s": 0.15,
+      "translation_x_px": 216,
+      "translation_y_px": 0,
+      "reused_from_v1": true
+    },
+    {
+      "frame": 2,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_02.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_02_source.png",
+      "pose": "point crystal forward",
+      "duration_s": 0.1,
+      "translation_x_px": 294,
+      "translation_y_px": 0,
+      "reused_from_v1": false
+    },
+    {
+      "frame": 3,
+      "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_03.png",
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_03_source.png",
+      "pose": "return staff to idle",
+      "duration_s": 0.2,
+      "translation_x_px": 101,
+      "translation_y_px": 0,
+      "reused_from_v1": true
+    }
+  ]
+}

@@ -74,6 +74,12 @@ class StatusSet:
             return bool(self.poisons)
         return kind in self.effects
 
+    def has_poison_source(self, source: str | None = None) -> bool:
+        """True if the target has any poison, or one from a specific source."""
+        if source is None:
+            return bool(self.poisons)
+        return any(poison.source == source for poison in self.poisons)
+
     def get(self, kind: str) -> Effect | None:
         return self.effects.get(kind)
 

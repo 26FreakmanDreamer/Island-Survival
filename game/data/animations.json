@@ -230,8 +230,13 @@
     },
     "rhea_dash": {
       "loop": false,
-      "frames": ["rhea_dash/rhea_dash_00.png", "rhea_dash/rhea_dash_01.png", "rhea_dash/rhea_dash_02.png", "rhea_dash/rhea_dash_03.png", "rhea_dash/rhea_dash_04.png"],
-      "durations": [0.06, 0.20, 0.20, 0.14, 0.40]
+      "frames": ["rhea_dash/rhea_dash_00.png", "rhea_dash/rhea_dash_01.png", "rhea_dash/rhea_dash_02.png", "rhea_dash/rhea_dash_03.png"],
+      "durations": [0.06, 0.20, 0.20, 0.14]
+    },
+    "rhea_dash_return": {
+      "loop": false,
+      "frames": ["rhea_dash/rhea_dash_04.png"],
+      "durations": [0.12]
     },
     "climb": {
       "loop": true,
@@ -488,6 +493,109 @@
       "loop": false,
       "frames": ["creepy_jump_shot/creepy_jump_shot_00.png", "creepy_jump_shot/creepy_jump_shot_01.png", "creepy_jump_shot/creepy_jump_shot_02.png", "creepy_jump_shot/creepy_jump_shot_03.png"],
       "durations": [0.10, 0.15, 0.70, 0.15]
+    }
+  },
+  "mech_crab_frame_size": [640, 640],
+  "mech_crab_pivot": [320, 628],
+  "mech_crab_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.30, 0.30, 0.30, 0.30]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png"],
+      "durations": [0.15, 0.15, 0.15, 0.15]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_03.png", "ko/ko_04.png"],
+      "durations": [0.25, 0.20, 0.25, 0.30]
+    },
+    "mech_laser": {
+      "loop": false,
+      "frames": ["mech_laser/mech_laser_00.png", "mech_laser/mech_laser_01.png", "mech_laser/mech_laser_02.png", "mech_laser/mech_laser_03.png", "mech_laser/mech_laser_04.png", "mech_laser/mech_laser_05.png", "mech_laser/mech_laser_06.png", "mech_laser/mech_laser_07.png", "mech_laser/mech_laser_08.png"],
+      "durations": [0.25, 0.25, 0.25, 0.25, 0.50, 0.50, 0.50, 0.15, 0.15]
+    },
+    "mech_charge": {
+      "loop": false,
+      "frames": ["mech_charge/mech_charge_00.png", "mech_charge/mech_charge_01.png", "mech_charge/mech_charge_02.png", "mech_charge/mech_charge_03.png", "mech_charge/mech_charge_04.png", "mech_charge/mech_charge_05.png", "mech_charge/mech_charge_06.png"],
+      "durations": [0.25, 0.25, 0.25, 0.25, 0.275, 0.275, 0.25]
+    },
+    "mech_claw_slam": {
+      "loop": false,
+      "frames": ["mech_claw_slam/mech_claw_slam_00.png", "mech_claw_slam/mech_claw_slam_01.png", "mech_claw_slam/mech_claw_slam_02.png", "mech_claw_slam/mech_claw_slam_03.png", "mech_claw_slam/mech_claw_slam_04.png", "mech_claw_slam/mech_claw_slam_05.png", "mech_claw_slam/mech_claw_slam_06.png"],
+      "durations": [0.1667, 0.1667, 0.1666, 0.075, 0.075, 0.125, 0.125]
+    },
+    "mech_leap_slam": {
+      "loop": false,
+      "frames": ["mech_leap_slam/mech_leap_slam_00.png", "mech_leap_slam/mech_leap_slam_01.png", "mech_leap_slam/mech_leap_slam_02.png", "mech_leap_slam/mech_leap_slam_03.png", "mech_leap_slam/mech_leap_slam_04.png", "mech_leap_slam/mech_leap_slam_05.png", "mech_leap_slam/mech_leap_slam_06.png", "mech_leap_slam/mech_leap_slam_07.png"],
+      "durations": [0.20, 0.20, 0.20, 0.20, 0.2167, 0.2167, 0.2166, 0.20]
+    }
+  },
+  "shadow_ninja_frame_size": [384, 384],
+  "shadow_ninja_pivot": [192, 372],
+  "shadow_ninja_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.30, 0.30, 0.30, 0.30]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png", "walk/walk_04.png", "walk/walk_05.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["crouch/crouch_00.png"],
+      "durations": [0.50]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
+      "durations": [0.25, 0.20, 0.25, 0.30]
+    },
+    "shadow_kunai_slash": {
+      "loop": false,
+      "frames": ["shadow_kunai_slash/shadow_kunai_slash_00.png", "shadow_kunai_slash/shadow_kunai_slash_01.png", "shadow_kunai_slash/shadow_kunai_slash_02.png", "shadow_kunai_slash/shadow_kunai_slash_03.png", "shadow_kunai_slash/shadow_kunai_slash_04.png"],
+      "durations": [0.07, 0.07, 0.07, 0.07, 0.07]
+    },
+    "shadow_kunai_throw": {
+      "loop": false,
+      "frames": ["shadow_kunai_throw/shadow_kunai_throw_00.png", "shadow_kunai_throw/shadow_kunai_throw_01.png", "shadow_kunai_throw/shadow_kunai_throw_02.png", "shadow_kunai_throw/shadow_kunai_throw_03.png", "shadow_kunai_throw/shadow_kunai_throw_04.png"],
+      "durations": [0.09, 0.09, 0.09, 0.09, 0.09]
+    },
+    "shadow_dash": {
+      "loop": false,
+      "frames": ["shadow_dash/shadow_dash_00.png", "shadow_dash/shadow_dash_01.png", "shadow_dash/shadow_dash_02.png", "shadow_dash/shadow_dash_03.png", "shadow_dash/shadow_dash_04.png"],
+      "durations": [0.09, 0.09, 0.09, 0.09, 0.09]
+    },
+    "stun": {
+      "loop": false,
+      "frames": ["stun/stun_00.png"],
+      "durations": [0.50]
     }
   }
 }

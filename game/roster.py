@@ -8,8 +8,10 @@ from .config import ASSETS_DIR, ROOT
 from .creepy_shooter import CreepyShooter
 from .dummy import Dummy
 from .lina import Lina
+from .mech_crab import MechCrab
 from .nyra import Nyra
 from .rhea import Rhea
+from .shadow_ninja import ShadowNinja
 from .veno import Veno
 from .warrior import Warrior
 
@@ -22,6 +24,8 @@ FIGHTER_CLASSES = {
     "veno": Veno,
     "bat": Bat,
     "creepy_shooter": CreepyShooter,
+    "mech_crab": MechCrab,
+    "shadow_ninja": ShadowNinja,
 }
 
 

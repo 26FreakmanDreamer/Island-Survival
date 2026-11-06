@@ -1,0 +1,35 @@
+{
+  "title": "Crooked Witch KO v1 - base v4_02",
+  "columns": 2,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_ko\\crooked_witch_ko_v1_00.png",
+        "label": "00 stagger",
+        "duration": "0.15"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_ko\\crooked_witch_ko_v1_01.png",
+        "label": "01 knees buckle",
+        "duration": "0.20"
+      }
+    ],
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_ko\\crooked_witch_ko_v1_02.png",
+        "label": "02 side fall / release",
+        "duration": "0.20"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_ko\\crooked_witch_ko_v1_03.png",
+        "label": "03 down / hold",
+        "duration": "0.20"
+      }
+    ]
+  ]
+}

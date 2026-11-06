@@ -48,8 +48,10 @@ class HUD:
         h: int,
         label: str,
         ready: bool,
+        color: tuple[int, int, int] | None = None,
     ) -> None:
-        color = (70, 210, 140) if ready else (160, 160, 170)
+        if color is None:
+            color = (70, 210, 140) if ready else (160, 160, 170)
         pygame.draw.rect(surface, (18, 20, 26), (x, y, w, h))
         pygame.draw.rect(surface, color, (x, y, w, h), 1)
         text = self.small.render(label, True, color)
@@ -81,17 +83,31 @@ class HUD:
 
         if hasattr(player, "q_cd") and hasattr(player, "e_cd"):
             q_label = "Q READY" if player.q_cd <= 0.0 else f"Q {player.q_cd:.1f}s"
-            if player.e_cd > 0.0:
+            e_phase = getattr(player, "e_phase", None)
+            e_window = getattr(player, "e_window", 0.0)
+            e_color = None
+            if e_phase == "window":
+                e_label = f"E RETURN {e_window:.1f}s"
+                e_ready = False
+                e_color = (235, 180, 70)
+            elif e_phase is not None:
+                e_label = "E ACTIVE"
+                e_ready = False
+                e_color = (235, 180, 70)
+            elif player.e_cd > 0.0:
                 e_label = f"E {player.e_cd:.1f}s"
+                e_ready = False
             elif has_energy and player.energy < player.max_energy:
                 e_label = "E NEED 100"
+                e_ready = False
             else:
                 e_label = "E READY"
-            e_ready = player.e_cd <= 0.0 and (
-                not has_energy or player.energy >= player.max_energy
-            )
+                e_ready = True
+            e_ready = e_ready and player.e_cd <= 0.0
             self._badge(surface, 24, 106, 126, 28, q_label, player.q_cd <= 0.0)
-            self._badge(surface, 158, 106, 130, 28, e_label, e_ready)
+            self._badge(
+                surface, 158, 106, 130, 28, e_label, e_ready, e_color
+            )
 
         if hasattr(player, "flame_time") and hasattr(player, "current_flame_bonus"):
             if player.flame_time > 0.0:
@@ -109,7 +125,12 @@ class HUD:
             True,
             (240, 232, 220),
         )
-        label_y = round(enemy.y - enemy.hurtbox_dims[1] - 46.0)
+        lift = (
+            enemy.health_bar_lift
+            if getattr(enemy, "health_bar_lift", None) is not None
+            else enemy.hurtbox_dims[1]
+        )
+        label_y = round(enemy.y - lift - 46.0)
         surface.blit(
             label,
             (round(enemy.x - label.get_width() * 0.5), label_y),

@@ -1,0 +1,22 @@
+{
+  "action": "hurt",
+  "version": "v2",
+  "status": "user_approved",
+  "user_approval_date": "2026-11-04",
+  "tool": "built-in image_gen",
+  "reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "pose_reference": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_hurt\\crooked_witch_hurt_v1_00.png",
+  "revised_frame": 0,
+  "source_frames": [
+    "crooked_witch_hurt_v2_00.png",
+    "crooked_witch_hurt_v1_01.png"
+  ],
+  "frame_durations_s": [
+    0.1,
+    0.1
+  ],
+  "action_duration_s": 0.2,
+  "preview_final_hold_s": 0,
+  "runtime_integrated": false,
+  "prompt": "Precise sprite revision for the Crooked Witch, one full-size sprite, exact same 1254x1254 square transparent canvas. Image 1 is crooked_witch_base_v4_02, primary identity, costume and proportion reference. Image 2 is the pose reference. Preserve silver hair, ornate purple-and-gold costume, cream ruffles, crooked hat, brown boots, exact same face, eye shape and full crystal staff. True clear transparent alpha around the isolated sprite, no haze, ground, shadow, particles or glow. Right hand stays near-side on the staff; the left hand is empty.\nPreserve the exact same character identity, body height, head size, shoulder width,\r\nlimb proportions, weapon size, camera distance, foot position and lighting as the reference.\r\nRight-facing three-quarter side view, full body and the entire weapon inside the frame,\r\nflat transparent background, no shadow, no text, no border, no scenery.\r\n\r\nCentering and framing are positioning choices only: never zoom, scale, stretch or shrink the\r\ncharacter to center it or to fit the full body/weapon. This applies whether the weapon is raised,\r\nlowered or held horizontally. If the weapon makes the silhouette taller or wider, keep the\r\ncharacter and weapon scale fixed and expand the canvas/margins or adjust the framing instead.\r\nIf the canonical runtime frame still cannot contain the full weapon at the fixed scale, stop and\r\nask the user; do not shrink the character or crop the weapon.\r\n\r\nCorrect near/far layering: the near arm and near leg are in front of the torso; the far arm\r\nand far leg stay behind it. The weapon is held by the same hand with a believable grip around\r\nthe haft; fingers wrap the haft, and the hand/weapon do not intersect the torso, head, legs,\r\nhair or clothing. No interpenetration, no merged or extra limbs, no floating parts, and no\r\nduplicated weapon.\r\n\r\nOnly change the pose: Edit image 2, the current HURT frame 00. Exactly ONE change: return her empty far LEFT arm/hand to the neutral position shown in image 1, relaxed straight down by the far-side hip at the SCREEN-RIGHT edge of the waist and skirt, visible below the gripping right hand around x800–835 y710–790. Its elbow is hidden behind the torso; fingers hang loosely downward. No hand, wrist, or sleeve projecting behind the hair on screen-left; restore the robe edge there naturally. Keep image 2's recoil lean, face and eye opening, planted legs, swept hair, hat, and the tilted staff firmly grasped by the near RIGHT hand at the same angle and grip. Image 1 is the approved character, scale, eye, and neutral far-arm reference..\r\n"
+}

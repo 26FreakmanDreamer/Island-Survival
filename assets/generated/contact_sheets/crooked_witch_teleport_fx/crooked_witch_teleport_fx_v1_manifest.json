@@ -1,0 +1,33 @@
+{
+  "name": "crooked_witch_teleport_fx_v1",
+  "reference_base": "assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png",
+  "source": "crooked_witch_teleport_fx_v1_master.png",
+  "canvas": [
+    1254,
+    1254
+  ],
+  "fx_offset": [
+    0,
+    100
+  ],
+  "out_frames": [
+    "crooked_witch_teleport_fx_v1_out_00.png",
+    "crooked_witch_teleport_fx_v1_out_01.png",
+    "crooked_witch_teleport_fx_v1_out_02.png",
+    "crooked_witch_teleport_fx_v1_out_03.png",
+    "crooked_witch_teleport_fx_v1_out_04.png",
+    "crooked_witch_teleport_fx_v1_out_05.png"
+  ],
+  "in_frames": [
+    "crooked_witch_teleport_fx_v1_in_00.png",
+    "crooked_witch_teleport_fx_v1_in_01.png",
+    "crooked_witch_teleport_fx_v1_in_02.png",
+    "crooked_witch_teleport_fx_v1_in_03.png",
+    "crooked_witch_teleport_fx_v1_in_04.png",
+    "crooked_witch_teleport_fx_v1_in_05.png"
+  ],
+  "frame_duration_seconds": 0.1,
+  "preview": "crooked_witch_teleport_fx_v1_preview.gif",
+  "note": "Independent transparent VFX overlay. Character alpha changes exist only in the composited preview; approved character images remain untouched.",
+  "prompt": "Edit the first reference (draft teleport FX) using the approved witch base only for style and scale. Keep one vertical oval runic portal with transparent center and exterior. Ensure generous margins, thin quiet violet/lavender ring, sparse gold glints, no red/blue noise, no witch, staff, scenery, shadow, text or border."
+}

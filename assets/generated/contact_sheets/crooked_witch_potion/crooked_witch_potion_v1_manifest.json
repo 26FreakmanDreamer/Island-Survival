@@ -1,0 +1,27 @@
+{
+  "status": "superseded_by_v2",
+  "superseded_by": "crooked_witch_potion_v2_manifest.json",
+  "runtime_integrated": false,
+  "frames": [
+    "crooked_witch_potion_v1_00.png",
+    "crooked_witch_potion_v1_01.png",
+    "crooked_witch_potion_v1_02.png",
+    "crooked_witch_potion_v1_03.png"
+  ],
+  "sheet": "crooked_witch_potion_v1_sheet.png",
+  "preview": "crooked_witch_potion_v1_preview.gif",
+  "base": "../crooked_witch_base/crooked_witch_base_v4_02.png",
+  "frame_durations_s": [
+    0.15,
+    0.15,
+    0.15,
+    0.2
+  ],
+  "release_frame": 2,
+  "action": "staff windup, far hand opens, staff flicks and releases conjured bottle, return",
+  "fx": [
+    "../crooked_witch_potion_projectile",
+    "../crooked_witch_potion_break",
+    "../crooked_witch_poison_pool"
+  ]
+}

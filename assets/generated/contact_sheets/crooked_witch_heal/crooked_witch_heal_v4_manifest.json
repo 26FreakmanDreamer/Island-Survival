@@ -1,0 +1,35 @@
+{
+  "version": "v4",
+  "status": "pending_user_review",
+  "runtime_integrated": false,
+  "reason": "User clarified frame 01: the far hand is on screen-right and should gesture like the screen-right hand of frame 02; the near hand rests beside the body, slightly toward the rear.",
+  "source_frames": [
+    "crooked_witch_heal_v3_00.png",
+    "crooked_witch_heal_v4_01.png",
+    "crooked_witch_heal_v2_02.png",
+    "crooked_witch_heal_v2_03.png",
+    "crooked_witch_heal_v1_04.png"
+  ],
+  "revised_frames": [
+    1
+  ],
+  "detached_staff_prop": "crooked_witch_heal_staff_prop_v1.png",
+  "heal_fx": "../crooked_witch_heal_fx/crooked_witch_heal_fx_v1_sheet.png",
+  "hold_frames": [
+    2,
+    3
+  ],
+  "hold_duration_s": 5.0,
+  "fx_cycle_s": 1.0,
+  "pulse_count": 5,
+  "sheet": "crooked_witch_heal_v4_sheet.png",
+  "transition": "crooked_witch_heal_v4_transition.png",
+  "comparison": "crooked_witch_heal_v4_01_compare.png",
+  "composite_sheet": "crooked_witch_heal_v4_composite_sheet.png",
+  "preview": "crooked_witch_heal_v4_preview.gif",
+  "prompt_summary": "Edit frame 01 from the next frame 02: screen-right FAR hand extends palm up like 02, with slightly shorter reach; screen-left NEAR hand rests low beside body, slightly behind. Preserve approved base, hover scale, identity, outfit, transparency and detached staff. No swapped or crossed arms.",
+  "approved_frames": [
+    1
+  ],
+  "review_note": "User approved v4 frame 01 on 2026-11-05, then requested an extra transition frame after 00. v4 sequence retained as prior version."
+}

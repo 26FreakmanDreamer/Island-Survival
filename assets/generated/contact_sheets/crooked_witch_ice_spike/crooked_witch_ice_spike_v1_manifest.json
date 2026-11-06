@@ -1,0 +1,24 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-04",
+  "runtime_integrated": false,
+  "base": "assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png",
+  "frames": [
+    "crooked_witch_ice_spike_v1_00.png",
+    "crooked_witch_ice_spike_v1_01.png",
+    "crooked_witch_ice_spike_v1_02.png",
+    "crooked_witch_ice_spike_v1_03.png"
+  ],
+  "frame_durations_s": [
+    0.15,
+    0.15,
+    0.1,
+    0.2
+  ],
+  "release_frame": 2,
+  "warning": "../crooked_witch_ice_warning/crooked_witch_ice_warning_v1_sheet.png",
+  "warning_duration_s": 1.0,
+  "spike_fx": "../crooked_witch_ice_spike_fx/crooked_witch_ice_spike_fx_v1_sheet.png",
+  "preview": "crooked_witch_ice_spike_v1_preview.gif",
+  "prompt_summary": "Approved base as exact character reference; right-facing 3/4 view; near right hand holds one unchanged staff; far left arm behind torso; shoulder prep, short arc, forward-down ground press, upright recovery; 1254 transparent frame, fixed body/staff size and feet baseline."
+}

@@ -1,0 +1,32 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-05",
+  "runtime_integrated": false,
+  "supersedes": "crooked_witch_potion_v1_manifest.json",
+  "change": "Frames 01 and 02 color and brightness adjusted toward frame 03; pose unchanged. Frames 00 and 03 are exact copies of v1.",
+  "frames": [
+    "crooked_witch_potion_v2_00.png",
+    "crooked_witch_potion_v2_01.png",
+    "crooked_witch_potion_v2_02.png",
+    "crooked_witch_potion_v2_03.png"
+  ],
+  "frame_durations_s": [0.15, 0.15, 0.15, 0.2],
+  "release_frame": 2,
+  "sheet": "crooked_witch_potion_v2_sheet.png",
+  "preview": "crooked_witch_potion_v2_preview.gif",
+  "unchanged_fx": [
+    "../crooked_witch_potion_projectile/crooked_witch_potion_projectile_v1_manifest.json",
+    "../crooked_witch_potion_break/crooked_witch_potion_break_v1_manifest.json",
+    "../crooked_witch_poison_pool/crooked_witch_poison_pool_v1_manifest.json"
+  ],
+  "title": "Crooked Witch potion v2 | recolored 01, 02",
+  "columns": 4,
+  "cell": 320,
+  "pivot": [10000, 10000],
+  "rows": [[
+    {"path": "assets/generated/contact_sheets/crooked_witch_potion/crooked_witch_potion_v2_00.png", "label": "00 unchanged", "duration": "0.15"},
+    {"path": "assets/generated/contact_sheets/crooked_witch_potion/crooked_witch_potion_v2_01.png", "label": "01 recolored", "duration": "0.15"},
+    {"path": "assets/generated/contact_sheets/crooked_witch_potion/crooked_witch_potion_v2_02.png", "label": "02 recolored", "duration": "0.15"},
+    {"path": "assets/generated/contact_sheets/crooked_witch_potion/crooked_witch_potion_v2_03.png", "label": "03 unchanged", "duration": "0.20"}
+  ]]
+}

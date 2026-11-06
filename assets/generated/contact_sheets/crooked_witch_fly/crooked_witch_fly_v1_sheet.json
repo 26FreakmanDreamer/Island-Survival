@@ -1,0 +1,45 @@
+{
+  "title": "Crooked Witch FLY v1 - actor frames / base v4_02",
+  "columns": 3,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_00.png",
+        "label": "00 gather",
+        "duration": "0.18"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_01.png",
+        "label": "01 heels lift",
+        "duration": "0.18"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_02.png",
+        "label": "02 flight A",
+        "duration": "0.18"
+      }
+    ],
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_03.png",
+        "label": "03 flight B",
+        "duration": "0.18"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_04.png",
+        "label": "04 legs extend",
+        "duration": "0.18"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_05.png",
+        "label": "05 landing",
+        "duration": "0.18"
+      }
+    ]
+  ]
+}

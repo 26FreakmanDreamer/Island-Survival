@@ -1,0 +1,24 @@
+{
+  "title": "Crooked Witch fire impact v1",
+  "canvas": [
+    640,
+    480
+  ],
+  "contact_pivot": [
+    320,
+    410
+  ],
+  "duration_ms": [
+    80,
+    100,
+    120,
+    140
+  ],
+  "frames": [
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_impact\\crooked_witch_fire_impact_v1_00.png",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_impact\\crooked_witch_fire_impact_v1_01.png",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_impact\\crooked_witch_fire_impact_v1_02.png",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fire_impact\\crooked_witch_fire_impact_v1_03.png"
+  ],
+  "runtime_integrated": false
+}

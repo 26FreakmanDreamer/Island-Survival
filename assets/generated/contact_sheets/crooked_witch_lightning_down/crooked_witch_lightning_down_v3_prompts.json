@@ -1,0 +1,7 @@
+{
+  "tool": "built-in image_gen",
+  "edit_target": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_down\\crooked_witch_lightning_down_v2_01_source.png",
+  "approved_base": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "prompt_set": "Preserve action and diagonal staff angle. Put staff shaft below near-right forearm and wrist. Right hand grips from above; thumb and fingers point down and curl around shaft. Staff stays outside and in front of hanging purple sleeve. Lock body/weapon scale, eye, costume, transparent canvas; no VFX, background, shadow, extra parts or interpenetration.",
+  "corrected_frame": 1
+}

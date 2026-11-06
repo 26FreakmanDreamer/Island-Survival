@@ -18,13 +18,15 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "combat")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja", "combat")
 REQUIRED_ATTACKS = (
     "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
-    "rhea_slash", "rhea_throw", "rhea_poison_throw", "rhea_dash",
+    "rhea_slash", "rhea_throw", "rhea_poison_throw", "rhea_dash", "rhea_dash_return",
     "veno_bite", "veno_poison", "veno_web", "bat_dive", "bat_sonic",
     "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
+    "mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam",
+    "shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash",
 )
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
@@ -42,7 +44,7 @@ REQUIRED_NYRA_CLIPS = (
 REQUIRED_RHEA_CLIPS = (
     "idle", "walk", "jump", "crouch", "hurt", "ko",
     "rhea_slash_r", "rhea_slash_l", "rhea_throw", "rhea_poison_throw",
-    "rhea_dash", "climb",
+    "rhea_dash", "rhea_dash_return", "climb",
 )
 REQUIRED_VENO_CLIPS = (
     "idle", "walk", "hover", "jump", "hurt", "ko",
@@ -55,17 +57,26 @@ REQUIRED_CREEPY_SHOOTER_CLIPS = (
     "idle", "walk", "crouch", "jump", "hurt", "ko",
     "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
 )
+REQUIRED_MECH_CRAB_CLIPS = (
+    "idle", "walk", "jump", "hurt", "ko",
+    "mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam",
+)
+REQUIRED_SHADOW_NINJA_CLIPS = (
+    "idle", "walk", "jump", "crouch", "hurt", "ko", "stun",
+    "shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash",
+)
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
 PLAYABLE_CLASSES = ("lina", "nyra", "rhea")
-ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "veno", "bat", "creepy_shooter")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
 PROJECTILE_KINDS = (
     "q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave",
     "rhea_shuriken", "rhea_poison_shuriken",
     "creepy_bullet", "creepy_homing_bullet", "creepy_down_bullet",
+    "shadow_kunai",
 )
 
 
@@ -296,6 +307,52 @@ class JsonStore:
         ):
             if key not in creepy.get("ai", {}):
                 raise ValueError(f"stats.json creepy_shooter.ai missing '{key}'")
+        mech = stats.get("mech_crab", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "ai",
+        ):
+            if key not in mech:
+                raise ValueError(f"stats.json mech_crab missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in mech.get("move", {}):
+                raise ValueError(f"stats.json mech_crab.move missing '{key}'")
+        for key in ("laser", "charge", "claw", "leap"):
+            if key not in mech.get("cooldowns", {}):
+                raise ValueError(f"stats.json mech_crab.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in mech.get("hurtbox", {}):
+                raise ValueError(f"stats.json mech_crab.hurtbox missing '{key}'")
+        for key in (
+            "laser_min_range", "laser_range", "charge_min_range", "charge_range",
+            "claw_range", "leap_min_range", "leap_range", "level_tolerance",
+            "decision_interval", "skill_gap",
+        ):
+            if key not in mech.get("ai", {}):
+                raise ValueError(f"stats.json mech_crab.ai missing '{key}'")
+        shadow = stats.get("shadow_ninja", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "ai",
+        ):
+            if key not in shadow:
+                raise ValueError(f"stats.json shadow_ninja missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in shadow.get("move", {}):
+                raise ValueError(f"stats.json shadow_ninja.move missing '{key}'")
+        for key in ("slash", "throw", "dash"):
+            if key not in shadow.get("cooldowns", {}):
+                raise ValueError(f"stats.json shadow_ninja.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in shadow.get("hurtbox", {}):
+                raise ValueError(f"stats.json shadow_ninja.hurtbox missing '{key}'")
+        for key in (
+            "close_range", "far_range", "level_tolerance", "decision_interval",
+            "low_hp_pct", "kunai_close_distance", "skill_gap", "opening_delay",
+            "jump_cooldown", "crouch_hold", "barrier_hop_range", "threat_range",
+        ):
+            if key not in shadow.get("ai", {}):
+                raise ValueError(f"stats.json shadow_ninja.ai missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -364,11 +421,56 @@ class JsonStore:
                 raise ValueError(
                     f"animations.json creepy_shooter clip '{key}' frame/duration count mismatch"
                 )
+        mech_clips = animations.get("mech_crab_clips", {})
+        for key in REQUIRED_MECH_CRAB_CLIPS:
+            if key not in mech_clips:
+                raise ValueError(f"animations.json missing mech_crab clip '{key}'")
+        for key, clip in mech_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json mech_crab clip '{key}' frame/duration count mismatch"
+                )
+        for key in ("mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam"):
+            attack = attacks.get(key, {})
+            total = sum(float(value) for value in mech_clips[key].get("durations", []))
+            if abs(total - float(attack.get("duration", total))) > 1e-3:
+                raise ValueError(
+                    f"animations.json mech_crab clip '{key}' duration {total:.3f} "
+                    f"does not match attacks.json duration {attack.get('duration')}"
+                )
+            phases = sum(
+                float(attack.get(phase, 0.0)) for phase in ("warning", "active", "recovery")
+            )
+            if abs(phases - float(attack.get("duration", phases))) > 1e-6:
+                raise ValueError(
+                    f"attacks.json '{key}' warning+active+recovery must equal duration"
+                )
+        shadow_clips = animations.get("shadow_ninja_clips", {})
+        for key in REQUIRED_SHADOW_NINJA_CLIPS:
+            if key not in shadow_clips:
+                raise ValueError(f"animations.json missing shadow_ninja clip '{key}'")
+        for key, clip in shadow_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json shadow_ninja clip '{key}' frame/duration count mismatch"
+                )
+        for key in ("shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash"):
+            attack = attacks.get(key, {})
+            total = sum(
+                float(value) for value in shadow_clips[key].get("durations", [])
+            )
+            if abs(total - float(attack.get("duration", total))) > 1e-3:
+                raise ValueError(
+                    f"animations.json shadow_ninja clip '{key}' duration {total:.3f} "
+                    f"does not match attacks.json duration {attack.get('duration')}"
+                )
         for key in (
             "nyra_frame_size", "nyra_pivot", "rhea_frame_size", "rhea_pivot",
             "veno_frame_size", "veno_pivot",
             "bat_frame_size", "bat_pivot",
             "creepy_shooter_frame_size", "creepy_shooter_pivot",
+            "mech_crab_frame_size", "mech_crab_pivot",
+            "shadow_ninja_frame_size", "shadow_ninja_pivot",
         ):
             value = animations.get(key)
             if not (isinstance(value, list) and len(value) == 2):
@@ -403,6 +505,14 @@ class JsonStore:
                             f"attacks.json '{key}' projectile event needs projectile in "
                             f"{PROJECTILE_KINDS}"
                         )
+                if (
+                    float(event.get("bonus_vs_poison_max_hp_pct", 0.0)) > 0.0
+                    and not event.get("bonus_vs_poison_source")
+                ):
+                    raise ValueError(
+                        f"attacks.json '{key}' poison max-HP bonus needs "
+                        "bonus_vs_poison_source"
+                    )
 
         characters = roster.get("characters", {})
         enemies = roster.get("enemies", {})

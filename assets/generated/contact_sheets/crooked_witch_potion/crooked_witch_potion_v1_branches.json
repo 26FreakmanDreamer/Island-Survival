@@ -1,0 +1,10 @@
+{
+  "status": "user_approved",
+  "user_approval_date": "2026-11-05",
+  "runtime_integrated": false,
+  "platform_miss": "gravity arc, bottle shatters on ground/platform, pool appears",
+  "ground_miss": "low horizontal travel, bottle shatters at path end, pool appears",
+  "direct_hit": "bottle shatters on target, direct-hit status applies, no pool",
+  "preview_only": "scene guides and target placeholder are not source art or runtime integration; actor colors in v1 branch previews are superseded by potion v2",
+  "storyboard": "crooked_witch_potion_v1_branch_storyboard.png"
+}

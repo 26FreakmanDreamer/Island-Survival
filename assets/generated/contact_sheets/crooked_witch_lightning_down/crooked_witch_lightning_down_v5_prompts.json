@@ -1,0 +1,7 @@
+{
+  "tool": "built-in image_gen",
+  "edit_target": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_down\\crooked_witch_lightning_down_v4_01_source.png",
+  "approved_base": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_base\\crooked_witch_base_v4_02.png",
+  "prompt_set": "Preserve v4 action, overhand fingers-down grip, cuff-staff occlusion, body proportions and the original rigid straight staff axis. Match only purple hat/sleeve/robe brightness to adjacent 00 and 02 frames, keeping skin, hair, gold, white ruffles and staff colors. Square transparent canvas, no VFX or extra parts.",
+  "corrected_frame": 1
+}

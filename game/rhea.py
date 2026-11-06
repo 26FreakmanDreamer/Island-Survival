@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import math
+
 import pygame
 
 from .combat import AttackRuntime
@@ -55,14 +57,52 @@ class Rhea(Fighter):
         self.attack_recovery_start = 0.0
         self.armor_applied = False
         self.queued_action: str | None = None
+        # E is a three-phase skill: outbound dash, a free-control return
+        # window, then an optional return dash. e_cd starts only when the
+        # whole skill ends.
+        self.e_phase: str | None = None
+        self.e_window = 0.0
+        self.e_buffered_return = False
+        self.e_cast_x = 0.0
+        self.e_cast_y = 0.0
+        self.e_cast_facing = 1
+        self.e_return_from_x = 0.0
+        self.e_return_from_y = 0.0
+        self.ignore_terrain = False
         self.reset()
 
     # --- public state -------------------------------------------------------
     def can_start_e(self) -> bool:
         return (
-            self.state not in (FighterState.HURT, FighterState.KO)
+            self.e_phase is None
+            and self.state not in (FighterState.HURT, FighterState.KO)
             and self.e_cd <= 0.0
         )
+
+    def _clear_phase_armor(self) -> None:
+        effect = self.statuses.effects.get("super_armor")
+        if effect is not None and effect.source in (
+            "rhea_dash",
+            "rhea_dash_return",
+        ):
+            self.statuses.effects.pop("super_armor", None)
+
+    def _clear_e_state(self) -> None:
+        self.e_phase = None
+        self.e_window = 0.0
+        self.e_buffered_return = False
+        self.ignore_terrain = False
+        self._clear_phase_armor()
+
+    def _finish_e_skill(self) -> None:
+        self.e_window = 0.0
+        self.e_phase = None
+        self.e_buffered_return = False
+        self.ignore_terrain = False
+        self.e_cd = self.e_cd_max
+        self._clear_phase_armor()
+        if self.queued_action == "e":
+            self.queued_action = None
 
     def take_hit(
         self,
@@ -72,7 +112,10 @@ class Rhea(Fighter):
         direction: int,
         launch: float = 0.0,
     ) -> bool:
-        if self.statuses.has("super_armor") and not self.invincible and self.hp > 0.0:
+        # An ignored/invincible hit must not cancel the return window.
+        if self.invincible or self.hp <= 0.0:
+            return False
+        if self.statuses.has("super_armor"):
             self.hp = max(0.0, self.hp - damage)
             self.flash = 0.12
             if self.hp <= 0.0:
@@ -84,13 +127,22 @@ class Rhea(Fighter):
                 self.attack_id = None
                 self.armor_applied = False
                 self.queued_action = None
+                self._clear_e_state()
                 if self.anim is not None:
                     self.anim.set_clip("ko", reset=True)
             return True
+        # A non-armored hit during the window (or an edge-case hit at the
+        # end of a dash phase) ends the whole skill and starts the cooldown.
+        if self.e_phase is not None:
+            self._finish_e_skill()
         self.queued_action = None
         return super().take_hit(damage, knockback, hitstun, direction, launch=launch)
 
     def cancel_attack(self) -> None:
+        e_active = self.e_phase is not None
+        self._clear_e_state()
+        if e_active:
+            self.e_cd = self.e_cd_max
         self.queued_action = None
         super().cancel_attack()
 
@@ -100,12 +152,23 @@ class Rhea(Fighter):
         self.q_cd = max(0.0, self.q_cd - dt)
         self.e_cd = max(0.0, self.e_cd - dt)
 
+        if self.e_phase is not None and self.state in (
+            FighterState.KO,
+            FighterState.HURT,
+        ):
+            self._clear_e_state()
+        elif self.e_phase == "window":
+            self.e_window = max(0.0, self.e_window - dt)
+            if self.e_window <= 0.0:
+                self._finish_e_skill()
+
         if self.state == FighterState.KO:
             self.vx = 0.0
             self.attack_runtime = None
             self.attack_id = None
             self.armor_applied = False
             self.queued_action = None
+            self._clear_e_state()
             self.anim.update(dt)
             self.stage.move_fighter(self, dt)
             return
@@ -125,7 +188,8 @@ class Rhea(Fighter):
 
         if self.state == FighterState.ATTACK:
             self._update_attack(dt, input_state, target, scene)
-            self.stage.move_fighter(self, dt)
+            if self.attack_id not in ("rhea_dash", "rhea_dash_return"):
+                self.stage.move_fighter(self, dt)
             return
 
         if self.statuses.control_locked():
@@ -149,11 +213,13 @@ class Rhea(Fighter):
             return
 
         action = input_state.buffer.consume_newest(("punch", "kick", "q", "e", "jump"))
-        if action is not None:
+        if action == "e" and self.attack_id == "rhea_dash":
+            self.e_buffered_return = True
+        elif action is not None:
             self.queued_action = action
 
         runtime.update(dt)
-        if self.attack_id == "rhea_dash":
+        if self.attack_id in ("rhea_dash", "rhea_dash_return"):
             self._update_dash_motion(runtime, dt, scene)
 
         armor_from = float(runtime.data.get("armor_from", 0.0))
@@ -171,28 +237,79 @@ class Rhea(Fighter):
             self.armor_applied = True
         self.anim.update(dt)
 
-        if runtime.finished:
-            if self.attack_id == "rhea_dash" and target is not None:
-                scene.push_apart(self, target)
+        if not runtime.finished:
+            return
+
+        if self.attack_id == "rhea_dash":
+            if self._finish_outbound(scene, target):
+                return
             if self._execute_queued(input_state, scene, target):
                 return
             self.state = FighterState.IDLE
+            self.anim.set_clip("idle")
+            return
+
+        if self.attack_id == "rhea_dash_return":
+            if target is not None:
+                scene.push_apart(self, target)
+            self._finish_e_skill()
             self.attack_runtime = None
             self.attack_id = None
+            self.armor_applied = False
+            self.state = FighterState.IDLE
             self.anim.set_clip("idle")
+            if self._execute_queued(input_state, scene, target):
+                return
+            return
+
+        if self._execute_queued(input_state, scene, target):
+            return
+        self.state = FighterState.IDLE
+        self.attack_runtime = None
+        self.attack_id = None
+        self.anim.set_clip("idle")
+
+    def _finish_outbound(self, scene, target) -> bool:
+        """Open the 2s window, or start the buffered return immediately."""
+        self.e_phase = "window"
+        self.e_window = 2.0
+        self.ignore_terrain = False
+        self._clear_phase_armor()
+        buffered = self.e_buffered_return
+        self.e_buffered_return = False
+        self.attack_runtime = None
+        self.attack_id = None
+        self.armor_applied = False
+        self.state = FighterState.IDLE
+        self.anim.set_clip("idle")
+        if not buffered:
+            return False
+        # An early E takes priority over any other queued action.
+        self.queued_action = None
+        return self._start_return(scene, target)
 
     def _update_dash_motion(self, runtime: AttackRuntime, dt: float, scene) -> None:
-        """Outbound burst, then a faster return to the cast position."""
-        if 0.06 <= runtime.time <= 0.60:
-            scene.stage.move_x(self, self.facing * 1100.0 * dt)
+        """Outbound burst, then a lerped return to the original cast point."""
+        if self.attack_id == "rhea_dash":
+            if 0.06 <= runtime.time <= 0.60:
+                scene.stage.move_x(
+                    self, self.facing * 1100.0 * dt, ignore_blocks=True
+                )
             return
-        if 0.60 <= runtime.time <= 1.00:
-            delta = runtime.cast_x - self.x
-            step = 1500.0 * dt
-            if abs(delta) <= step:
-                scene.stage.move_x(self, delta)
-            else:
-                scene.stage.move_x(self, step if delta > 0.0 else -step)
+        if self.attack_id == "rhea_dash_return":
+            progress = min(1.0, runtime.time / max(runtime.duration, 1e-6))
+            desired_x = self.e_return_from_x + (
+                self.e_cast_x - self.e_return_from_x
+            ) * progress
+            desired_y = self.e_return_from_y + (
+                self.e_cast_y - self.e_return_from_y
+            ) * progress
+            scene.stage.move_x(
+                self, desired_x - self.x, ignore_blocks=True
+            )
+            self.y = desired_y
+            if progress >= 1.0:
+                self.on_ground = True
 
     def _capture_locked_input(self, input_state) -> None:
         action = input_state.buffer.consume_newest(("punch", "kick", "q", "e", "jump"))
@@ -242,10 +359,45 @@ class Rhea(Fighter):
         return True
 
     def _start_e(self, scene, target) -> bool:
-        if not self.on_ground or not self.can_start_e():
+        if self.e_phase == "window":
+            if not self.on_ground:
+                return False
+            return self._start_return(scene, target)
+        if self.e_phase is not None or not self.on_ground or not self.can_start_e():
             return False
-        self.e_cd = self.e_cd_max
+        self.e_phase = "out"
+        self.e_window = 0.0
+        self.e_buffered_return = False
+        self.e_cast_x = self.x
+        self.e_cast_y = self.y
+        self.ignore_terrain = True
         self.start_attack("rhea_dash", scene, target)
+        self.e_cast_facing = self.facing
+        return True
+
+    def _start_return(self, scene, target) -> bool:
+        if not self.on_ground:
+            return False
+        dx = self.e_cast_x - self.x
+        dy = self.e_cast_y - self.y
+        duration = max(0.12, math.hypot(dx, dy) / 1500.0)
+        data = dict(self.store.attacks["rhea_dash_return"])
+        data["duration"] = duration
+        data["armor_until"] = duration
+        self.e_phase = "return"
+        self.e_window = 0.0
+        self.e_buffered_return = False
+        self.e_return_from_x = self.x
+        self.e_return_from_y = self.y
+        self.ignore_terrain = True
+        self.facing = self.e_cast_facing
+        self.start_attack(
+            "rhea_dash_return",
+            scene,
+            target,
+            data_override=data,
+            face_target=False,
+        )
         return True
 
     def _start_jump(self) -> bool:
@@ -273,9 +425,16 @@ class Rhea(Fighter):
         elif right and not left:
             self.facing = 1
 
-        if input_state.buffer.has("e") and self._start_e(scene, target):
-            input_state.buffer.consume("e")
-            return
+        if input_state.buffer.has("e"):
+            if self._start_e(scene, target):
+                input_state.buffer.consume("e")
+                return
+            if self.e_phase == "window":
+                # Airborne E is ignored; consume it so the 0.12s buffer
+                # cannot fire a return after landing.
+                input_state.buffer.consume("e")
+                if self.queued_action == "e":
+                    self.queued_action = None
 
         if input_state.buffer.has("q") and self._start_q(scene, target):
             input_state.buffer.consume("q")
@@ -331,8 +490,16 @@ class Rhea(Fighter):
                 self.anim.update(dt)
 
     # --- actions ------------------------------------------------------------
-    def start_attack(self, attack_id: str, scene, target) -> None:
-        scene.face_target_if_locked(self, target)
+    def start_attack(
+        self,
+        attack_id: str,
+        scene,
+        target,
+        data_override: dict | None = None,
+        face_target: bool = True,
+    ) -> None:
+        if face_target:
+            scene.face_target_if_locked(self, target)
         self.attack_id = attack_id
         self.state = FighterState.ATTACK
         self.vx = 0.0
@@ -343,7 +510,7 @@ class Rhea(Fighter):
             clip = attack_id
         self.anim.set_clip(clip, reset=True)
 
-        data = self.store.attacks[attack_id]
+        data = data_override or self.store.attacks[attack_id]
         armor_from = float(data.get("armor_from", 0.0))
         armor_until = float(data.get("armor_until", 0.0))
         self.armor_applied = False
@@ -393,12 +560,16 @@ class Rhea(Fighter):
     # --- rendering ----------------------------------------------------------
     def draw(self, surface, tint=None) -> None:
         runtime = self.attack_runtime
+        motion = 0
         if (
             runtime is not None
-            and self.attack_id == "rhea_dash"
-            and 0.06 <= runtime.time <= 0.98
+            and self.e_phase == "out"
+            and 0.06 <= runtime.time <= 0.60
         ):
-            motion = self.facing if runtime.time < 0.60 else -self.facing
+            motion = self.facing
+        elif runtime is not None and self.e_phase == "return":
+            motion = -self.facing
+        if motion:
             pivot_x, pivot_y = self.anim.pivot
             for index, alpha in ((1, 64), (2, 34)):
                 ghost = self.anim.surface(self.facing).copy()
@@ -425,5 +596,15 @@ class Rhea(Fighter):
         self.attack_recovery_start = 0.0
         self.armor_applied = False
         self.queued_action = None
+        self.e_phase = None
+        self.e_window = 0.0
+        self.e_buffered_return = False
+        self.e_cast_x = 0.0
+        self.e_cast_y = 0.0
+        self.e_cast_facing = 1
+        self.e_return_from_x = 0.0
+        self.e_return_from_y = 0.0
+        self.ignore_terrain = False
+        self._clear_phase_armor()
         if self.anim is not None:
             self.anim.set_clip("idle", reset=True)

@@ -1,0 +1,30 @@
+{
+  "version": "v2",
+  "status": "superseded_by_v3",
+  "previously_approved_source_frames": [0, 1],
+  "superseded_frames": [0, 1],
+  "runtime_integrated": false,
+  "reason": "User approved first two frames; requested redraw of hold frames 02/03 because arms looked crossed/deformed.",
+  "source_frames": [
+    "crooked_witch_heal_v1_00.png",
+    "crooked_witch_heal_v1_01.png",
+    "crooked_witch_heal_v2_02.png",
+    "crooked_witch_heal_v2_03.png",
+    "crooked_witch_heal_v1_04.png"
+  ],
+  "revised_frames": [
+    2,
+    3
+  ],
+  "detached_staff_prop": "crooked_witch_heal_staff_prop_v1.png",
+  "heal_fx": "../crooked_witch_heal_fx/crooked_witch_heal_fx_v1_sheet.png",
+  "hold_frames": [
+    2,
+    3
+  ],
+  "hold_duration_s": 5.0,
+  "fx_cycle_s": 1.0,
+  "pulse_count": 5,
+  "preview": "crooked_witch_heal_v2_preview.gif",
+  "prompt_summary": "Use approved base and first two heal frames. Keep anatomical LEFT shoulder/arm/hand entirely on screen-left and RIGHT shoulder/arm/hand on screen-right, with continuous shoulder-elbow-wrist connections, no crossover or arm swap. Frame 03 is a tiny breathing variation of corrected 02. Preserve body size, fly hover position, eye, clothes and separate floating staff."
+}

@@ -20,13 +20,18 @@
   `assets/frames/lina/flame/<action>/`; Warrior frames in `assets/frames/warrior/<action>/`;
   Bat frames in `assets/frames/bat/<action>/`; Creepy Shooter frames in
   `assets/frames/creepy_shooter/<action>/` with bullets/reticle in
-  `assets/frames/creepy_shooter/fx/`; Rhea frames in `assets/frames/rhea/<action>/` with the six
-  star strips in `assets/frames/rhea/fx/`.
+  `assets/frames/creepy_shooter/fx/`; Mech-Crab frames in `assets/frames/mech_crab/<action>/`
+  with the leap reticle in `assets/frames/mech_crab/fx/`; Rhea frames in
+  `assets/frames/rhea/<action>/` with the six star strips in `assets/frames/rhea/fx/`;
+  Shadow Ninja frames in `assets/frames/shadow_ninja/<action>/` with the two-frame kunai in
+  `assets/frames/shadow_ninja/fx/`.
 - `game/data/animations.json` defines Lina's `clips`/`flame_clips`, Warrior's
   `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, Bat's
   `bat_clips`/`bat_frame_size`/`bat_pivot`, Creepy Shooter's
-  `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`, and Rhea's
-  `rhea_clips`/`rhea_frame_size`/`rhea_pivot`.
+  `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`,
+  `mech_crab_clips`/`mech_crab_frame_size`/`mech_crab_pivot`, Rhea's
+  `rhea_clips`/`rhea_frame_size`/`rhea_pivot`, and Shadow Ninja's
+  `shadow_ninja_clips`/`shadow_ninja_frame_size`/`shadow_ninja_pivot`.
 
 ## Frame inventory
 
@@ -40,10 +45,18 @@
 - Rhea (33): idle 2, walk 4, jump 2, crouch 1, hurt 2, KO 3, rhea_slash_r 3, rhea_slash_l 3,
   rhea_throw 3, rhea_poison_throw 3, rhea_dash 5, climb 2; plus six 64x64 star FX
   (`rhea_shuriken_00..02`, `rhea_poison_shuriken_00..02`).
+- Mech-Crab (47): idle 4, walk 4, jump 2, hurt 2, KO 4, mech_laser 9, mech_charge 7,
+  mech_claw_slam 7, mech_leap_slam 8; plus three 205x205 leap-reticle FX
+  (`mech_crab_lock_00..02`).
+- Shadow Ninja (35): idle 4, walk 6, jump 2, crouch 1, hurt 2, KO 4, shadow_kunai_slash 5,
+  shadow_kunai_throw 5, shadow_dash 5, stun 1; plus two 32x32 horizontal kunai FX
+  (`shadow_kunai_00..01`).
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
   150px. Creepy Shooter: 384x384 RGBA, pivot (192,372), body 214 (roll imported at 0.9x).
-  Rhea: 384x384 RGBA, pivot (192,372), body 214.
+  Mech-Crab: 640x640 RGBA, pivot (320,628), body 230 (front-facing, mirrored at runtime).
+  Rhea: 384x384 RGBA, pivot (192,372), body 214. Shadow Ninja: 384x384 RGBA, pivot (192,372),
+  body 214.
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.
 
 ## Normal frame generation
@@ -338,6 +351,86 @@ py tools/import_frames.py --action creepy_roll_shot --src <raw> --out assets/gen
 - Approval gate: base A, each action contact sheet, both bullet sheets and the final in-game
   preview were reviewed. The user supplied the lock art directly; do not redraw it.
 
+## Mech-Crab (2026-11-03)
+
+- Approved front-facing base: `assets/generated/base/mech_crab_front_base.png`; canonical source
+  `Image/Enemy/mech-crab-512.png`. Runtime canvas 640x640, pivot (320,628), body 230; hurtbox
+  160x150, `stage_body_width` 170. The crab faces the camera and walks sideways on six legs plus
+  two claws; only the front view is stored and the runtime mirrors it. Do not introduce a side-view
+  base or change the leg/claw count.
+- Frame inventory (47): idle 4, walk 4, jump 2, hurt 2, KO 4 (`ko_00`, `ko_01`, `ko_03`, `ko_04`),
+  `mech_laser` 9, `mech_charge` 7, `mech_claw_slam` 7, `mech_leap_slam` 8; plus three 205x205 leap
+  reticle frames. Runtime folders: `assets/frames/mech_crab/idle/`, `walk/`, `jump/`, `hurt/`,
+  `ko/`, `mech_laser/`, `mech_charge/`, `mech_claw_slam/`, `mech_leap_slam/` and
+  `assets/frames/mech_crab/fx/`. These 47 character frames are approved; do not re-import or
+  regenerate them without an explicit request.
+- Import pattern (640 canvas, pivot 320,628, body 230; use `--anchor bbox-center` for the core
+  loops and `--anchor image-center` for asymmetrical skill frames so the core stays on the pivot):
+
+```text
+py tools/import_frames.py --action idle --src <raw> --out assets/generated/staged/mech_crab/idle --base assets/generated/base/mech_crab_front_base.png --body-height 230 --canvas 640 --pivot-x 320 --pivot-y 628 --anchor bbox-center --expect 4
+py tools/import_frames.py --action mech_laser --src <raw> --out assets/generated/staged/mech_crab/mech_laser --base assets/generated/base/mech_crab_front_base.png --body-height 230 --canvas 640 --pivot-x 320 --pivot-y 628 --anchor image-center --expect 9
+```
+
+- The leap reticle is **user-drawn**, not generated: source frames
+  `assets/generated/contact_sheets/mech_crab_lock_anim_v1_00..02.png` (724x724, transparent). They
+  are baked to 205x205 (0.8x of the 256px baseline) with a premultiplied LANCZOS downscale at
+  `assets/frames/mech_crab/fx/mech_crab_lock_00..02.png`. Timing is 0.22/0.18/0.40s (largest /
+  smaller / orange) from the supplied GIF; the last frame holds through the leap flight. The
+  runtime draws it at the fixed landing point; it has no hitbox. Do not redraw it.
+- Preview tool: `tools/preview_mech_crab.py` renders 01_startup through 15_stage_variant (laser
+  warning/active/blocked, charge warning/active, claw growth/swing/impact, three leap-reticle
+  frames, flight, landing, F1/F2 and the stage) into
+  `assets/generated/contact_sheets/mech_crab_ingame_v1/`. Run it headlessly with the SDL dummy
+  driver; it forces `enemy_count_override = 1`.
+- Approval gate: the base, each action contact sheet, the reticle art and the in-game preview were
+  reviewed. The user supplied the reticle directly; keep its transparency and do not bake it into
+  character frames.
+
+## Shadow Ninja (2026-11-06)
+
+- Approved base: `assets/generated/base/shadow_ninja_side_base.png`, derived from the canonical
+  `Image/Enemy/shadow-ninja-256.png`. Runtime canvas 384x384, pivot (192,372), body 214; hurtbox
+  56x210 standing / 56x130 crouching, `stage_body_width` 100. The normal form faces right; the
+  kunai is held in the near/right hand and the far/left hand stays behind the hip. The phantom form
+  is not part of this asset set.
+- Frame inventory (35): idle 4, walk 6, jump 2, crouch 1, hurt 2, KO 4, `shadow_kunai_slash` 5,
+  `shadow_kunai_throw` 5, `shadow_dash` 5, stun 1. Runtime folders:
+  `assets/frames/shadow_ninja/idle/`, `walk/`, `jump/`, `crouch/`, `hurt/`, `ko/`,
+  `shadow_kunai_slash/`, `shadow_kunai_throw/`, `shadow_dash/`, `stun/` and `fx/`. These 35
+  character frames are approved; do not re-import or regenerate them without an explicit request.
+- Animation notes:
+  - `walk` uses the approved v5 set, fixed-scale normalized to body 214 with the 00 frame as the
+    feet/body reference.
+  - `shadow_kunai_slash` uses the approved v6 set, normalized to body 214; the kunai is on the right
+    side for 00/01 and frame 02 uses the reverse/icepick grip. The high hitbox is
+    `[20,-195,130,55]`.
+  - `shadow_kunai_throw` uses the approved v5 set. Frame 02 is the **release frame**: the character
+    frame has no kunai baked in; the separate `ShadowKunaiProjectile` FX is the thrown weapon. Frames
+    02/03 crouch deeper and frame 04 keeps the black hand glove.
+  - `shadow_dash` uses the approved v3 set; 01/02/03 are lower and more forward-leaning, 00/04 keep
+    the v1 poses. The low hitbox is `[0,-80,90,80]`, so a full jump clears it.
+  - `ko` uses the v2 set; the final frame has closed eyes.
+  - `crouch` uses the deep v2 frame; the visual is 188px including hair while the gameplay hurtbox is
+    56x130.
+- Kunai FX: two 32x32 RGBA frames (`assets/frames/shadow_ninja/fx/shadow_kunai_00.png` and
+  `_01.png`), horizontally oriented, non-rotating, with one brighter frame. They were extracted with
+  Seedream `image_to_image` from a crop of the approved base and downscaled with the smooth variant.
+  Do not add a third frame or re-enable rotation.
+- Import pattern (384 canvas, pivot 192,372, body 214):
+```text
+py tools/import_frames.py --action idle --src <raw> --out assets/generated/staged/shadow_ninja/idle --base assets/generated/base/shadow_ninja_side_base.png --body-height 214 --canvas 384 --pivot-x 192 --pivot-y 372 --expect 4
+```
+  For `walk`, use the fixed-scale normalization described above; for crouch/dash/throw, keep the
+  fixed body scale so the crouch/lean is not stretched back to 214.
+- Preview tool: `tools/preview_shadow_ninja.py` renders 01_startup through 14_stage (slash, low
+  throw, blocked throw, dash, marks 1/2/3 + burst, stun, idle, F1/F2 and the stage) into
+  `assets/generated/contact_sheets/shadow_ninja_ingame_v1/`. Run it headlessly with the SDL dummy
+  driver; it forces `enemy_count_override = 1`.
+- Approval gate: the base, each action contact sheet, the kunai FX and the in-game preview were
+  reviewed. Keep the two-frame horizontal kunai, the throw frame-02 release (no kunai in the
+  character frame), the closed-eye KO final frame and the fixed-scale walk/dash normalization.
+
 ## Projectile / skill VFX (2026-10-24)
 
 These are visual-only assets. Damage, hitboxes, timing, cooldowns and AI are unchanged.
@@ -434,8 +527,10 @@ Near-transparent pixels (alpha < 10) are cleared.
 3. Import into `assets/generated/staged/<character>/<action>/` with the character's canvas/pivot.
 4. Build a contact sheet and review it (pose, limb identity, feet alignment, effects).
 5. Copy approved frames to `assets/frames/lina/<action>/`, `assets/frames/lina/flame/<action>/`,
-   `assets/frames/warrior/<action>/`, `assets/frames/creepy_shooter/<action>/` or
-   `assets/frames/rhea/<action>/`; Rhea's separate star FX go to `assets/frames/rhea/fx/`.
+   `assets/frames/warrior/<action>/`, `assets/frames/creepy_shooter/<action>/`,
+   `assets/frames/mech_crab/<action>/` or `assets/frames/rhea/<action>/`; separate FX go to
+   `assets/frames/rhea/fx/`, `assets/frames/creepy_shooter/fx/` or
+   `assets/frames/mech_crab/fx/`.
 6. Press F5 in-game after replacing frames; the animation cache invalidates on path + mtime.
 
 Canonical `Image/` files are read-only. Generated candidates, staging folders and contact sheets are

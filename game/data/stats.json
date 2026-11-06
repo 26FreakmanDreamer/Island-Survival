@@ -63,8 +63,8 @@
       "gravity": 2200
     },
     "cooldowns": {
-      "q": 8.0,
-      "e": 15.0
+      "q": 6.0,
+      "e": 10.0
     },
     "hurtbox": {
       "standing": [56, 210],
@@ -129,7 +129,13 @@
       "close_range": 70,
       "ranged_range": 700,
       "decision_interval": 0.1,
-      "hover_min_time": 0.3
+      "hover_min_time": 0.3,
+      "group_skill_gaps": {
+        "veno_bite": 0.8,
+        "veno_poison": 1.2,
+        "veno_web": 1.2
+      },
+      "opening_delay": 0.5
     }
   },
   "bat": {
@@ -152,7 +158,7 @@
     },
     "flight": {
       "min_height": 40,
-      "max_height": 420,
+      "max_height": 477,
       "preferred_height": 240,
       "vertical_speed": 300,
       "bob": 24,
@@ -163,7 +169,22 @@
       "sonic_min_range": 120,
       "sonic_range": 700,
       "standoff": 220,
-      "decision_interval": 0.15
+      "decision_interval": 0.15,
+      "group_skill_gaps": {
+        "bat_dive": 0.8,
+        "bat_sonic": 1.2
+      },
+      "opening_delay": 0.5,
+      "flight_cycle": {
+        "free_flight": 5.0,
+        "low_stay": 2.0,
+        "high_height_min": 400.0,
+        "high_height_max": 477.0,
+        "low_height": 70.0,
+        "high_flights": 3,
+        "low_flights": 2,
+        "stagger": 1.0
+      }
     }
   },
   "creepy_shooter": {
@@ -195,6 +216,73 @@
       "roll_time": 0.28,
       "platform_reach": 180.0,
       "jump_heights": [220.0, 268.0]
+    }
+  },
+  "mech_crab": {
+    "hp": 400,
+    "basic_atk": 30,
+    "extra_atk": 0,
+    "stage_body_width": 170,
+    "move": {
+      "walk": 120,
+      "jump_v": 700,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "laser": 6.0,
+      "charge": 5.0,
+      "claw": 5.0,
+      "leap": 8.0
+    },
+    "hurtbox": {
+      "standing": [160, 150],
+      "crouching": [160, 150]
+    },
+    "ai": {
+      "laser_min_range": 160.0,
+      "laser_range": 900.0,
+      "charge_min_range": 220.0,
+      "charge_range": 520.0,
+      "claw_range": 150.0,
+      "leap_min_range": 180.0,
+      "leap_range": 620.0,
+      "level_tolerance": 100.0,
+      "decision_interval": 0.15,
+      "skill_gap": 1.0
+    }
+  },
+  "shadow_ninja": {
+    "hp": 100,
+    "basic_atk": 20,
+    "extra_atk": 0,
+    "stage_body_width": 100,
+    "move": {
+      "walk": 390,
+      "jump_v": 760,
+      "gravity": 2200
+    },
+    "cooldowns": {
+      "slash": 0.5,
+      "throw": 5.0,
+      "dash": 8.0
+    },
+    "hurtbox": {
+      "standing": [56, 210],
+      "crouching": [56, 130]
+    },
+    "ai": {
+      "close_range": 170.0,
+      "far_range": 520.0,
+      "level_tolerance": 60.0,
+      "decision_interval": 0.12,
+      "low_hp_pct": 0.4,
+      "kunai_close_distance": 160.0,
+      "skill_gap": 0.2,
+      "opening_delay": 0.6,
+      "jump_cooldown": 0.8,
+      "crouch_hold": 0.35,
+      "barrier_hop_range": 80.0,
+      "threat_range": 220.0
     }
   },
   "dummy": {

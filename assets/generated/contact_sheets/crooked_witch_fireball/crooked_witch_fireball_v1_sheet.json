@@ -1,0 +1,14 @@
+{
+  "title": "Crooked Witch fireball v1",
+  "sprite": "crooked_witch_fireball_v1_00.png",
+  "canvas": [
+    384,
+    512
+  ],
+  "leading_tip_pivot": [
+    192,
+    406
+  ],
+  "motion": "vertical downward at target x; trail points upward",
+  "runtime_integrated": false
+}

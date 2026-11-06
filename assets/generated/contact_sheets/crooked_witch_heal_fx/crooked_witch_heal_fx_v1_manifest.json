@@ -1,0 +1,14 @@
+{
+  "status": "pending_user_review",
+  "runtime_integrated": false,
+  "fx_frames": [
+    "crooked_witch_heal_fx_v1_00.png",
+    "crooked_witch_heal_fx_v1_01.png",
+    "crooked_witch_heal_fx_v1_02.png",
+    "crooked_witch_heal_fx_v1_03.png",
+    "crooked_witch_heal_fx_v1_04.png"
+  ],
+  "fx_cycle_s": 1.0,
+  "fx_cycle_repeats": 5,
+  "pulse_frame": 4
+}

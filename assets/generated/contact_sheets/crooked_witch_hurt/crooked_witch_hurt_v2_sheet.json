@@ -1,0 +1,23 @@
+{
+  "title": "Crooked Witch HURT v2 - revised frame 00",
+  "columns": 2,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_hurt\\crooked_witch_hurt_v2_00.png",
+        "label": "00 recoil / left hand neutral",
+        "duration": "0.10"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_hurt\\crooked_witch_hurt_v1_01.png",
+        "label": "01 recover",
+        "duration": "0.10"
+      }
+    ]
+  ]
+}

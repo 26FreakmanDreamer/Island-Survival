@@ -1,0 +1,31 @@
+{
+  "version": "v3",
+  "status": "superseded_by_v4",
+  "runtime_integrated": false,
+  "reason": "User requested far/rear left hand in frames 00 and 01 rest naturally at the side of the body instead of extending backward.",
+  "source_frames": [
+    "crooked_witch_heal_v3_00.png",
+    "crooked_witch_heal_v3_01.png",
+    "crooked_witch_heal_v2_02.png",
+    "crooked_witch_heal_v2_03.png",
+    "crooked_witch_heal_v1_04.png"
+  ],
+  "revised_frames": [
+    0,
+    1
+  ],
+  "detached_staff_prop": "crooked_witch_heal_staff_prop_v1.png",
+  "heal_fx": "../crooked_witch_heal_fx/crooked_witch_heal_fx_v1_sheet.png",
+  "hold_frames": [
+    2,
+    3
+  ],
+  "hold_duration_s": 5.0,
+  "fx_cycle_s": 1.0,
+  "pulse_count": 5,
+  "preview": "crooked_witch_heal_v3_preview.gif",
+  "prompt_summary": "Use approved v4_02 base and fly hover pose. Redraw 00/01 far left shoulder, elbow and relaxed hand behind torso to rest at the side beside far hip, fingers downward; no hand stretched behind hair, no duplicate hand. Preserve 00 right-hand staff release and 01 right-hand palm-up preparation, character scale and canvas. Continue with v2 hold frames 02/03, v1 regrip 04, separate staff prop and existing heal FX.",
+  "superseded_frames": [
+    1
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "action": "crooked_witch_walk",
+  "version": "v2",
+  "change": "Timing only; six user-approved v1 PNG frames preserved",
+  "source_frames": [
+    "crooked_witch_walk_v1_00.png",
+    "crooked_witch_walk_v1_01.png",
+    "crooked_witch_walk_v1_02.png",
+    "crooked_witch_walk_v1_03.png",
+    "crooked_witch_walk_v1_04.png",
+    "crooked_witch_walk_v1_05.png"
+  ],
+  "frame_durations_s": [
+    0.16,
+    0.16,
+    0.16,
+    0.16,
+    0.16,
+    0.16
+  ],
+  "loop_duration_s": 0.96,
+  "loop": true,
+  "pose_approval": "user approved",
+  "timing": "slower playback requested by user",
+  "runtime_integrated": false
+}

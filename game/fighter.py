@@ -33,6 +33,9 @@ CLIMB_DRAW_SCALE = 1.2  # Lina default; Nyra overrides this per character.
 
 class Fighter:
     show_health_bar = False
+    # None uses the hurtbox height; tall enemies can raise the bar clear of
+    # their artwork.
+    health_bar_lift: float | None = None
 
     def __init__(
         self,
@@ -97,9 +100,17 @@ class Fighter:
         self.marks = 0
         self.mark_burst_time = 0.0
         self.mark_burst_damage = 0.0
+        # Shadow Ninja's marks also live on the target, but use separate
+        # fields so Nyra and Shadow Ninja can coexist in the same match.
+        self.shadow_marks = 0
+        self.shadow_mark_burst_time = 0.0
+        self.shadow_mark_burst_damage = 0.0
         self.statuses = StatusSet()
         self.attack_runtime = None
         self.attack_id = None
+        # Multi-body enemies share these start times to keep the same skill
+        # from being opened by several group members at once.
+        self.last_attack_at: dict[str, float] = {}
 
     def set_attack_stats(self, cfg: dict) -> None:
         """Copy the data-driven attack values used by the damage formula."""
@@ -133,6 +144,7 @@ class Fighter:
         self.statuses.update(dt, self)
         self.flash = max(0.0, self.flash - dt)
         self.mark_burst_time = max(0.0, self.mark_burst_time - dt)
+        self.shadow_mark_burst_time = max(0.0, self.shadow_mark_burst_time - dt)
         if self.hitstun > 0.0:
             self.hitstun = max(0.0, self.hitstun - dt)
         if self.kb_time > 0.0:
@@ -185,6 +197,9 @@ class Fighter:
             self.marks = 0
             self.mark_burst_time = 0.0
             self.mark_burst_damage = 0.0
+            self.shadow_marks = 0
+            self.shadow_mark_burst_time = 0.0
+            self.shadow_mark_burst_damage = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
             return True
@@ -227,6 +242,9 @@ class Fighter:
             self.marks = 0
             self.mark_burst_time = 0.0
             self.mark_burst_damage = 0.0
+            self.shadow_marks = 0
+            self.shadow_mark_burst_time = 0.0
+            self.shadow_mark_burst_damage = 0.0
             if self.anim is not None:
                 self.anim.set_clip("ko", reset=True)
         elif was_climbing:
@@ -506,10 +524,39 @@ class Fighter:
         self.marks = 0
         self.mark_burst_time = 0.0
         self.mark_burst_damage = 0.0
+        self.shadow_marks = 0
+        self.shadow_mark_burst_time = 0.0
+        self.shadow_mark_burst_damage = 0.0
         self.on_ground = True
         self.statuses.clear()
         self.attack_runtime = None
         self.attack_id = None
+        self.last_attack_at.clear()
+
+    def group_skill_recent(
+        self,
+        scene,
+        attack_id: str,
+        window: float,
+    ) -> bool:
+        """True when another living group member started this skill recently."""
+        if window <= 0.0:
+            return False
+        now = float(getattr(scene, "sim_time", 0.0))
+        for other in getattr(scene, "enemies", []):
+            if other is self or getattr(other, "hp", 0.0) <= 0.0:
+                continue
+            last = float(
+                getattr(other, "last_attack_at", {}).get(attack_id, -999.0)
+            )
+            if now - last < window:
+                return True
+        return False
+
+    def note_attack_started(self, scene, attack_id: str) -> None:
+        self.last_attack_at[attack_id] = float(
+            getattr(scene, "sim_time", 0.0)
+        )
 
     def cancel_attack(self) -> None:
         """Drop the current attack; used when the scene swaps targets."""
@@ -528,7 +575,12 @@ class Fighter:
         height: int = 10,
     ) -> None:
         bar_x = round(self.x - width * 0.5)
-        bar_y = round(self.y - self.hurtbox_dims[1] - 30.0)
+        lift = (
+            self.health_bar_lift
+            if self.health_bar_lift is not None
+            else self.hurtbox_dims[1]
+        )
+        bar_y = round(self.y - lift - 30.0)
         pygame.draw.rect(surface, (20, 20, 20), (bar_x, bar_y, width, height))
         fill = max(0.0, min(1.0, self.hp / self.max_hp)) if self.max_hp else 0.0
         pygame.draw.rect(

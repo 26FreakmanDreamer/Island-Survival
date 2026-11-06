@@ -42,6 +42,7 @@
       "class": "warrior",
       "stats": "warrior",
       "spawn": "warrior_spawn",
+      "stage_variant": "warrior",
       "clips": "warrior_clips",
       "frame_size": "warrior_frame_size",
       "pivot": "warrior_pivot",
@@ -56,6 +57,7 @@
       "class": "veno",
       "stats": "veno",
       "spawn": "veno_spawn",
+      "stage_variant": "veno",
       "clips": "veno_clips",
       "frame_size": "veno_frame_size",
       "pivot": "veno_pivot",
@@ -66,13 +68,15 @@
       "decides_match": true,
       "count": 3,
       "spawn_offsets": [-100, 0, 120],
-      "spawn_modes": ["ground", "hover", "hover"]
+      "spawn_modes": ["ground", "hover", "hover"],
+      "spawn_jitter": 40
     },
     "bat": {
       "name": "Bat",
       "class": "bat",
       "stats": "bat",
       "spawn": "bat_spawn",
+      "stage_variant": "bat",
       "clips": "bat_clips",
       "frame_size": "bat_frame_size",
       "pivot": "bat_pivot",
@@ -84,7 +88,8 @@
       "flying": true,
       "count": 5,
       "spawn_offsets": [0, -160, 160, -80, 80],
-      "spawn_heights": [180, 320, 240, 380, 280]
+      "spawn_heights": [180, 320, 240, 380, 280],
+      "spawn_jitter": 40
     },
     "creepy_shooter": {
       "name": "Creepy Shooter",
@@ -98,6 +103,36 @@
       "frames_dir": "creepy_shooter",
       "fallback": "Image/Enemy/creepy-shooter-256.png",
       "skill_slots": ["creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot"],
+      "separates": true,
+      "decides_match": true
+    },
+    "mech_crab": {
+      "name": "Mech-Crab",
+      "class": "mech_crab",
+      "stats": "mech_crab",
+      "spawn": "mech_crab_spawn",
+      "stage_variant": "mech_crab",
+      "clips": "mech_crab_clips",
+      "frame_size": "mech_crab_frame_size",
+      "pivot": "mech_crab_pivot",
+      "frames_dir": "mech_crab",
+      "fallback": "Image/Enemy/mech-crab-512.png",
+      "skill_slots": ["mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam"],
+      "separates": true,
+      "decides_match": true
+    },
+    "shadow_ninja": {
+      "name": "Shadow Ninja",
+      "class": "shadow_ninja",
+      "stats": "shadow_ninja",
+      "spawn": "shadow_ninja_spawn",
+      "stage_variant": "shadow_ninja",
+      "clips": "shadow_ninja_clips",
+      "frame_size": "shadow_ninja_frame_size",
+      "pivot": "shadow_ninja_pivot",
+      "frames_dir": "shadow_ninja",
+      "fallback": "Image/Enemy/shadow-ninja-256.png",
+      "skill_slots": ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", null],
       "separates": true,
       "decides_match": true
     },

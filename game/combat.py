@@ -146,7 +146,9 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
     bonus = attacker.current_flame_bonus()
     damage = attack_damage(attacker, attack, event) * (1.0 + bonus)
     poison_bonus_pct = float(event.get("bonus_vs_poison_max_hp_pct", 0.0))
-    if poison_bonus_pct > 0.0 and target.statuses.has("poison"):
+    if poison_bonus_pct > 0.0 and target.statuses.has_poison_source(
+        event.get("bonus_vs_poison_source")
+    ):
         damage += target.max_hp * poison_bonus_pct
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
 
@@ -198,6 +200,13 @@ def resolve_projectile_hit(scene, projectile) -> None:
     max_hp_pct = float(getattr(projectile, "bonus_target_max_hp_pct", 0.0))
     if max_hp_pct > 0.0:
         damage += target.max_hp * max_hp_pct
+    poison_bonus_pct = float(
+        getattr(projectile, "bonus_vs_poison_max_hp_pct", 0.0)
+    )
+    if poison_bonus_pct > 0.0 and target.statuses.has_poison_source(
+        getattr(projectile, "bonus_vs_poison_source", None)
+    ):
+        damage += target.max_hp * poison_bonus_pct
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
     if damage > 0.0:
         target.take_hit(damage, projectile.knockback, projectile.hitstun, projectile.direction)

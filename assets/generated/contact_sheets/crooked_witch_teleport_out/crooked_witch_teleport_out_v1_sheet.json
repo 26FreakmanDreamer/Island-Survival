@@ -1,0 +1,28 @@
+{
+  "title": "Crooked Witch TELEPORT_OUT v1 - actor frames / base v4_02",
+  "columns": 3,
+  "cell": 1254,
+  "pivot": [
+    627,
+    1170
+  ],
+  "rows": [
+    [
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_out\\crooked_witch_teleport_out_v1_00.png",
+        "label": "00 staff gathers",
+        "duration": "0.10"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_out\\crooked_witch_teleport_out_v1_01.png",
+        "label": "01 shoulders tuck",
+        "duration": "0.10"
+      },
+      {
+        "path": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_teleport_out\\crooked_witch_teleport_out_v1_02.png",
+        "label": "02 folds close",
+        "duration": "0.10"
+      }
+    ]
+  ]
+}

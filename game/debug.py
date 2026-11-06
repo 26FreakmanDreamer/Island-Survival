@@ -121,11 +121,26 @@ class DebugPanel:
                 f"Q {player.q_cd:4.1f}s  E {player.e_cd:4.1f}s"
             )
         elif hasattr(player, "q_cd") and hasattr(player, "e_cd"):
-            lines.append(f"Q {player.q_cd:4.1f}s  E {player.e_cd:4.1f}s")
+            e_phase = getattr(player, "e_phase", None)
+            if e_phase == "window":
+                e_text = f"E RETURN {player.e_window:4.1f}s"
+            elif e_phase == "out":
+                e_text = "E OUT"
+            elif e_phase == "return":
+                e_text = "E RETURNING"
+            else:
+                e_text = f"E {player.e_cd:4.1f}s"
+            lines.append(f"Q {player.q_cd:4.1f}s  {e_text}")
         if hasattr(player, "mark_detonations") and enemy is not None:
             lines.append(
                 f"MARKS {int(enemy.marks)}/3 BURST {enemy.mark_burst_time:.2f} "
                 f"LAST {enemy.mark_burst_damage:.0f} BURSTS {player.mark_detonations}"
+            )
+        if getattr(enemy, "is_shadow_ninja", False):
+            lines.append(
+                f"SHADOW MARKS {int(getattr(player, 'shadow_marks', 0))}/3 "
+                f"BURST {getattr(player, 'shadow_mark_burst_time', 0.0):.2f} "
+                f"LAST {getattr(player, 'shadow_mark_burst_damage', 0.0):.0f}"
             )
         if all(
             hasattr(player, attr)
@@ -200,6 +215,15 @@ class DebugPanel:
             lines.append(f"SKILL GAP {enemy.skill_cd:.2f}s")
         if hasattr(enemy, "mode"):
             lines.append(f"MODE {enemy.mode}  HOVER {enemy.hover_height:.0f}")
+        if getattr(enemy, "flight_side", None):
+            bag = getattr(enemy, "flight_bag", [])
+            lines.append(
+                f"FLIGHT {enemy.flight_side} {enemy.flight_remaining:.2f}s "
+                f"target {getattr(enemy, 'flight_target_height', 0.0):.0f}h "
+                f"wx {getattr(enemy, 'free_target_x', 0.0):.0f} "
+                f"stay {getattr(enemy, 'low_stay_remaining', 0.0):.2f}s "
+                f"bag {bag.count('high')}H/{bag.count('low')}L"
+            )
         for projectile in scene.projectiles:
             if getattr(projectile, "kind", "") == "axe_throw":
                 lines.append(

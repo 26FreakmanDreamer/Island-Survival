@@ -1,0 +1,36 @@
+{
+  "status": "revision_requested",
+  "previously_approved_frames": [0, 1],
+  "superseded_frames": [0, 1, 2, 3],
+  "rejected_frames": [2, 3],
+  "runtime_integrated": false,
+  "base": "assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png",
+  "hover_reference": "assets/generated/contact_sheets/crooked_witch_fly/crooked_witch_fly_v1_02.png",
+  "actor_frames": [
+    "crooked_witch_heal_v1_00.png",
+    "crooked_witch_heal_v1_01.png",
+    "crooked_witch_heal_v1_02.png",
+    "crooked_witch_heal_v1_03.png",
+    "crooked_witch_heal_v1_04.png"
+  ],
+  "hold_frames": [
+    2,
+    3
+  ],
+  "hold_duration_s": 5.0,
+  "fx_frames": [
+    "crooked_witch_heal_fx_v1_00.png",
+    "crooked_witch_heal_fx_v1_01.png",
+    "crooked_witch_heal_fx_v1_02.png",
+    "crooked_witch_heal_fx_v1_03.png",
+    "crooked_witch_heal_fx_v1_04.png"
+  ],
+  "fx_cycle_s": 1.0,
+  "fx_cycle_repeats": 5,
+  "pulse_frame": 4,
+  "detached_staff_prop": "crooked_witch_heal_staff_prop_v1.png",
+  "preview": "crooked_witch_heal_v1_preview.gif",
+  "preview_frame_duration_s": 0.2,
+  "note": "All 5 actor frames, detached staff prop and FX are separate transparent layers. Staff appears in actor frame 04 only; preview excludes separate prop in that frame. No runtime assets or code changed.",
+  "prompt_summary": "Use approved v4_02 identity and fly02 hover scale; 00 right hand releases staff with open palm, 01 arms opening, 02/03 both empty hands open palms up and breathing, 04 approved fly03 returns original right-hand grip. Detached staff matches approved bronze-amethyst prop with original length. Green motes orbit upward, bright pulse each second for five cycles."
+}

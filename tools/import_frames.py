@@ -91,6 +91,15 @@ def main() -> int:
     parser.add_argument("--canvas", type=int, default=256)
     parser.add_argument("--pivot-x", type=int, default=128)
     parser.add_argument("--pivot-y", type=int, default=244)
+    parser.add_argument(
+        "--anchor",
+        choices=("feet", "bbox-center", "image-center"),
+        default="feet",
+        help=(
+            "Horizontal anchor: bottom-band foot center (default), alpha-bbox "
+            "center, or source-image center (keeps a centered core fixed)."
+        ),
+    )
     parser.add_argument("--order", default="")
     parser.add_argument("--expect", type=int, default=0)
     parser.add_argument("--remove-bg", action="store_true")
@@ -195,6 +204,12 @@ def main() -> int:
 
         cropped = image.crop(bbox)
         feet_x = _feet_center_x(cropped)
+        if args.anchor == "feet":
+            anchor_x = feet_x
+        elif args.anchor == "bbox-center":
+            anchor_x = cropped.width * 0.5
+        else:
+            anchor_x = image.width * 0.5 - bbox[0]
         used_scale = scale
         warning = ""
         if cropped.width * scale > args.canvas * 0.98 or cropped.height * scale > args.pivot_y * 0.98:
@@ -211,7 +226,7 @@ def main() -> int:
         )
         resized = cropped.resize(new_size, Image.LANCZOS)
         canvas = Image.new("RGBA", (args.canvas, args.canvas), (0, 0, 0, 0))
-        left = args.pivot_x - round(feet_x * used_scale)
+        left = args.pivot_x - round(anchor_x * used_scale)
         top = args.pivot_y - new_size[1]
         canvas.alpha_composite(resized, (left, top))
 

@@ -7,7 +7,7 @@ import sys
 
 import pygame
 
-from game.combat import resolve_hit
+from game.combat import AttackRuntime, local_box_to_rect, resolve_hit
 from game.config import ASSETS_DIR, FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.fx import missing_lina_q_assets, missing_veno_web_asset
@@ -1037,6 +1037,14 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         rhea.facing = 1
         return rhea, enemy
 
+    def _rhea_tick_until(predicate, limit: int = 240) -> int:
+        """Tick until a predicate holds; hitstop can shift fixed tick counts."""
+        ticks = 0
+        while not predicate() and ticks < limit:
+            scene.tick(FIXED_DT)
+            ticks += 1
+        return ticks
+
     rhea_roster_order_ok = (
         list(scene.store.roster.get("characters", {})) == ["lina", "nyra", "rhea"]
     )
@@ -1047,6 +1055,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and rhea.basic_atk == 20.0
         and not hasattr(rhea, "energy")
         and rhea.poison_source == "rhea_poison"
+        and abs(rhea.q_cd_max - 6.0) < 1e-6
+        and abs(rhea.e_cd_max - 10.0) < 1e-6
         and abs(rhea.climb_draw_scale - 1.1) < 1e-6
     )
     rhea_default_ok = default_character_ok and default_enemy_ok
@@ -1057,7 +1067,12 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         == 60.0
         and all(
             float(event.get("knockback", 0.0)) == 0.0
-            for attack_id in ("rhea_throw", "rhea_poison_throw", "rhea_dash")
+            for attack_id in (
+                "rhea_throw",
+                "rhea_poison_throw",
+                "rhea_dash",
+                "rhea_dash_return",
+            )
             for event in scene.store.attacks[attack_id].get("events", [])
             if event.get("type") in ("hitbox", "projectile")
         )
@@ -1112,6 +1127,19 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and no_flip_ok
     )
 
+    # The slash must reach a grounded Veno's low (75px) hurtbox.
+    rhea, rhea_veno = _rhea_setup("veno", 400.0)
+    for enemy in scene.enemies:
+        enemy.ai_enabled = False
+    rhea_veno.on_ground = True
+    rhea_veno.y = scene.stage.ground_y
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    rhea_lmb_ground_veno_ok = (
+        abs((rhea_veno.max_hp - rhea_veno.hp) - 20.0) < 0.01
+    )
+
     # Passive: only an existing rhea_poison is extended, once per target and
     # attack, without a cap; Veno's poison and absent poison stay untouched.
     rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
@@ -1152,6 +1180,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         len(rhea_enemy.statuses.poisons) == 1
         and rhea_enemy.statuses.poisons[0].remaining > 10.0
     )
+    lmb_poison_damage = 200.0 - rhea_enemy.hp
     rhea_passive_ok = (
         abs(passive_first - 3.0) < 1e-6
         and abs(passive_second - 3.0) < 1e-6
@@ -1160,7 +1189,34 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and passive_veno
         and passive_no_cap
         and lmb_extend_actual
+        and abs(lmb_poison_damage - 26.0) < 0.01
     )
+
+    rhea, rhea_enemy = _rhea_setup("warrior", 380.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    passive_300_damage = 300.0 - rhea_enemy.hp
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 380.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    passive_1000_damage = 1000.0 - rhea_enemy.hp
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 380.0)
+    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    scene.input.buffer.press("punch")
+    for _ in range(30):
+        scene.tick(FIXED_DT)
+    passive_veno_damage = 200.0 - rhea_enemy.hp
+    rhea_passive_3pct_ok = (
+        abs(passive_300_damage - 29.0) < 0.01
+        and abs(passive_1000_damage - 50.0) < 0.01
+    )
+    rhea_passive_veno_ok = abs(passive_veno_damage - 20.0) < 0.01
 
     # RMB: 24 damage, steel shuriken, mid lane, and +1s poison extension.
     rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
@@ -1180,7 +1236,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         if rhea_enemy.hp < rhea_enemy.max_hp:
             break
     rhea_rmb_ok = (
-        abs(rhea_enemy.hp - 176.0) < 0.01
+        abs(rhea_enemy.hp - 170.0) < 0.01
         and rmb_projectile is not None
         and rmb_projectile.kind == "rhea_shuriken"
         and rmb_projectile.visual_kind == "rhea_shuriken"
@@ -1376,59 +1432,174 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         ) < 1e-6
     )
 
-    # E: two groups of 14, return to cast_x, pass-through, full armor.
+    # E: outbound 16, free-control 2s window, manual return 14, cooldown at end.
     rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
     dash_start_x = rhea.x
-    dash_max_x = rhea.x
     scene.input.buffer.press("e")
-    for index in range(80):
-        scene.tick(FIXED_DT)
-        dash_max_x = max(dash_max_x, rhea.x)
-        if index == 45:
-            rhea_enemy.x = dash_start_x
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    dash_end_x = rhea.x
+    outbound_damage = 1000.0 - rhea_enemy.hp
+    window_open = (
+        rhea.e_phase == "window"
+        and rhea.e_window > 1.9
+        and rhea.e_cd == 0.0
+        and rhea.attack_id is None
+        and abs(outbound_damage - 16.0) < 0.01
+        and dash_end_x > 850.0
+    )
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None)
     dash_damage = 1000.0 - rhea_enemy.hp
     rhea_dash_ok = (
-        abs(dash_damage - 28.0) < 0.01
+        window_open
+        and abs(dash_damage - 30.0) < 0.01
         and abs(rhea.x - dash_start_x) < 1.0
-        and dash_max_x > 850.0
-        and rhea.e_cd > 13.0
+        and rhea.e_cd > 8.0
         and rhea.attack_id is None
         and rhea.facing == 1
         and abs(rhea_enemy.x - rhea.x) >= 84.5
     )
 
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    no_return_x = rhea.x
+    _rhea_tick_until(lambda: rhea.e_phase is None, 300)
+    rhea_e_no_return_ok = (
+        abs(rhea.x - no_return_x) < 1.0
+        and no_return_x > 850.0
+        and rhea.e_cd > 8.0
+        and abs((1000.0 - rhea_enemy.hp) - 16.0) < 0.01
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    start_x = rhea.x
+    scene.input.buffer.press("e")
+    for _ in range(6):
+        scene.tick(FIXED_DT)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_buffered_ok = (
+        abs(rhea.x - start_x) < 1.0
+        and abs((1000.0 - rhea_enemy.hp) - 30.0) < 0.01
+        and rhea.e_cd > 8.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    window_before = rhea.e_window
+    scene.input.buffer.press("jump")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    airborne = not rhea.on_ground
+    scene.input.buffer.press("e")
+    for _ in range(3):
+        scene.tick(FIXED_DT)
+    ignored_air = rhea.e_phase == "window" and rhea.attack_id is None
+    window_after = rhea.e_window
+    _rhea_tick_until(lambda: rhea.on_ground, 120)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_air_ok = (
+        airborne
+        and ignored_air
+        and window_after < window_before
+        and abs(rhea.x - 300.0) < 1.0
+        and rhea.e_cd > 0.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    rhea.take_hit(5.0, 0.0, 0.2, 1)
+    rhea_e_hit_cancel_ok = (
+        rhea.e_phase is None
+        and rhea.e_window == 0.0
+        and rhea.e_cd > 8.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    window_before_q = rhea.e_window
+    scene.input.buffer.press("q")
+    for _ in range(10):
+        scene.tick(FIXED_DT)
+    rhea_e_window_q_ok = (
+        rhea.e_phase == "window"
+        and rhea.e_window < window_before_q
+        and rhea.q_cd > 0.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    for _ in range(6):
+        scene.tick(FIXED_DT)
+    return_armor = (
+        rhea.e_phase == "return"
+        and rhea.statuses.has("super_armor")
+        and rhea.attack_id == "rhea_dash_return"
+    )
+    return_hp_before = rhea.hp
+    rhea.take_hit(10.0, 300.0, 0.4, -1, launch=200.0)
+    return_armor_hit = (
+        abs(rhea.hp - (return_hp_before - 10.0)) < 0.01
+        and rhea.hitstun == 0.0
+        and rhea.kb_vx == 0.0
+        and rhea.e_phase == "return"
+    )
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_return_armor_ok = (
+        return_armor and return_armor_hit and rhea.e_cd > 8.0
+    )
+
+    rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_poison_ok = abs((200.0 - rhea_enemy.hp) - 60.0) < 0.01
+
     rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
     rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
     scene.input.buffer.press("e")
-    for _ in range(80):
-        scene.tick(FIXED_DT)
-    rhea_e_poison_ok = abs((200.0 - rhea_enemy.hp) - 58.0) < 0.01
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_veno_no_bonus_ok = abs((200.0 - rhea_enemy.hp) - 30.0) < 0.01
 
     rhea, rhea_enemy = _rhea_setup("warrior", 500.0)
-    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
     scene.input.buffer.press("e")
-    for _ in range(80):
-        scene.tick(FIXED_DT)
-    rhea_e_poison_300_ok = abs((300.0 - rhea_enemy.hp) - 73.0) < 0.01
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    rhea_e_poison_300_ok = abs((300.0 - rhea_enemy.hp) - 75.0) < 0.01
 
     rhea, rhea_enemy = _rhea_setup("creepy_shooter", 500.0)
-    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
     rhea_enemy.statuses.add("damage_reduction", 20.0, value=0.5)
     scene.input.buffer.press("e")
-    for _ in range(80):
-        scene.tick(FIXED_DT)
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
     e200_dr_damage = 200.0 - rhea_enemy.hp
 
     rhea, rhea_enemy = _rhea_setup("warrior", 500.0)
-    rhea_enemy.statuses.add_poison("veno_poison", 10.0, 0.0)
+    rhea_enemy.statuses.add_poison("rhea_poison", 10.0, 0.0)
     rhea_enemy.statuses.add("damage_reduction", 20.0, value=0.5)
     scene.input.buffer.press("e")
-    for _ in range(80):
-        scene.tick(FIXED_DT)
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
     e300_dr_damage = 300.0 - rhea_enemy.hp
     rhea_e_dr_ok = (
-        abs(e200_dr_damage - 29.0) < 0.01
-        and abs(e300_dr_damage - 36.5) < 0.01
+        abs(e200_dr_damage - 30.0) < 0.01
+        and abs(e300_dr_damage - 37.5) < 0.01
     )
 
     rhea, rhea_enemy = _rhea_setup("dummy", 900.0)
@@ -1451,7 +1622,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         scene.tick(FIXED_DT)
     armor_mid = rhea.statuses.has("super_armor")
     rhea.take_hit(10.0, 300.0, 0.4, -1)
-    rhea_e_armor_ok = (
+    armor_anim = rhea.anim.clip_name == "rhea_dash"
+    outbound_armor_ok = (
         armor_started
         and rhea.attack_id == "rhea_dash"
         and rhea.state == FighterState.ATTACK
@@ -1461,18 +1633,35 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and rhea.hitstun == 0.0
         and rhea.kb_vx == 0.0
         and rhea.vy == 0.0
-        and rhea.anim.clip_name == "rhea_dash"
+        and armor_anim
+    )
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    rhea_e_armor_ok = (
+        outbound_armor_ok and not rhea.statuses.has("super_armor")
     )
 
     rhea, rhea_enemy = _rhea_setup("dummy", 900.0)
     scene.stage.blocks_enabled = True
-    block_dash_max = rhea.x
     scene.input.buffer.press("e")
-    for _ in range(80):
-        scene.tick(FIXED_DT)
-        block_dash_max = max(block_dash_max, rhea.x)
-    rhea_e_block_ok = (
-        block_dash_max <= 351.0 and abs(rhea.x - 300.0) < 1.0
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    terrain_pass_x = rhea.x
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase is None, 240)
+    terrain_returned = abs(rhea.x - 300.0) < 1.0
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 900.0)
+    scene.stage.blocks_enabled = True
+    rhea.x = 150.0
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    barrier_pushed_out = not any(
+        scene.stage.body_rect(rhea).colliderect(block)
+        for block in scene.stage.blocks
+    )
+    rhea_e_terrain_ok = (
+        terrain_pass_x > 800.0
+        and terrain_returned
+        and barrier_pushed_out
     )
 
     rhea, rhea_enemy = _rhea_setup("dummy", 600.0)
@@ -1509,6 +1698,18 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and rhea.e_cd == 0.0
         and not scene.projectiles
         and not rhea_enemy.statuses.has("poison")
+    )
+
+    rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
+    scene.input.buffer.press("e")
+    _rhea_tick_until(lambda: rhea.e_phase == "window")
+    scene.reset()
+    rhea_cleanup_window_ok = (
+        rhea.e_phase is None
+        and rhea.e_window == 0.0
+        and rhea.e_cd == 0.0
+        and rhea.attack_runtime is None
+        and not rhea.ignore_terrain
     )
 
     scene.set_character("rhea")
@@ -1803,6 +2004,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         len(scene.enemies) == 3
         and any(not enemy.on_ground for enemy in scene.enemies)
         and any(enemy.on_ground for enemy in scene.enemies)
+        and all(enemy.x >= 640.0 for enemy in scene.enemies)
     )
     # Each Veno keeps its own skill cooldowns (bite 1s, poison 5s, web 8s).
     venos = list(scene.enemies)
@@ -1825,6 +2027,56 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         enemy.hp = 0.0
     scene.tick(FIXED_DT)
     veno_group_ok = group_spawn_ok and scene.match_over == "WIN"
+
+    # The 3-Veno group must stagger the same skill; observe real AI starts.
+    def _min_start_gap(times):
+        ordered = sorted(times)
+        if len(ordered) < 2:
+            return 0.0
+        return min(b - a for a, b in zip(ordered, ordered[1:]))
+
+    scene.enemy_count_override = None
+    scene.set_enemy("warrior")
+    scene.set_enemy("veno")
+    scene.reset()
+    scene.player.x = 280.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.on_ground = True
+    scene.player.invincible = True
+    for enemy in scene.enemies:
+        enemy.ai_enabled = True
+    veno_seen = {}
+    veno_starts = {"veno_poison": [], "veno_web": []}
+    for _ in range(int(4.0 / FIXED_DT)):
+        scene.tick(FIXED_DT)
+        for enemy in scene.enemies:
+            for attack_id in veno_starts:
+                started = enemy.last_attack_at.get(attack_id)
+                key = (id(enemy), attack_id)
+                if started is not None and veno_seen.get(key) != started:
+                    veno_seen[key] = started
+                    veno_starts[attack_id].append(started)
+    veno_poison_gap = _min_start_gap(veno_starts["veno_poison"])
+    veno_web_gap = _min_start_gap(veno_starts["veno_web"])
+    saved_sim_time = float(scene.sim_time)
+    scene.sim_time = 10.0
+    veno_a, veno_b = list(scene.enemies)[:2]
+    veno_a.note_attack_started(scene, "veno_bite")
+    veno_bite_gate = veno_b.group_skill_recent(scene, "veno_bite", 0.8)
+    scene.sim_time = 10.8
+    veno_bite_gate_clear = not veno_b.group_skill_recent(
+        scene, "veno_bite", 0.8
+    )
+    scene.sim_time = saved_sim_time
+    veno_group_gap_ok = (
+        len(veno_starts["veno_poison"]) >= 2
+        and len(veno_starts["veno_web"]) >= 2
+        and veno_poison_gap >= 1.2 - 2 * FIXED_DT
+        and veno_web_gap >= 1.2 - 2 * FIXED_DT
+        and veno_bite_gate
+        and veno_bite_gate_clear
+    )
+
     scene.enemy_count_override = 1
     scene.set_enemy("warrior")
     scene.reset()
@@ -1969,7 +2221,11 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     bat_sonic_ok = (
         abs((sonic_hp_before - scene.player.hp) - 12.0) < 1e-6
         and sonic_stun_seen
-        and 0.5 <= sonic_stun_remaining <= 1.0
+        and 0.6 <= sonic_stun_remaining <= 0.85
+        and abs(
+            scene.store.attacks["bat_sonic"]["events"][0]["status_duration"]
+            - 0.8
+        ) < 1e-6
     )
     bat_sonic_return_ok = (
         sonic_wave is not None
@@ -2081,6 +2337,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     # the player who is standing behind the block.
     scene.stage.set_blocks_enabled(True)
     scene.reset()
+    # The Bat stage is intentionally empty; inject a barrier for this
+    # block-bounce test only.
+    injected_block = pygame.Rect(700, 560, 90, 60)
+    scene.stage.blocks.append(injected_block)
     bat = scene.enemy
     bat.ai_enabled = False
     scene.player.x = 1000.0
@@ -2120,6 +2380,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and not block_wave.alive
         and scene.player.hp == block_hp_before
     )
+    scene.stage.blocks.remove(injected_block)
 
     # Hurt/stun stay airborne; only KO falls and switches to the landed frame.
     scene.reset()
@@ -2162,13 +2423,27 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("bat")
     scene.reset()
     bat_group = list(scene.enemies)
+    bat_xs = [enemy.x for enemy in bat_group]
+    bat_flight_remaining = sorted(
+        round(enemy.flight_remaining, 3) for enemy in bat_group
+    )
+    bat_flight_bags_ok = all(
+        (1 if enemy.flight_side == "high" else 0)
+        + enemy.flight_bag.count("high") == 3
+        and (1 if enemy.flight_side == "low" else 0)
+        + enemy.flight_bag.count("low") == 2
+        for enemy in bat_group
+    )
     bat_group_spawn_ok = (
         len(bat_group) == 5
         and all(not enemy.on_ground for enemy in bat_group)
-        and len({round(enemy.x) for enemy in bat_group}) == 5
         and len({round(enemy.y) for enemy in bat_group}) == 5
         and max(enemy.hover_height for enemy in bat_group) >= 360.0
         and min(enemy.hover_height for enemy in bat_group) <= 200.0
+        and sum(1 for x in bat_xs if x >= 640.0) >= 4
+        and max(bat_xs) - min(bat_xs) >= 240.0
+        and bat_flight_remaining == [5.0, 6.0, 7.0, 8.0, 9.0]
+        and bat_flight_bags_ok
     )
     for enemy in bat_group:
         enemy.sonic_cd = 0.0
@@ -2188,6 +2463,118 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         bat_group_spawn_ok
         and bat_group_cooldowns_ok
         and bat_group_win_ok
+    )
+
+    # The 5-Bat group must stagger the same skill; observe real AI starts.
+    scene.enemy_count_override = None
+    scene.set_enemy("warrior")
+    scene.set_enemy("bat")
+    scene.reset()
+    scene.player.x = 280.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.on_ground = True
+    scene.player.invincible = True
+    for enemy in scene.enemies:
+        enemy.ai_enabled = True
+    bat_seen = {}
+    bat_starts = {"bat_sonic": [], "bat_dive": []}
+    for _ in range(int(12.0 / FIXED_DT)):
+        scene.tick(FIXED_DT)
+        for enemy in scene.enemies:
+            for attack_id in bat_starts:
+                started = enemy.last_attack_at.get(attack_id)
+                key = (id(enemy), attack_id)
+                if started is not None and bat_seen.get(key) != started:
+                    bat_seen[key] = started
+                    bat_starts[attack_id].append(started)
+    bat_sonic_gap = _min_start_gap(bat_starts["bat_sonic"])
+    bat_dive_gap = _min_start_gap(bat_starts["bat_dive"])
+    bat_group_gap_ok = (
+        len(bat_starts["bat_sonic"]) >= 2
+        and len(bat_starts["bat_dive"]) >= 2
+        and bat_sonic_gap >= 1.2 - 2 * FIXED_DT
+        and bat_dive_gap >= 0.8 - 2 * FIXED_DT
+    )
+
+    # Bat free-flight bag: 5 flights with 3 high / 2 low, randomized; a low
+    # flight stays 2s at y=550 and must be hittable.
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("warrior")
+    scene.set_enemy("bat")
+    scene.reset()
+    flight_bat = scene.enemy
+    flight_bat.ai_enabled = True
+    scene.player.x = 280.0
+    scene.player.y = scene.stage.ground_y
+    scene.player.on_ground = True
+    scene.player.invincible = True
+    high_min_y = scene.stage.ground_y - flight_bat.flight_high_max
+    high_max_y = scene.stage.ground_y - flight_bat.flight_high_min
+    low_y = scene.stage.ground_y - flight_bat.flight_low_height
+    flight_bag_ok = (
+        (1 if flight_bat.flight_side == "high" else 0)
+        + flight_bat.flight_bag.count("high") == 3
+        and (1 if flight_bat.flight_side == "low" else 0)
+        + flight_bat.flight_bag.count("low") == 2
+    )
+    low_stay_seen = False
+    low_y_seen = False
+    high_y_seen = False
+    low_hit = False
+    low_fight_done = False
+    low_sonic_seen = False
+    flight_xs = []
+    last_sonic_at = flight_bat.last_attack_at.get("bat_sonic")
+    for _ in range(int(32.0 / FIXED_DT)):
+        scene.tick(FIXED_DT)
+        flight_xs.append(flight_bat.x)
+        side = flight_bat.flight_side
+        sonic_at = flight_bat.last_attack_at.get("bat_sonic")
+        if sonic_at is not None and sonic_at != last_sonic_at:
+            last_sonic_at = sonic_at
+            if side == "low":
+                low_sonic_seen = True
+        if side == "low":
+            if flight_bat.low_stay_remaining > 1.5:
+                low_stay_seen = True
+            if abs(flight_bat.y - low_y) <= 30.0:
+                low_y_seen = True
+            if not low_fight_done and abs(flight_bat.y - low_y) <= 15.0:
+                flight_bat.ai_enabled = False
+                flight_bat.cancel_attack()
+                scene.player.invincible = False
+                scene.player.statuses.clear()
+                scene.player.hp = scene.player.max_hp
+                scene.player.state = FighterState.IDLE
+                scene.player.hitstun = 0.0
+                scene.player.on_ground = True
+                scene.player.x = flight_bat.x - 80.0
+                scene.player.y = scene.stage.ground_y
+                scene.player.facing = 1
+                scene.input.buffer.press("punch")
+                for _ in range(30):
+                    scene.tick(FIXED_DT)
+                low_hit = (
+                    abs((flight_bat.max_hp - flight_bat.hp) - 20.0) < 0.01
+                )
+                low_fight_done = True
+                flight_bat.ai_enabled = True
+                scene.player.invincible = True
+        elif side == "high" and (
+            high_min_y - 5.0
+            <= flight_bat.y
+            <= high_max_y + flight_bat.bob + 5.0
+        ):
+            high_y_seen = True
+    bat_flight_cycle_ok = (
+        flight_bag_ok
+        and low_stay_seen
+        and low_y_seen
+        and high_y_seen
+        and low_hit
+        and not low_sonic_seen
+        and max(flight_xs) - min(flight_xs) >= 80.0
     )
 
     scene.enemy_count_override = 1
@@ -2280,6 +2667,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.handle_debug_key(pygame.K_F7)
     f7_creepy_ok = scene.enemy_id == "creepy_shooter"
     scene.handle_debug_key(pygame.K_F7)
+    f7_mech_crab_ok = scene.enemy_id == "mech_crab"
+    scene.handle_debug_key(pygame.K_F7)
+    f7_shadow_ninja_ok = scene.enemy_id == "shadow_ninja"
+    scene.handle_debug_key(pygame.K_F7)
     f7_dummy_ok = scene.enemy_id == "dummy"
     b_before = scene.stage.blocks_enabled
     scene.handle_debug_key(pygame.K_b)
@@ -2325,6 +2716,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and f7_cycle_ok
         and f7_bat_ok
         and f7_creepy_ok
+        and f7_mech_crab_ok
+        and f7_shadow_ninja_ok
         and f7_dummy_ok
         and b_key_ok
         and lock_switch_off_ok
@@ -3105,7 +3498,779 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("warrior")
     creepy_cleanup_ok = had_homing and not scene.projectiles
     creepy_stage_switch_ok = (
-        scene.stage.platforms[0].left == 170 and scene.enemy.name == "Warrior"
+        scene.stage.platforms[0].left == 400 and scene.enemy.name == "Warrior"
+    )
+    scene.reset()
+
+    # --- Phase G: Mech-Crab ---
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("mech_crab")
+    scene.reset()
+    mech = scene.enemy
+    mech_player = scene.player
+    mech.ai_enabled = False
+
+    mech_crab_present = (
+        mech.name == "Mech-Crab"
+        and mech.max_hp == 400.0
+        and mech.hp == 400.0
+        and mech.basic_atk == 30.0
+        and mech.atk == 30.0
+        and mech.hurtbox_dims == (160.0, 150.0)
+        and mech.stage_half_width == 85.0
+        and mech.skill_slots
+        == ["mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam"]
+        and mech.entry.get("separates") is True
+        and mech.entry.get("decides_match") is True
+    )
+    mech_crab_stage_ok = (
+        len(scene.stage.platforms) == 2
+        and [tuple(rect) for rect in scene.stage.platforms]
+        == [(170, 268, 479, 78), (796, 220, 314, 78)]
+        and len(scene.stage.ladders) == 2
+        and [tuple(ladder.rect) for ladder in scene.stage.ladders]
+        == [(508, 268, 64, 352), (921, 220, 64, 400)]
+        and len(scene.stage.blocks) == 2
+        and not scene.stage.barriers
+        and scene.stage.spawn("mech_crab_spawn") == (1000.0, 620.0)
+    )
+
+    def _place_mech(ex: float, px: float, py: float = 620.0):
+        if scene.enemy_id != "mech_crab":
+            scene.set_enemy("mech_crab")
+        scene.reset()
+        crab = scene.enemy
+        crab.ai_enabled = False
+        crab.x = float(ex)
+        crab.y = 620.0
+        crab.on_ground = True
+        crab.vy = 0.0
+        player = scene.player
+        player.x = float(px)
+        player.y = float(py)
+        player.on_ground = True
+        player.vy = 0.0
+        player.hp = 100.0
+        player.statuses.clear()
+        return crab, player
+
+    mech_crab_armor_ok = True
+    for mech_attack in (
+        "mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam",
+    ):
+        crab, player = _place_mech(
+            600.0, 700.0 if mech_attack == "mech_claw_slam" else 900.0
+        )
+        if not crab.force_attack(scene, player, mech_attack):
+            mech_crab_armor_ok = False
+            break
+        for _ in range(5):
+            scene.tick(FIXED_DT)
+        before_hp = crab.hp
+        crab.take_hit(10.0, 120.0, 0.25, 1)
+        if not (
+            crab.state == FighterState.ATTACK
+            and abs(crab.hp - (before_hp - 10.0)) < 0.01
+            and crab.hitstun == 0.0
+            and crab.kb_vx == 0.0
+            and crab.statuses.has("super_armor")
+        ):
+            mech_crab_armor_ok = False
+            break
+    crab, player = _place_mech(600.0, 900.0)
+    crab.force_attack(scene, player, "mech_laser")
+    for _ in range(70):
+        scene.tick(FIXED_DT)
+    armor_beam_seen = crab.laser_beam is not None
+    crab.take_hit(9999.0, 0.0, 0.2, 1)
+    mech_crab_armor_ok = (
+        mech_crab_armor_ok
+        and armor_beam_seen
+        and crab.state == FighterState.KO
+        and crab.attack_id is None
+        and crab.laser_beam is None
+    )
+
+    crab, player = _place_mech(600.0, 900.0)
+    laser_started = crab.force_attack(scene, player, "mech_laser")
+    laser_cd_start = crab.laser_cd
+    laser_start_x = crab.x
+    laser_beam_seen = False
+    laser_damage = 0.0
+    laser_hits = 0
+    last_hp = player.hp
+    for _ in range(220):
+        scene.tick(FIXED_DT)
+        if crab.laser_beam is not None:
+            laser_beam_seen = True
+        if player.hp < last_hp:
+            laser_hits += 1
+            laser_damage += last_hp - player.hp
+            last_hp = player.hp
+        if crab.attack_id is None and _ > 10:
+            break
+    laser_ok = (
+        laser_started
+        and laser_beam_seen
+        and abs(laser_cd_start - 6.0) < 1e-6
+        and abs(crab.x - laser_start_x) < 0.01
+        and laser_hits == 1
+        and abs(laser_damage - 36.0) < 0.01
+        and crab.laser_beam is None
+    )
+    crab, player = _place_mech(300.0, 900.0)
+    crab.force_attack(scene, player, "mech_laser")
+    for _ in range(62):
+        scene.tick(FIXED_DT)
+    blocked_beam = crab.laser_beam
+    laser_block_ok = (
+        blocked_beam is not None
+        and blocked_beam.blocked
+        and blocked_beam.end_y <= 346.5
+    )
+    mech_crab_laser_ok = laser_ok and laser_block_ok
+
+    crab, player = _place_mech(600.0, 800.0)
+    charge_started = crab.force_attack(scene, player, "mech_charge")
+    charge_cd_start = crab.charge_cd
+    charge_start_x = crab.x
+    for _ in range(50):
+        scene.tick(FIXED_DT)
+    charge_warning_still = abs(crab.x - charge_start_x) < 0.01
+    for _ in range(80):
+        scene.tick(FIXED_DT)
+    charge_damage = 100.0 - player.hp
+    crab, player = _place_mech(600.0, 800.0)
+    crab.force_attack(scene, player, "mech_charge")
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    player.x = 300.0
+    for _ in range(120):
+        scene.tick(FIXED_DT)
+    charge_lock_ok = crab.x > 800.0 and player.hp == 100.0
+    crab, player = _place_mech(900.0, 1100.0, 220.0)
+    crab.force_attack(scene, player, "mech_charge")
+    for _ in range(160):
+        scene.tick(FIXED_DT)
+    charge_wall_ok = abs(crab.x - 1105.0) < 1.0 and player.hp == 100.0
+    mech_crab_charge_ok = (
+        charge_started
+        and abs(charge_cd_start - 5.0) < 1e-6
+        and charge_warning_still
+        and abs(charge_damage - 45.0) < 0.01
+        and charge_lock_ok
+        and charge_wall_ok
+    )
+
+    crab, player = _place_mech(600.0, 700.0)
+    claw_started = crab.force_attack(scene, player, "mech_claw_slam")
+    claw_cd_start = crab.claw_cd
+    for _ in range(25):
+        scene.tick(FIXED_DT)
+    claw_early_hp = player.hp
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    claw_damage = 100.0 - player.hp
+    claw_stun_effect = player.statuses.get("stun")
+    claw_stun = claw_stun_effect is not None
+    claw_stun_left = claw_stun_effect.remaining if claw_stun_effect else 0.0
+    crab, player = _place_mech(600.0, 700.0)
+    crab.force_attack(scene, player, "mech_claw_slam")
+    for _ in range(10):
+        scene.tick(FIXED_DT)
+    player.x = 500.0
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+    claw_behind_ok = player.hp == 100.0
+    mech_crab_claw_ok = (
+        claw_started
+        and abs(claw_cd_start - 5.0) < 1e-6
+        and claw_early_hp == 100.0
+        and abs(claw_damage - 30.0) < 0.01
+        and claw_stun
+        and 0.8 <= claw_stun_left <= 1.3
+        and claw_behind_ok
+    )
+
+    crab, player = _place_mech(600.0, 900.0)
+    leap_started = crab.force_attack(scene, player, "mech_leap_slam")
+    leap_cd_start = crab.leap_cd
+    leap_marker_x = crab.leap_target_x
+    leap_marker_y = crab.leap_target_y
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    player.x = 1100.0
+    leap_marker_fixed = (
+        crab.leap_target_x == leap_marker_x
+        and crab.leap_target_y == leap_marker_y
+    )
+    for _ in range(140):
+        scene.tick(FIXED_DT)
+    leap_dodge_ok = player.hp == 100.0
+    crab, player = _place_mech(600.0, 900.0)
+    player.y = 220.0
+    player.on_ground = True
+    crab.force_attack(scene, player, "mech_leap_slam")
+    for _ in range(150):
+        scene.tick(FIXED_DT)
+    leap_platform_ok = (
+        abs(crab.y - 220.0) < 0.5 and abs(player.hp - 40.0) < 0.01
+    )
+    mech_crab_leap_ok = (
+        leap_started
+        and abs(leap_cd_start - 8.0) < 1e-6
+        and leap_marker_fixed
+        and leap_dodge_ok
+        and leap_platform_ok
+    )
+
+    crab, player = _place_mech(600.0, 300.0)
+    crab.force_attack(scene, player, "mech_claw_slam")
+    for _ in range(70):
+        scene.tick(FIXED_DT)
+    gap_after = crab.skill_gap
+    crab.ai_enabled = True
+    crab.decision_cd = 0.0
+    for _ in range(10):
+        scene.tick(FIXED_DT)
+    no_skill_in_gap = crab.attack_id is None
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+    skill_after_gap = crab.attack_id is not None
+    mech_crab_gap_ok = (
+        gap_after > 0.5 and no_skill_in_gap and skill_after_gap
+    )
+
+    mech_slot_results = []
+    for mech_key, mech_attack in (
+        (pygame.K_v, "mech_laser"),
+        (pygame.K_c, "mech_charge"),
+        (pygame.K_x, "mech_claw_slam"),
+        (pygame.K_z, "mech_leap_slam"),
+    ):
+        crab, player = _place_mech(600.0, 800.0)
+        scene.handle_debug_key(mech_key)
+        mech_slot_results.append(crab.attack_id == mech_attack)
+    mech_crab_slots_ok = all(mech_slot_results)
+
+    crab, player = _place_mech(600.0, 900.0)
+    crab.hp = 1.0
+    crab.take_hit(5.0, 0.0, 0.1, 1)
+    scene.tick(FIXED_DT)
+    mech_crab_win_ok = scene.match_over == "WIN"
+
+    crab, player = _place_mech(600.0, 900.0)
+    crab.force_attack(scene, player, "mech_laser")
+    for _ in range(70):
+        scene.tick(FIXED_DT)
+    cleanup_beam_before_reset = crab.laser_beam is not None
+    scene.reset()
+    crab = scene.enemy
+    cleanup_reset_ok = (
+        crab.laser_beam is None
+        and crab.attack_id is None
+        and crab.leap_target_x is None
+    )
+    crab.force_attack(scene, scene.player, "mech_laser")
+    for _ in range(70):
+        scene.tick(FIXED_DT)
+    cleanup_beam_before_ko = crab.laser_beam is not None
+    crab.take_hit(9999.0, 0.0, 0.2, 1)
+    cleanup_ko_ok = crab.laser_beam is None and crab.attack_id is None
+    scene.set_enemy("warrior")
+    cleanup_switch_ok = not scene.projectiles and not scene.fx_effects
+    mech_crab_cleanup_ok = (
+        cleanup_beam_before_reset
+        and cleanup_reset_ok
+        and cleanup_beam_before_ko
+        and cleanup_ko_ok
+        and cleanup_switch_ok
+    )
+
+    mech_ai_checks = []
+    crab, player = _place_mech(600.0, 700.0)
+    crab.ai_enabled = True
+    scene.tick(FIXED_DT)
+    mech_ai_checks.append(crab.attack_id == "mech_claw_slam")
+    crab, player = _place_mech(600.0, 850.0)
+    crab.ai_enabled = True
+    scene.tick(FIXED_DT)
+    mech_ai_checks.append(crab.attack_id == "mech_charge")
+    crab, player = _place_mech(600.0, 1150.0)
+    crab.ai_enabled = True
+    scene.tick(FIXED_DT)
+    mech_ai_checks.append(crab.attack_id == "mech_laser")
+    crab, player = _place_mech(600.0, 900.0)
+    player.y = 220.0
+    player.on_ground = True
+    crab.ai_enabled = True
+    scene.tick(FIXED_DT)
+    mech_ai_checks.append(crab.attack_id == "mech_leap_slam")
+    mech_crab_ai_ok = all(mech_ai_checks)
+
+    scene.set_enemy("mech_crab")
+    scene.reset()
+    mech = scene.enemy
+    mech_crab_missing = len(mech.anim.missing_paths())
+    mech_crab_lock_dir = ASSETS_DIR / "frames" / "mech_crab" / "fx"
+    mech_crab_fx_missing = sum(
+        not (mech_crab_lock_dir / f"mech_crab_lock_{index:02d}.png").exists()
+        for index in range(3)
+    )
+
+    # --- Phase H: Shadow Ninja (normal form) ---
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("shadow_ninja")
+    scene.reset()
+
+    def _place_shadow(ex: float, px: float, py: float = 620.0):
+        if scene.enemy_id != "shadow_ninja":
+            scene.set_enemy("shadow_ninja")
+        scene.reset()
+        shadow = scene.enemy
+        shadow.ai_enabled = False
+        shadow.x = float(ex)
+        shadow.y = 620.0
+        shadow.on_ground = True
+        shadow.vy = 0.0
+        shadow.ignore_separation = False
+        shadow.crouch_timer = 0.0
+        target = scene.player
+        target.x = float(px)
+        target.y = float(py)
+        target.on_ground = True
+        target.vy = 0.0
+        target.hp = target.max_hp
+        target.statuses.clear()
+        target.shadow_marks = 0
+        target.shadow_mark_burst_time = 0.0
+        return shadow, target
+
+    shadow = scene.enemy
+    shadow_player = scene.player
+    shadow_ninja_present = (
+        scene.enemy_id == "shadow_ninja"
+        and getattr(shadow, "name", "") == "Shadow Ninja"
+        and shadow.__class__.__name__ == "ShadowNinja"
+        and len(scene.enemies) == 1
+        and shadow.skill_slots
+        == ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", None]
+    )
+    shadow_ninja_stats_ok = (
+        shadow.max_hp == shadow_player.max_hp
+        and shadow.atk == shadow_player.atk
+        and abs(shadow.walk_speed - shadow_player.walk_speed * 1.5) < 1e-6
+    )
+    for character_id in ("nyra", "rhea", "lina"):
+        scene.set_character(character_id)
+        scene.reset()
+        shadow_check = scene.enemy
+        shadow_ninja_stats_ok = shadow_ninja_stats_ok and (
+            shadow_check.max_hp == scene.player.max_hp
+            and shadow_check.atk == scene.player.atk
+            and abs(shadow_check.walk_speed - scene.player.walk_speed * 1.5)
+            < 1e-6
+        )
+
+    # Skill 1: 0.35s action, 0.5s cooldown from cast, high hitbox.
+    shadow, shadow_player = _place_shadow(450.0, 400.0)
+    shadow.facing = -1
+    shadow_ninja_slots_ok = (
+        not shadow.force_skill(scene, shadow_player, 3)
+        and shadow.attack_id is None
+    )
+    hp_before = shadow_player.hp
+    shadow.force_skill(scene, shadow_player, 0)
+    slash_cd_set = abs(shadow.slash_cd - shadow.slash_cd_max) < 1e-6
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    shadow_ninja_slash_ok = (
+        slash_cd_set
+        and abs((hp_before - shadow_player.hp) - shadow.atk) < 0.01
+        and shadow_player.shadow_marks == 1
+        and shadow.slash_cd <= 0.0
+        and shadow.attack_id is None
+    )
+
+    shadow, shadow_player = _place_shadow(400.0, 450.0)
+    shadow.facing = 1
+    shadow_player.facing = -1
+    slash_rect = local_box_to_rect(shadow, [20, -195, 130, 55])
+    shadow_player.state = FighterState.IDLE
+    slash_standing = slash_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.CROUCH
+    slash_crouch_miss = not slash_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.IDLE
+    shadow_ninja_crouch_ok = slash_standing and slash_crouch_miss
+
+    # Skill 2: low lane, 1.2 atk, 1s stun, one mark, blocked by a barrier.
+    shadow, shadow_player = _place_shadow(400.0, 900.0)
+    shadow.force_skill(scene, shadow_player, 1)
+    throw_cd_set = abs(shadow.throw_cd - shadow.throw_cd_max) < 1e-6
+    throw_low_lane = False
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+        if scene.projectiles:
+            kunai = scene.projectiles[0]
+            throw_low_lane = (
+                getattr(kunai, "kind", "") == "shadow_kunai"
+                and abs(kunai.y - (shadow.y - 60.0)) < 0.01
+            )
+    hp_before = shadow_player.hp
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    shadow_ninja_throw_ok = (
+        throw_cd_set
+        and throw_low_lane
+        and abs((hp_before - shadow_player.hp) - shadow.atk * 1.2) < 0.01
+        and shadow_player.statuses.has("stun")
+        and shadow_player.shadow_marks == 1
+    )
+
+    shadow, shadow_player = _place_shadow(400.0, 900.0)
+    saved_blocks = scene.stage.blocks
+    saved_barriers = scene.stage.barriers
+    test_barrier = pygame.Rect(600, 560, 90, 60)
+    scene.stage.blocks = [test_barrier]
+    scene.stage.barriers = [test_barrier]
+    shadow.force_skill(scene, shadow_player, 1)
+    for _ in range(60):
+        scene.tick(FIXED_DT)
+    throw_blocked_ok = (
+        shadow_player.hp == shadow_player.max_hp
+        and shadow_player.shadow_marks == 0
+        and not scene.projectiles
+    )
+    scene.stage.blocks = saved_blocks
+    scene.stage.barriers = saved_barriers
+
+    # Skill 3: dash ~630-640px, pass through the player, low hitbox.
+    shadow, shadow_player = _place_shadow(400.0, 800.0)
+    shadow.facing = 1
+    dash_start_x = shadow.x
+    shadow.force_skill(scene, shadow_player, 2)
+    dash_cd_set = abs(shadow.dash_cd - shadow.dash_cd_max) < 1e-6
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    shadow_ninja_dash_ok = (
+        dash_cd_set
+        and 600.0 <= shadow.x - dash_start_x <= 680.0
+        and abs((shadow_player.max_hp - shadow_player.hp) - shadow.atk * 1.5)
+        < 0.01
+        and shadow_player.shadow_marks == 1
+        and not shadow.ignore_separation
+        and shadow.attack_id is None
+    )
+
+    shadow, shadow_player = _place_shadow(400.0, 450.0)
+    shadow.facing = 1
+    shadow_player.facing = -1
+    dash_rect = local_box_to_rect(shadow, [0, -80, 90, 80])
+    shadow_player.state = FighterState.IDLE
+    dash_standing = dash_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.y = 620.0 - 131.0
+    shadow_player.on_ground = False
+    shadow_player.state = FighterState.AIR
+    dash_jump_miss = not dash_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.y = 620.0
+    shadow_player.on_ground = True
+    shadow_player.state = FighterState.IDLE
+    shadow_ninja_dash_jump_dodge_ok = dash_standing and dash_jump_miss
+
+    # Marks: 1 -> 2 -> 3 -> burst -> 1, extra atk, stun, KO/reset clear.
+    shadow, shadow_player = _place_shadow(450.0, 400.0)
+    mark_counts = []
+    for _ in range(4):
+        shadow._add_shadow_mark(scene, shadow_player)
+        mark_counts.append(shadow_player.shadow_marks)
+    mark_cycle_ok = mark_counts == [1, 2, 3, 1]
+    mark_damage_ok = abs((shadow_player.max_hp - shadow_player.hp) - shadow.atk) < 0.01
+    mark_stun_ok = shadow_player.statuses.has("stun")
+    mark_burst_ok = shadow_player.shadow_mark_burst_time > 0.0
+    shadow_player.shadow_marks = 2
+    shadow_player.take_hit(9999.0, 0.0, 0.0, 1)
+    mark_ko_clear = shadow_player.shadow_marks == 0
+    scene.reset()
+    mark_reset_clear = shadow_player.shadow_marks == 0
+
+    shadow, shadow_player = _place_shadow(450.0, 400.0)
+    shadow_player.statuses.add("super_armor", 2.0)
+    hp_before = shadow_player.hp
+    for _ in range(4):
+        shadow._add_shadow_mark(scene, shadow_player)
+    mark_armor_damage = abs((hp_before - shadow_player.hp) - shadow.atk) < 0.01
+    mark_armor_stun = not shadow_player.statuses.has("stun")
+    shadow_ninja_marks_ok = (
+        mark_cycle_ok
+        and mark_damage_ok
+        and mark_stun_ok
+        and mark_burst_ok
+        and mark_ko_clear
+        and mark_reset_clear
+        and mark_armor_damage
+        and mark_armor_stun
+    )
+
+    scene.set_character("nyra")
+    scene.reset()
+    scene.player.marks = 2
+    scene.player.shadow_marks = 3
+    shadow_marks_independent = (
+        scene.player.marks == 2 and scene.player.shadow_marks == 3
+    )
+    scene.set_character("lina")
+    scene.reset()
+
+    # AI: close 2 -> 1, low HP 3 away, far 2 -> 3, very far walk, defense.
+    shadow, shadow_player = _place_shadow(450.0, 600.0)
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_close_throw = shadow.attack_id == "shadow_kunai_throw"
+
+    shadow, shadow_player = _place_shadow(450.0, 600.0)
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 5.0
+    shadow.slash_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_close_slash = shadow.attack_id == "shadow_kunai_slash"
+
+    shadow, shadow_player = _place_shadow(450.0, 600.0)
+    shadow.hp = shadow.max_hp * 0.3
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 5.0
+    shadow.dash_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_low_hp_dash = shadow.attack_id == "shadow_dash" and shadow.facing == -1
+
+    shadow, shadow_player = _place_shadow(400.0, 800.0)
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_far_throw = shadow.attack_id == "shadow_kunai_throw"
+
+    shadow, shadow_player = _place_shadow(400.0, 800.0)
+    scene.projectiles = []
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 5.0
+    shadow.dash_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_far_dash = shadow.attack_id == "shadow_dash"
+
+    shadow, shadow_player = _place_shadow(300.0, 1000.0)
+    shadow.opening_cd = 0.0
+    shadow.throw_cd = 0.0
+    shadow.dash_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think(scene, shadow_player)
+    ai_very_far_walk = (
+        shadow.attack_id is None and shadow.state == FighterState.WALK
+    )
+
+    shadow, shadow_player = _place_shadow(450.0, 700.0)
+    shadow_player.facing = -1
+    shadow_player.attack_runtime = AttackRuntime(
+        shadow_player,
+        "test_high",
+        {
+            "duration": 1.0,
+            "events": [
+                {
+                    "t": 0.0,
+                    "until": 1.0,
+                    "type": "hitbox",
+                    "box": [20, -195, 130, 55],
+                }
+            ],
+        },
+        shadow,
+        scene,
+    )
+    shadow.opening_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow._think(scene, shadow_player)
+    ai_crouch = shadow.state == FighterState.CROUCH
+    shadow_player.attack_runtime = AttackRuntime(
+        shadow_player,
+        "test_low",
+        {
+            "duration": 1.0,
+            "events": [
+                {
+                    "t": 0.0,
+                    "until": 1.0,
+                    "type": "hitbox",
+                    "box": [0, -80, 90, 80],
+                }
+            ],
+        },
+        shadow,
+        scene,
+    )
+    shadow.state = FighterState.IDLE
+    shadow.on_ground = True
+    shadow.y = 620.0
+    shadow.jump_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow._think(scene, shadow_player)
+    ai_jump = shadow.state == FighterState.AIR and shadow.vy < 0.0
+    shadow_player.attack_runtime = None
+
+    shadow_ninja_ai_ok = all(
+        (
+            ai_close_throw,
+            ai_close_slash,
+            ai_low_hp_dash,
+            ai_far_throw,
+            ai_far_dash,
+            ai_very_far_walk,
+            ai_crouch,
+            ai_jump,
+        )
+    )
+
+    # Barrier hop: a temporary barrier is enough to verify the future-stage AI.
+    shadow, shadow_player = _place_shadow(420.0, 700.0)
+    shadow.facing = 1
+    hop_barrier = pygame.Rect(500, 560, 90, 60)
+    saved_blocks = scene.stage.blocks
+    saved_barriers = scene.stage.barriers
+    scene.stage.blocks = [hop_barrier]
+    scene.stage.barriers = [hop_barrier]
+    hop_started = shadow._try_barrier_hop(scene, shadow_player)
+    for _ in range(60):
+        shadow.update(FIXED_DT, scene)
+    shadow_ninja_barrier_hop_ok = (
+        hop_started and abs(shadow.y - 560.0) < 1.0 and shadow.on_ground
+    )
+    scene.stage.blocks = saved_blocks
+    scene.stage.barriers = saved_barriers
+
+    # Win / cleanup / slot 4 safety.
+    shadow, shadow_player = _place_shadow(450.0, 400.0)
+    shadow.hp = 1.0
+    shadow_player.facing = 1
+    scene.input.buffer.press("punch")
+    for _ in range(40):
+        scene.tick(FIXED_DT)
+    shadow_ninja_win_ok = scene.match_over == "WIN"
+    scene.reset()
+    shadow_ninja_cleanup_ok = (
+        scene.enemy.hp == scene.enemy.max_hp
+        and scene.player.shadow_marks == 0
+        and not scene.projectiles
+        and not scene.player.statuses.has("stun")
+    )
+    shadow, shadow_player = _place_shadow(400.0, 900.0)
+    shadow.force_skill(scene, shadow_player, 1)
+    for _ in range(20):
+        scene.tick(FIXED_DT)
+    had_kunai = bool(scene.projectiles)
+    scene.set_enemy("warrior")
+    shadow_ninja_cleanup_ok = (
+        shadow_ninja_cleanup_ok and had_kunai and not scene.projectiles
+    )
+
+    scene.set_enemy("shadow_ninja")
+    scene.reset()
+    shadow = scene.enemy
+    shadow_ninja_missing_frames = len(shadow.anim.missing_paths())
+    shadow_fx_dir = ASSETS_DIR / "frames" / "shadow_ninja" / "fx"
+    shadow_ninja_fx_missing = sum(
+        not (shadow_fx_dir / f"shadow_kunai_{index:02d}.png").exists()
+        for index in range(2)
+    )
+
+    # Enemy-specific stage variants: Warrior symmetric, Bat/Veno empty,
+    # Dummy on the default stage.
+    scene.enemy_count_override = None
+    scene.set_enemy("creepy_shooter")
+    scene.reset()
+    scene.set_enemy("warrior")
+    scene.reset()
+    warrior_stage = scene.stage
+    warrior_stage_ok = (
+        len(warrior_stage.platforms) == 1
+        and tuple(warrior_stage.platforms[0]) == (400, 220, 479, 78)
+        and len(warrior_stage.ladders) == 1
+        and tuple(warrior_stage.ladders[0].rect) == (608, 220, 64, 400)
+        and [tuple(rect) for rect in warrior_stage.barriers]
+        == [(400, 560, 90, 60), (790, 560, 90, 60)]
+        and abs(warrior_stage.platforms[0].centerx - 640) <= 1
+        and warrior_stage.ladders[0].rect.centerx == 640
+        and (
+            warrior_stage.barriers[0].centerx
+            + warrior_stage.barriers[1].centerx
+        )
+        == 1280
+    )
+
+    scene.set_enemy("bat")
+    scene.reset()
+    bat_stage_ok = (
+        not scene.stage.blocks
+        and not scene.stage.ladders
+        and len(scene.enemies) == 5
+        and all(not enemy.on_ground for enemy in scene.enemies)
+    )
+
+    scene.set_enemy("veno")
+    scene.reset()
+    veno_stage_ok = (
+        not scene.stage.blocks
+        and not scene.stage.ladders
+        and len(scene.enemies) == 3
+        and any(not enemy.on_ground for enemy in scene.enemies)
+        and any(enemy.on_ground for enemy in scene.enemies)
+    )
+
+    scene.stage.set_blocks_enabled(False)
+    scene.set_enemy("dummy")
+    dummy_blocks_preserved = not scene.stage.blocks_enabled
+    dummy_stage = scene.stage
+    scene.stage.set_blocks_enabled(True)
+    scene.set_enemy("mech_crab")
+    scene.reset()
+    mech_stage = scene.stage
+    mech_variant_ok = (
+        len(mech_stage.platforms) == 2
+        and [tuple(rect) for rect in mech_stage.platforms]
+        == [(170, 268, 479, 78), (796, 220, 314, 78)]
+        and len(mech_stage.ladders) == 2
+        and [tuple(ladder.rect) for ladder in mech_stage.ladders]
+        == [(508, 268, 64, 352), (921, 220, 64, 400)]
+        and len(mech_stage.blocks) == 2
+        and not mech_stage.barriers
+        and mech_stage.spawn("mech_crab_spawn") == (1000.0, 620.0)
+    )
+    scene.set_enemy("shadow_ninja")
+    scene.reset()
+    shadow_stage = scene.stage
+    shadow_variant_ok = (
+        not shadow_stage.blocks
+        and not shadow_stage.ladders
+        and shadow_stage.spawn("shadow_ninja_spawn") == (1000.0, 620.0)
+    )
+    scene_variant_switch_ok = (
+        dummy_blocks_preserved
+        and len(dummy_stage.platforms) == 2
+        and len(dummy_stage.ladders) == 2
+        and len(dummy_stage.blocks) == 4
+        and mech_variant_ok
+        and shadow_variant_ok
     )
     scene.reset()
 
@@ -3142,19 +4307,32 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"rhea_roster_order_ok={rhea_roster_order_ok} "
         f"rhea_present={rhea_present} rhea_default_ok={rhea_default_ok} "
         f"rhea_knockback_ok={rhea_knockback_ok} "
-        f"rhea_lmb_ok={rhea_lmb_ok} rhea_passive_ok={rhea_passive_ok} "
+        f"rhea_lmb_ok={rhea_lmb_ok} "
+        f"rhea_lmb_ground_veno_ok={rhea_lmb_ground_veno_ok} "
+        f"rhea_passive_ok={rhea_passive_ok} "
+        f"rhea_passive_3pct_ok={rhea_passive_3pct_ok} "
+        f"rhea_passive_veno_ok={rhea_passive_veno_ok} "
         f"rhea_rmb_ok={rhea_rmb_ok} rhea_q_ok={rhea_q_ok} "
         f"rhea_q_300_ok={rhea_q_300_ok} rhea_q_dummy_ok={rhea_q_dummy_ok} "
         f"rhea_q_dr_ok={rhea_q_dr_ok} rhea_q_stack_ok={rhea_q_stack_ok} "
         f"rhea_q_kill_ok={rhea_q_kill_ok} "
         f"rhea_close_range_ok={rhea_close_range_ok} rhea_range_ok={rhea_range_ok} "
         f"rhea_dash_ok={rhea_dash_ok} "
+        f"rhea_e_no_return_ok={rhea_e_no_return_ok} "
+        f"rhea_e_buffered_ok={rhea_e_buffered_ok} "
+        f"rhea_e_air_ok={rhea_e_air_ok} "
+        f"rhea_e_hit_cancel_ok={rhea_e_hit_cancel_ok} "
+        f"rhea_e_window_q_ok={rhea_e_window_q_ok} "
+        f"rhea_e_return_armor_ok={rhea_e_return_armor_ok} "
         f"rhea_e_poison_ok={rhea_e_poison_ok} "
         f"rhea_e_poison_300_ok={rhea_e_poison_300_ok} "
+        f"rhea_e_veno_no_bonus_ok={rhea_e_veno_no_bonus_ok} "
         f"rhea_e_dr_ok={rhea_e_dr_ok} rhea_e_armor_ok={rhea_e_armor_ok} "
-        f"rhea_e_block_ok={rhea_e_block_ok} "
+        f"rhea_e_terrain_ok={rhea_e_terrain_ok} "
         f"rhea_projectile_block_ok={rhea_projectile_block_ok} "
-        f"rhea_cleanup_ok={rhea_cleanup_ok} rhea_climb_ok={rhea_climb_ok} "
+        f"rhea_cleanup_ok={rhea_cleanup_ok} "
+        f"rhea_cleanup_window_ok={rhea_cleanup_window_ok} "
+        f"rhea_climb_ok={rhea_climb_ok} "
         f"rhea_missing_frames={rhea_missing} rhea_fx_missing={rhea_fx_missing} "
         f"rhea_switch_ai_off_ok={rhea_switch_ai_off_ok} "
         f"veno_present={veno_present} veno_bite_ok={veno_bite_ok} "
@@ -3175,6 +4353,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"veno_slots_ok={veno_slots_ok} veno_win_ok={veno_win_ok} "
         f"veno_group_ok={veno_group_ok} "
         f"veno_group_cooldowns_ok={veno_group_cooldowns_ok} "
+        f"veno_group_gap_ok={veno_group_gap_ok} "
         f"veno_missing_frames={veno_missing} "
         f"bat_present={bat_present} default_enemy_ok={default_enemy_ok} "
         f"bat_flight_ok={bat_flight_ok} bat_dive_ok={bat_dive_ok} "
@@ -3192,6 +4371,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"bat_group_ok={bat_group_ok} "
         f"bat_group_spawn_ok={bat_group_spawn_ok} "
         f"bat_group_cooldowns_ok={bat_group_cooldowns_ok} "
+        f"bat_group_gap_ok={bat_group_gap_ok} "
+        f"bat_flight_cycle_ok={bat_flight_cycle_ok} "
         f"bat_group_win_ok={bat_group_win_ok} "
         f"bat_missing_frames={bat_missing} "
         f"creepy_present={creepy_present} creepy_stage_ok={creepy_stage_ok} "
@@ -3210,7 +4391,40 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"creepy_ladder_hit_top_ok={creepy_ladder_hit_top_ok} "
         f"creepy_cleanup_ok={creepy_cleanup_ok} "
         f"creepy_stage_switch_ok={creepy_stage_switch_ok} "
+        f"warrior_stage_ok={warrior_stage_ok} bat_stage_ok={bat_stage_ok} "
+        f"veno_stage_ok={veno_stage_ok} "
+        f"scene_variant_switch_ok={scene_variant_switch_ok} "
         f"creepy_missing_frames={creepy_missing} creepy_fx_missing={creepy_fx_missing} "
+        f"mech_crab_present={mech_crab_present} "
+        f"mech_crab_stage_ok={mech_crab_stage_ok} "
+        f"mech_crab_armor_ok={mech_crab_armor_ok} "
+        f"mech_crab_laser_ok={mech_crab_laser_ok} "
+        f"mech_crab_charge_ok={mech_crab_charge_ok} "
+        f"mech_crab_claw_ok={mech_crab_claw_ok} "
+        f"mech_crab_leap_ok={mech_crab_leap_ok} "
+        f"mech_crab_gap_ok={mech_crab_gap_ok} "
+        f"mech_crab_slots_ok={mech_crab_slots_ok} "
+        f"mech_crab_win_ok={mech_crab_win_ok} "
+        f"mech_crab_cleanup_ok={mech_crab_cleanup_ok} "
+        f"mech_crab_ai_ok={mech_crab_ai_ok} "
+        f"mech_crab_missing_frames={mech_crab_missing} "
+        f"mech_crab_fx_missing={mech_crab_fx_missing} "
+        f"shadow_ninja_present={shadow_ninja_present} "
+        f"shadow_ninja_stats_ok={shadow_ninja_stats_ok} "
+        f"shadow_ninja_slots_ok={shadow_ninja_slots_ok} "
+        f"shadow_ninja_slash_ok={shadow_ninja_slash_ok} "
+        f"shadow_ninja_throw_ok={shadow_ninja_throw_ok} "
+        f"shadow_ninja_dash_ok={shadow_ninja_dash_ok} "
+        f"shadow_ninja_marks_ok={shadow_ninja_marks_ok} "
+        f"shadow_ninja_ai_ok={shadow_ninja_ai_ok} "
+        f"shadow_ninja_crouch_ok={shadow_ninja_crouch_ok} "
+        f"shadow_ninja_jump_dodge_ok={shadow_ninja_dash_jump_dodge_ok} "
+        f"shadow_ninja_barrier_hop_ok={shadow_ninja_barrier_hop_ok} "
+        f"shadow_ninja_win_ok={shadow_ninja_win_ok} "
+        f"shadow_ninja_cleanup_ok={shadow_ninja_cleanup_ok} "
+        f"shadow_marks_independent={shadow_marks_independent} "
+        f"shadow_ninja_missing_frames={shadow_ninja_missing_frames} "
+        f"shadow_ninja_fx_missing={shadow_ninja_fx_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -3295,7 +4509,10 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and rhea_default_ok
         and rhea_knockback_ok
         and rhea_lmb_ok
+        and rhea_lmb_ground_veno_ok
         and rhea_passive_ok
+        and rhea_passive_3pct_ok
+        and rhea_passive_veno_ok
         and rhea_rmb_ok
         and rhea_q_ok
         and rhea_q_300_ok
@@ -3306,13 +4523,21 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and rhea_close_range_ok
         and rhea_range_ok
         and rhea_dash_ok
+        and rhea_e_no_return_ok
+        and rhea_e_buffered_ok
+        and rhea_e_air_ok
+        and rhea_e_hit_cancel_ok
+        and rhea_e_window_q_ok
+        and rhea_e_return_armor_ok
         and rhea_e_poison_ok
         and rhea_e_poison_300_ok
+        and rhea_e_veno_no_bonus_ok
         and rhea_e_dr_ok
         and rhea_e_armor_ok
-        and rhea_e_block_ok
+        and rhea_e_terrain_ok
         and rhea_projectile_block_ok
         and rhea_cleanup_ok
+        and rhea_cleanup_window_ok
         and rhea_climb_ok
         and rhea_missing == 0
         and rhea_fx_missing == 0
@@ -3340,6 +4565,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and veno_win_ok
         and veno_group_ok
         and veno_group_cooldowns_ok
+        and veno_group_gap_ok
         and veno_missing == 0
         and bat_present
         and default_enemy_ok
@@ -3361,6 +4587,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and bat_sonic_lock_ok
         and bat_count_ok
         and bat_group_ok
+        and bat_group_gap_ok
+        and bat_flight_cycle_ok
         and bat_missing == 0
         and creepy_present
         and creepy_stage_ok
@@ -3375,8 +4603,42 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and creepy_ladder_hit_ok
         and creepy_cleanup_ok
         and creepy_stage_switch_ok
+        and warrior_stage_ok
+        and bat_stage_ok
+        and veno_stage_ok
+        and scene_variant_switch_ok
         and creepy_missing == 0
         and creepy_fx_missing == 0
+        and mech_crab_present
+        and mech_crab_stage_ok
+        and mech_crab_armor_ok
+        and mech_crab_laser_ok
+        and mech_crab_charge_ok
+        and mech_crab_claw_ok
+        and mech_crab_leap_ok
+        and mech_crab_gap_ok
+        and mech_crab_slots_ok
+        and mech_crab_win_ok
+        and mech_crab_cleanup_ok
+        and mech_crab_ai_ok
+        and mech_crab_missing == 0
+        and mech_crab_fx_missing == 0
+        and shadow_ninja_present
+        and shadow_ninja_stats_ok
+        and shadow_ninja_slots_ok
+        and shadow_ninja_slash_ok
+        and shadow_ninja_throw_ok
+        and shadow_ninja_dash_ok
+        and shadow_ninja_marks_ok
+        and shadow_ninja_ai_ok
+        and shadow_ninja_crouch_ok
+        and shadow_ninja_dash_jump_dodge_ok
+        and shadow_ninja_barrier_hop_ok
+        and shadow_ninja_win_ok
+        and shadow_ninja_cleanup_ok
+        and shadow_marks_independent
+        and shadow_ninja_missing_frames == 0
+        and shadow_ninja_fx_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok

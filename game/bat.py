@@ -75,12 +75,34 @@ class Bat(Fighter):
         self.sonic_range = float(ai["sonic_range"])
         self.standoff = float(ai["standoff"])
         self.decision_interval = float(ai["decision_interval"])
+        self.group_skill_gaps = {
+            str(key): float(value)
+            for key, value in ai.get("group_skill_gaps", {}).items()
+        }
+        self.opening_delay = float(ai.get("opening_delay", 0.0))
+        flight = ai.get("flight_cycle", {})
+        self.free_flight = float(flight.get("free_flight", 5.0))
+        self.flight_low_stay = float(flight.get("low_stay", 2.0))
+        self.flight_high_min = float(flight.get("high_height_min", 400.0))
+        self.flight_high_max = float(flight.get("high_height_max", 600.0))
+        self.flight_low_height = float(flight.get("low_height", 70.0))
+        self.flight_high_count = int(flight.get("high_flights", 3))
+        self.flight_low_count = int(flight.get("low_flights", 2))
+        self.flight_stagger = float(flight.get("stagger", 1.0))
 
         self.dive_cd_max = float(cfg["cooldowns"]["dive"])
         self.sonic_cd_max = float(cfg["cooldowns"]["sonic"])
         self.dive_cd = 0.0
         self.sonic_cd = 0.0
         self.decision_cd = 0.0
+        self.opening_cd = 0.0
+        self.flight_side: str | None = None
+        self.flight_target_height = self.flight_low_height
+        self.flight_remaining = 0.0
+        self.flight_bag: list[str] = []
+        self.low_stay_remaining = 0.0
+        self.free_target_x = 0.0
+        self.free_target_timer = 0.0
         self.bob_phase = 0.0
         self.dive_dir = (-1.0, 0.0)
         self.flying = True
@@ -110,6 +132,8 @@ class Bat(Fighter):
         self.dive_cd = max(0.0, self.dive_cd - dt)
         self.sonic_cd = max(0.0, self.sonic_cd - dt)
         self.decision_cd = max(0.0, self.decision_cd - dt)
+        self.opening_cd = max(0.0, self.opening_cd - dt)
+        self._update_flight_cycle(dt, scene)
 
         if self.state == FighterState.KO:
             self.vx = 0.0
@@ -202,6 +226,54 @@ class Bat(Fighter):
 
         self.on_ground = False
 
+    def _make_flight_bag(self) -> list[str]:
+        bag = ["high"] * self.flight_high_count
+        bag += ["low"] * self.flight_low_count
+        random.shuffle(bag)
+        return bag
+
+    def _next_flight_side(self) -> str:
+        if not self.flight_bag:
+            self.flight_bag = self._make_flight_bag()
+        return self.flight_bag.pop(0)
+
+    def _pick_free_target(self) -> None:
+        half = self.hurtbox_width * 0.5
+        low, high = self.stage.walls
+        margin = half + 20.0
+        self.free_target_x = random.uniform(low + margin, high - margin)
+        self.free_target_timer = random.uniform(0.9, 1.4)
+
+    def _enter_flight_side(self, side: str) -> None:
+        self.flight_side = side
+        if side == "high":
+            self.flight_target_height = random.uniform(
+                self.flight_high_min, self.flight_high_max
+            )
+        else:
+            self.flight_target_height = self.flight_low_height
+        self._pick_free_target()
+
+    def _update_flight_cycle(self, dt: float, scene) -> None:
+        """Five random free flights: three high, two low; low flights stay 2s."""
+        if not self.ai_enabled or scene.match_over is not None:
+            return
+        if self.state == FighterState.KO:
+            return
+        if self.low_stay_remaining > 0.0:
+            self.low_stay_remaining = max(0.0, self.low_stay_remaining - dt)
+            if self.low_stay_remaining <= 0.0:
+                self._enter_flight_side(self._next_flight_side())
+                self.flight_remaining = self.free_flight
+            return
+        self.flight_remaining = max(0.0, self.flight_remaining - dt)
+        if self.flight_remaining <= 0.0:
+            if self.flight_side == "low":
+                self.low_stay_remaining = self.flight_low_stay
+            else:
+                self._enter_flight_side(self._next_flight_side())
+                self.flight_remaining = self.free_flight
+
     # --- AI -----------------------------------------------------------------
     def _think(self, dt: float, scene, target) -> None:
         dx = target.x - self.x
@@ -210,9 +282,10 @@ class Bat(Fighter):
         distance = abs(dx)
         self.bob_phase += dt
 
-        if self.decision_cd <= 0.0:
+        if self.decision_cd <= 0.0 and self.opening_cd <= 0.0:
             sonic_ready = (
-                self.sonic_cd <= 0.0
+                self.flight_side == "high"
+                and self.sonic_cd <= 0.0
                 and self.sonic_min_range <= distance <= self.sonic_range
             )
             dive_ready = (
@@ -220,13 +293,15 @@ class Bat(Fighter):
                 and distance <= self.dive_range
                 and self._dive_can_reach(target)
             )
-            sonic_available = (
-                sonic_ready
-                and not self._group_skill_recent(scene, "bat_sonic")
+            sonic_available = sonic_ready and not self.group_skill_recent(
+                scene,
+                "bat_sonic",
+                self.group_skill_gaps.get("bat_sonic", 0.0),
             )
-            dive_available = (
-                dive_ready
-                and not self._group_skill_recent(scene, "bat_dive")
+            dive_available = dive_ready and not self.group_skill_recent(
+                scene,
+                "bat_dive",
+                self.group_skill_gaps.get("bat_dive", 0.0),
             )
             # Randomness belongs to the sonic only. The dive is deterministic:
             # it fires whenever it is ready and its hitbox can actually reach
@@ -243,8 +318,14 @@ class Bat(Fighter):
                 # The sonic random gate skipped this decision; retry shortly.
                 self.decision_cd = self.decision_interval
 
-        target_x = target.x - self.facing * self.standoff
-        offset = self.cruise_height + math.sin(
+        self.free_target_timer = max(0.0, self.free_target_timer - dt)
+        if (
+            self.free_target_timer <= 0.0
+            or abs(self.x - self.free_target_x) <= 18.0
+        ):
+            self._pick_free_target()
+        target_x = self.free_target_x
+        offset = self.flight_target_height + math.sin(
             self.bob_phase * self.bob_rate
         ) * self.bob
         offset = max(
@@ -311,23 +392,6 @@ class Bat(Fighter):
                 return True
         return False
 
-    def _group_skill_recent(
-        self,
-        scene,
-        attack_id: str,
-        window: float = 0.55,
-    ) -> bool:
-        """True when another living Bat started the same skill recently."""
-        attr = "last_sonic_at" if attack_id == "bat_sonic" else "last_dive_at"
-        now = float(getattr(scene, "sim_time", 0.0))
-        for other in getattr(scene, "enemies", []):
-            if other is self or getattr(other, "hp", 0.0) <= 0.0:
-                continue
-            last = float(getattr(other, attr, -999.0))
-            if now - last < window:
-                return True
-        return False
-
     def _hold(self, dt: float) -> None:
         self.vx = 0.0
         self.vy = 0.0
@@ -349,11 +413,10 @@ class Bat(Fighter):
         self.attack_runtime = AttackRuntime(self, attack_id, data, target, scene)
         if attack_id == "bat_dive":
             self.dive_cd = self.dive_cd_max
-            self.last_dive_at = float(getattr(scene, "sim_time", 0.0))
             self._lock_dive_direction(target)
         elif attack_id == "bat_sonic":
             self.sonic_cd = self.sonic_cd_max
-            self.last_sonic_at = float(getattr(scene, "sim_time", 0.0))
+        self.note_attack_started(scene, attack_id)
 
     def _lock_dive_direction(self, target) -> None:
         """Aim the dive once at attack start; it does not home."""
@@ -438,10 +501,13 @@ class Bat(Fighter):
         self.dive_cd = 0.0
         self.sonic_cd = random.uniform(0.0, min(2.5, self.sonic_cd_max))
         self.decision_cd = 0.0
+        self.opening_cd = self.opening_delay
+        self.flight_bag = self._make_flight_bag()
+        self._enter_flight_side(self._next_flight_side())
+        self.flight_remaining = self.free_flight
+        self.low_stay_remaining = 0.0
         self.bob_phase = 0.0
         self.cruise_height = self.preferred_height
-        self.last_sonic_at = -999.0
-        self.last_dive_at = -999.0
         self.dive_dir = (-1.0, 0.0)
         self.flying = True
         self.mode = "fly"
