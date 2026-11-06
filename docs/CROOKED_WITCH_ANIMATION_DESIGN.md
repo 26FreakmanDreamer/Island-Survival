@@ -22,6 +22,8 @@
 
 2026-11-06：用户确认火雨的像素施法特效和完整预览，并授权写入本文档。当前施法特效采用 `crooked_witch_fire_rain_v7_pulse`：白色倒三角光区内三道浅黄色光束旋转、淡入蓄亮，达到峰值后光区消失；随后长而粗的黄色光柱用 0.4s 淡入，顶部为长轴水平的椭圆，光柱连接杖顶并固定保持。完整预览串联飞入、正面举杖、施法、10 颗火球、落地爆开和返回原位；人物仍采用 fire_rain v6 与 fly v3，火球及落地效果沿用各自 v1。素材和演出已确认，尚未接入游戏。
 
+2026-11-06：用户确认闪电特效 `crooked_witch_lightning_fx_v2`，并授权写入本文档。向前、向上、向下三组均在原特效前新增 3 张生成的过渡帧，每帧 0.06s，共 0.18s，表现杖尖起电、电弧聚集和压缩放电；以形态变化引入，不做淡入或交叉渐变。原 v1 的杖尖闪光、完整闪电和末尾消散原样保留，接在新增帧后。素材与预览已确认，尚未接入游戏。
+
 ## 来源与绘制基准
 
 - 技能及被动以 `instruction.docx` 的 Enemy / Crooked Witch 为准；动作组织参考 warrior、creepy shooter 已采用的动画。
@@ -79,7 +81,8 @@
 | --- | --- |
 | `crooked_witch_teleport_fx_v1` | 已通过。独立透明紫金法环与碎光，消失和出现各 6 帧、每帧 0.10s。法环与人物帧分层；预览中的人物淡入淡出仅为合成演示。`crooked_witch_teleport_fx_v1_sheet.png` 为审批接触表，`crooked_witch_teleport_fx_v1_preview.gif` 为动态预览。暂不接入游戏。 |
 | `crooked_witch_heal_fx_v1` | 绿色粒子向上环绕，每秒恢复脉冲。 |
-| `crooked_witch_lightning_fx_v1` | 杖尖闪光和闪电主体，从实际杖尖发出。 |
+| `crooked_witch_lightning_fx_v1` | 历史版本保留；杖尖闪光、完整闪电和消散三帧，作为 v2 的 03–05 帧原样沿用。 |
+| `crooked_witch_lightning_fx_v2` | 当前已通过；向前、向上、向下各 6 张独立透明帧。00–02 为新生成的杖尖起电、电弧聚集、压缩放电，各 0.06s；03–05 沿用 v1 的闪光、完整闪电、消散，分别为 0.08/0.10/0.10s。单次特效共 0.46s，新增引入段共 0.18s；逐帧直接显示，无淡入或交叉渐变，保留末尾消散。特效从实际杖尖发出，与人物分层。 |
 | `crooked_witch_ice_warning_v1` | 已通过；独立透明蓝色预警圈 5 帧、每帧 0.20s，共 1s；在人物 02 释放帧出现，末帧增强亮度，满 1s 后接冰锥。 |
 | `crooked_witch_ice_spike_fx_v1` | 已通过；独立透明冰锥 7 帧：破地、小锥升起、继续生长、峰值、峰值闪光、碎裂、消散。合成预览按每帧 0.10s 播放，特效与人物分层。 |
 | `crooked_witch_potion_projectile_v1` | 已通过；独立透明药瓶 3 帧，封口的紫金瓶身内有绿色发光液体。预览按 00→01→02→01 轻微摆转；平台施法后受重力前落，地面施法后以低位水平前进。 |
@@ -124,6 +127,7 @@
 - 动作主名遵循 `name_action_v1`；单帧附帧号、预览附用途后缀；后续版本递增，不覆盖旧版。
 - 闪电三组人物素材分别保存在 `assets/generated/contact_sheets/crooked_witch_lightning/`、`crooked_witch_lightning_up/`、`crooked_witch_lightning_down/`。当前版本为 v2、v1、v5；每组保留 4 张透明人物帧、`*_sheet.png` 接触表和 `*_preview.gif` 预览。工作画布为 1536×1254，仅平移对齐脚部，未缩放人物或法杖；1254×1254 原始生成帧以 `*_source.png` 保留。旧版及未采用的重生图保留作对照，运行用画布和 pivot 仍待接入时确定。
 - 飞行动作当前版本为 `assets/generated/contact_sheets/crooked_witch_fly/crooked_witch_fly_v3`，同目录保留 6 张 1254×1254 透明人物帧、`crooked_witch_fly_v3.png` 全尺寸帧表、`crooked_witch_fly_v3_sheet.png` 审批接触表、`crooked_witch_fly_v3.gif` 动态预览和 `crooked_witch_fly_v3_sheet.json` 帧记录。v3 仅重绘 04 帧；00–03、05 与 v2 逐字节相同，v1、v2 保留作对照。
+- 闪电特效保存在 `assets/generated/contact_sheets/crooked_witch_lightning_fx/`，当前采用 `crooked_witch_lightning_fx_v2_{forward/up/down}_00.png` 至 `_05.png`，共 18 张 1400×1400 透明 PNG；共用特效连接点 `(300,700)`，三个方向分别为 0°、向上 35°、向下 35°。连接点仅用于当前素材合成对齐，不代表已确定运行用画布与 pivot。审批接触表为 [v2 帧表](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_sheet.png)，新增过渡与原闪光的对照为 [杖尖特写](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_intro_sheet.png)，动态预览为 [正常速度](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_preview.gif) 和 [3 倍时长慢速](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_slow_preview.gif)。正常预览在特效前后另有 0.30/0.40s 的人物静止停顿，仅用于审阅，不计入 0.46s 特效时长。同目录保留 3 张 `crooked_witch_lightning_fx_v2_intro_00_source.png` 至 `_02_source.png` 原始生成帧、`crooked_witch_lightning_fx_v2_prompts.json` 生成记录和 `crooked_witch_lightning_fx_v2_sheet.json` 帧序记录；v1 全部原文件保留，v2 的 03–05 与相应 v1 的 00–02 逐字节相同。此次只确认素材演出，不修改人物动作节奏、技能逻辑或数值，尚未接入游戏。
 - 冰锥人物帧、预警圈和冰锥特效分别保存在 `assets/generated/contact_sheets/crooked_witch_ice_spike/`、`crooked_witch_ice_warning/`、`crooked_witch_ice_spike_fx/`；各目录的 `*_sheet.png` 是审批接触表，`crooked_witch_ice_spike_v1_preview.gif` 展示施法、1s 预警和冰锥破地碎裂的合成顺序。
 - 药瓶人物动作保存在 `assets/generated/contact_sheets/crooked_witch_potion/`，当前采用 `crooked_witch_potion_v2_00.png` 至 `_03.png`；`crooked_witch_potion_v2_sheet.png` 和 `crooked_witch_potion_v2_preview.gif` 分别是审批接触表与动态预览。药瓶飞行、碎裂、毒区的透明单帧和各自 `*_sheet.png`、`*_preview.gif` 分别保存在 `crooked_witch_potion_projectile/`、`crooked_witch_potion_break/`、`crooked_witch_poison_pool/`。同目录保留 v1 人物帧及三种命中分支的演示预览，分支预览中的人物颜色为旧版，仅用于说明事件顺序；当前人物配色以 v2 为准。演示中的平台线、地面线和目标占位轮廓不是游戏素材，全部素材尚未接入游戏。
 - 火雨人物素材保存在 `assets/generated/contact_sheets/crooked_witch_fire_rain/`。当前 00 帧为 `crooked_witch_fire_rain_v2_00.png`，01–04 帧为 `crooked_witch_fire_rain_v6_01.png` 至 `_04.png`，审批接触表为 `crooked_witch_fire_rain_v6_sheet.png`。01、02 帧画布为 1536×1536，03、04 帧为保留高举法杖而扩至 1536×1792；接触表仅为排版给 00–02 增加透明上边距，人物和法杖均未缩放。运行用统一画布与 pivot 待接入时确定。v1–v5 保留作修订记录；人物素材尚未接入游戏。

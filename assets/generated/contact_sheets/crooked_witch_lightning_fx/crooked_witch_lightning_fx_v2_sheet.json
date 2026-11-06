@@ -1,0 +1,283 @@
+{
+  "title": "Crooked Witch lightning VFX v2 / generated ignition introduction",
+  "status": "pending_user_review",
+  "runtime_integrated": false,
+  "transparent_canvas": [
+    1400,
+    1400
+  ],
+  "effect_pivot": [
+    300,
+    700
+  ],
+  "stages": [
+    "ignition spark",
+    "gathering arcs",
+    "compressed discharge",
+    "staff-tip flash",
+    "flash and full bolt",
+    "fading bolt"
+  ],
+  "duration_ms": [
+    60,
+    60,
+    60,
+    80,
+    100,
+    100
+  ],
+  "fade_in": false,
+  "crossfade": false,
+  "fade_out": "unchanged v1 fading-bolt frame",
+  "intro_processing": [
+    {
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_00_source.png",
+      "source_sha256": "ca174c5c3040e55fc975cb566f23367080661b41403d5c4dafad6e3c6eeeeab4",
+      "source_alpha_bbox": [
+        444,
+        432,
+        826,
+        805
+      ],
+      "crop_visible_alpha_threshold": 8,
+      "crop_margin_px": 8,
+      "core_in_cropped_source": [
+        191.9546,
+        187.9006
+      ],
+      "placed_core": [
+        300.11,
+        699.6615
+      ],
+      "resized_size": [
+        44,
+        43
+      ],
+      "max_edge_px": 44,
+      "alpha": "native generated alpha, resampling only; no opacity ramp"
+    },
+    {
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_01_source.png",
+      "source_sha256": "d3dd572c9b2ebee52afd9079fd1464c3a27b34e6a99aac31a5d303e6814da9f3",
+      "source_alpha_bbox": [
+        411,
+        420,
+        950,
+        796
+      ],
+      "crop_visible_alpha_threshold": 8,
+      "crop_margin_px": 8,
+      "core_in_cropped_source": [
+        255.5133,
+        196.3052
+      ],
+      "placed_core": [
+        299.7684,
+        700.3253
+      ],
+      "resized_size": [
+        86,
+        60
+      ],
+      "max_edge_px": 86,
+      "alpha": "native generated alpha, resampling only; no opacity ramp"
+    },
+    {
+      "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_02_source.png",
+      "source_sha256": "d9627e292482f51fee0274b496883eb5a6cb8287b923ec4f404e6e0a31753bc7",
+      "source_alpha_bbox": [
+        243,
+        172,
+        1010,
+        962
+      ],
+      "crop_visible_alpha_threshold": 8,
+      "crop_margin_px": 8,
+      "core_in_cropped_source": [
+        375.1318,
+        437.8755
+      ],
+      "placed_core": [
+        299.6253,
+        700.0555
+      ],
+      "resized_size": [
+        126,
+        130
+      ],
+      "max_edge_px": 130,
+      "alpha": "native generated alpha, resampling only; no opacity ramp"
+    }
+  ],
+  "directions": {
+    "forward": {
+      "angle_degrees": 0,
+      "release_actor": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning\\crooked_witch_lightning_v2_02.png",
+      "crystal_tip_on_actor": [
+        1500,
+        427
+      ],
+      "frames": [
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_00.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_01.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_02.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_03.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_04.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_forward_05.png"
+      ],
+      "source_mapping": [
+        {
+          "frame": 0,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_00_source.png",
+          "rotation_degrees": 0
+        },
+        {
+          "frame": 1,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_01_source.png",
+          "rotation_degrees": 0
+        },
+        {
+          "frame": 2,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_02_source.png",
+          "rotation_degrees": 0
+        },
+        {
+          "frame": 3,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_forward_00.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 4,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_forward_01.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 5,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_forward_02.png",
+          "unchanged_copy": true
+        }
+      ]
+    },
+    "up": {
+      "angle_degrees": 35,
+      "release_actor": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_up\\crooked_witch_lightning_up_v1_02.png",
+      "crystal_tip_on_actor": [
+        1395,
+        105
+      ],
+      "frames": [
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_00.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_01.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_02.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_03.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_04.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_up_05.png"
+      ],
+      "source_mapping": [
+        {
+          "frame": 0,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_00_source.png",
+          "rotation_degrees": 35
+        },
+        {
+          "frame": 1,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_01_source.png",
+          "rotation_degrees": 35
+        },
+        {
+          "frame": 2,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_02_source.png",
+          "rotation_degrees": 35
+        },
+        {
+          "frame": 3,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_up_00.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 4,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_up_01.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 5,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_up_02.png",
+          "unchanged_copy": true
+        }
+      ]
+    },
+    "down": {
+      "angle_degrees": -35,
+      "release_actor": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_down\\crooked_witch_lightning_down_v5_02.png",
+      "crystal_tip_on_actor": [
+        1410,
+        945
+      ],
+      "frames": [
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_00.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_01.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_02.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_03.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_04.png",
+        "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_down_05.png"
+      ],
+      "source_mapping": [
+        {
+          "frame": 0,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_00_source.png",
+          "rotation_degrees": -35
+        },
+        {
+          "frame": 1,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_01_source.png",
+          "rotation_degrees": -35
+        },
+        {
+          "frame": 2,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_02_source.png",
+          "rotation_degrees": -35
+        },
+        {
+          "frame": 3,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_down_00.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 4,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_down_01.png",
+          "unchanged_copy": true
+        },
+        {
+          "frame": 5,
+          "source": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v1_down_02.png",
+          "unchanged_copy": true
+        }
+      ]
+    }
+  },
+  "sheet": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_sheet.png",
+  "intro_sheet": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_intro_sheet.png",
+  "preview": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_preview.gif",
+  "slow_preview": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_lightning_fx\\crooked_witch_lightning_fx_v2_slow_preview.gif",
+  "preview_pause_ms": [
+    300,
+    400
+  ],
+  "preview_actor_scale": "one common scale and world crop for all directions; no per-direction normalization",
+  "preserved_v1_sha256": {
+    "crooked_witch_lightning_fx_v1_bolt_source.png": "8ed3640a6e42b5c175d5b53a22b3947eeb557b354007de52ab286599d9785ed1",
+    "crooked_witch_lightning_fx_v1_down_00.png": "7016ea75a4d1d6b8d2875d58235c8dd02bc0e3ed286c3da133337ed5264623c7",
+    "crooked_witch_lightning_fx_v1_down_01.png": "b9e1969efee83629b9f9c1d6ff8cc12eda1f92b0928fc7dcdbc952664c46f340",
+    "crooked_witch_lightning_fx_v1_down_02.png": "7a8a4294d41b4194aef5627bb7d54ecd7b6be619d9b97f7dad9cb9187703c93f",
+    "crooked_witch_lightning_fx_v1_flash_source.png": "5bbe10657d3f99b0a120cdb6e2e5485d5a59a47283cfbb94983fcc6d3a46a9f0",
+    "crooked_witch_lightning_fx_v1_forward_00.png": "7016ea75a4d1d6b8d2875d58235c8dd02bc0e3ed286c3da133337ed5264623c7",
+    "crooked_witch_lightning_fx_v1_forward_01.png": "cd833bc3be004cdb235bc1983377d7581bfd1a87d60a66f152eb2b6153c3f8e2",
+    "crooked_witch_lightning_fx_v1_forward_02.png": "d14bb66b3d592cd9b609f6b0f65c65f2ed3f1b101d95bea3c96349c090310db8",
+    "crooked_witch_lightning_fx_v1_preview.gif": "4b12508fe32be442975b13ab0ba090d41218dcafde93377c650792a37c8dba29",
+    "crooked_witch_lightning_fx_v1_sheet.json": "834efb4a2195184304c5ee43497511cb51bd0b8edf6f4476407de023d67e7ed4",
+    "crooked_witch_lightning_fx_v1_sheet.png": "80730efeaab3558516e46a530cc9ed15ae1293831f73a38e7469122c9f1cc194",
+    "crooked_witch_lightning_fx_v1_up_00.png": "7016ea75a4d1d6b8d2875d58235c8dd02bc0e3ed286c3da133337ed5264623c7",
+    "crooked_witch_lightning_fx_v1_up_01.png": "c3f1119bb27f0d85b6e55d4c1081cde95020f80446528167d64833e2f0aa0862",
+    "crooked_witch_lightning_fx_v1_up_02.png": "1728b11fbd2ae5e30a31446bff2f86d4a8a7da331175b39ea444dca62775b97d"
+  }
+}
