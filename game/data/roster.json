@@ -128,11 +128,12 @@
       "spawn": "shadow_ninja_spawn",
       "stage_variant": "shadow_ninja",
       "clips": "shadow_ninja_clips",
+      "flame_clips": "shadow_ninja_phantom_clips",
       "frame_size": "shadow_ninja_frame_size",
       "pivot": "shadow_ninja_pivot",
       "frames_dir": "shadow_ninja",
       "fallback": "Image/Enemy/shadow-ninja-256.png",
-      "skill_slots": ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", null],
+      "skill_slots": ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", "shadow_phantom_form"],
       "separates": true,
       "decides_match": true
     },

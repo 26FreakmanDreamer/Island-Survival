@@ -27,6 +27,8 @@ REQUIRED_ATTACKS = (
     "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
     "mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam",
     "shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash",
+    "shadow_phantom_form", "shadow_phantom_rend", "shadow_phantom_bind",
+    "shadow_phantom_flash",
 )
 REQUIRED_CLIPS = (
     "idle", "walk", "jump", "crouch", "punch_l", "punch_r",
@@ -63,7 +65,13 @@ REQUIRED_MECH_CRAB_CLIPS = (
 )
 REQUIRED_SHADOW_NINJA_CLIPS = (
     "idle", "walk", "jump", "crouch", "hurt", "ko", "stun",
-    "shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash",
+    "shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", "transform",
+)
+REQUIRED_SHADOW_NINJA_PHANTOM_CLIPS = (
+    "idle", "walk", "shadow_phantom_rend", "shadow_phantom_bind",
+    "phantom_vanish", "phantom_appear", "phantom_flash_attack",
+    "phantom_pause", "phantom_shark_emerge", "phantom_shark_charge",
+    "phantom_shark_recover", "revert",
 )
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
@@ -76,7 +84,7 @@ PROJECTILE_KINDS = (
     "q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave",
     "rhea_shuriken", "rhea_poison_shuriken",
     "creepy_bullet", "creepy_homing_bullet", "creepy_down_bullet",
-    "shadow_kunai",
+    "shadow_kunai", "shadow_phantom_bind", "shadow_phantom_flash",
 )
 
 
@@ -340,7 +348,7 @@ class JsonStore:
         for key in ("walk", "jump_v", "gravity"):
             if key not in shadow.get("move", {}):
                 raise ValueError(f"stats.json shadow_ninja.move missing '{key}'")
-        for key in ("slash", "throw", "dash"):
+        for key in ("slash", "throw", "dash", "phantom_form"):
             if key not in shadow.get("cooldowns", {}):
                 raise ValueError(f"stats.json shadow_ninja.cooldowns missing '{key}'")
         for key in ("standing", "crouching"):
@@ -353,6 +361,13 @@ class JsonStore:
         ):
             if key not in shadow.get("ai", {}):
                 raise ValueError(f"stats.json shadow_ninja.ai missing '{key}'")
+        for key in (
+            "damage_threshold_pct", "claw_range", "bind_range", "flash_range",
+            "behind_offset", "appear_min_wall_margin", "shadow_max_range",
+            "shadow_speed", "shark_charge_distance", "shark_charge_speed",
+        ):
+            if key not in shadow.get("phantom", {}):
+                raise ValueError(f"stats.json shadow_ninja.phantom missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -464,6 +479,60 @@ class JsonStore:
                     f"animations.json shadow_ninja clip '{key}' duration {total:.3f} "
                     f"does not match attacks.json duration {attack.get('duration')}"
                 )
+        transform_total = sum(
+            float(value) for value in shadow_clips["transform"].get("durations", [])
+        )
+        transform_attack = attacks.get("shadow_phantom_form", {})
+        if abs(
+            transform_total - float(transform_attack.get("duration", transform_total))
+        ) > 1e-3:
+            raise ValueError(
+                f"animations.json shadow_ninja transform duration {transform_total:.3f} "
+                "does not match attacks.json shadow_phantom_form duration"
+            )
+        phantom_clips = animations.get("shadow_ninja_phantom_clips", {})
+        for key in REQUIRED_SHADOW_NINJA_PHANTOM_CLIPS:
+            if key not in phantom_clips:
+                raise ValueError(
+                    f"animations.json missing shadow_ninja_phantom clip '{key}'"
+                )
+        for key, clip in phantom_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json shadow_ninja_phantom clip '{key}' "
+                    "frame/duration count mismatch"
+                )
+        for clip_key, attack_key in (
+            ("shadow_phantom_rend", "shadow_phantom_rend"),
+            ("shadow_phantom_bind", "shadow_phantom_bind"),
+        ):
+            attack = attacks.get(attack_key, {})
+            total = sum(
+                float(value)
+                for value in phantom_clips[clip_key].get("durations", [])
+            )
+            if abs(total - float(attack.get("duration", total))) > 1e-3:
+                raise ValueError(
+                    f"animations.json shadow_ninja_phantom clip '{clip_key}' "
+                    f"duration {total:.3f} does not match attacks.json duration "
+                    f"{attack.get('duration')}"
+                )
+        flash_total = (
+            sum(float(v) for v in phantom_clips["phantom_vanish"]["durations"]) * 2.0
+            + sum(float(v) for v in phantom_clips["phantom_appear"]["durations"]) * 2.0
+            + sum(float(v) for v in phantom_clips["phantom_flash_attack"]["durations"])
+            + sum(float(v) for v in phantom_clips["phantom_pause"]["durations"])
+            + sum(float(v) for v in phantom_clips["phantom_shark_emerge"]["durations"])
+            + sum(float(v) for v in phantom_clips["phantom_shark_charge"]["durations"])
+            + sum(float(v) for v in phantom_clips["phantom_shark_recover"]["durations"])
+            + 0.01  # hidden gap while the shadow bolt travels
+        )
+        flash_attack = attacks.get("shadow_phantom_flash", {})
+        if abs(flash_total - float(flash_attack.get("duration", flash_total))) > 1e-3:
+            raise ValueError(
+                f"shadow_ninja_phantom flash phases total {flash_total:.3f} "
+                "does not match attacks.json shadow_phantom_flash duration"
+            )
         for key in (
             "nyra_frame_size", "nyra_pivot", "rhea_frame_size", "rhea_pivot",
             "veno_frame_size", "veno_pivot",

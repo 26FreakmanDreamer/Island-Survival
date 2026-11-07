@@ -1,0 +1,345 @@
+{
+  "skill": "shadow_phantom_flash",
+  "version": 1,
+  "review_status": "candidate",
+  "character_reference": "assets/frames/shadow_ninja/phantom/idle/idle_00.png",
+  "generated_with": "built-in ImageGen",
+  "facing": "right",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "duration_ms": 2482,
+  "loop": false,
+  "total_character_frames": 25,
+  "core_fx_frames": 6,
+  "timeline": [
+    {
+      "clip": "phantom_vanish",
+      "start_ms": 0,
+      "end_ms": 300
+    },
+    {
+      "clip": "phantom_appear",
+      "start_ms": 300,
+      "end_ms": 600
+    },
+    {
+      "clip": "phantom_flash_attack",
+      "start_ms": 600,
+      "end_ms": 840
+    },
+    {
+      "clip": "phantom_vanish",
+      "start_ms": 840,
+      "end_ms": 1150
+    },
+    {
+      "clip": "phantom_appear",
+      "start_ms": 1150,
+      "end_ms": 1450
+    },
+    {
+      "clip": "phantom_pause",
+      "start_ms": 1450,
+      "end_ms": 1750
+    },
+    {
+      "clip": "phantom_shark_emerge",
+      "start_ms": 1750,
+      "end_ms": 1960
+    },
+    {
+      "clip": "phantom_shark_charge",
+      "start_ms": 1960,
+      "end_ms": 2272
+    },
+    {
+      "clip": "phantom_shark_recover",
+      "start_ms": 2272,
+      "end_ms": 2482
+    }
+  ],
+  "events": {
+    "projectile_spawn_ms": 680,
+    "charge_start_ms": 1960,
+    "charge_end_ms": 2272
+  },
+  "preview_layout": "reference composition of the authored cels; actor paths and projectile timing follow the design",
+  "character_frames": {
+    "phantom_vanish": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_vanish_00.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/vanish/vanish_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_vanish_01.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/vanish/vanish_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_vanish_02.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/vanish/vanish_02.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_vanish_03.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/vanish/vanish_03.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_vanish_04.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/vanish/vanish_04.png"
+      }
+    ],
+    "phantom_appear": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_appear_00.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/appear/appear_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_appear_01.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/appear/appear_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_appear_02.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/appear/appear_02.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_appear_03.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/appear/appear_03.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_appear_04.png",
+        "duration_ms": 60,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/appear/appear_04.png"
+      }
+    ],
+    "phantom_flash_attack": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_attack_00.png",
+        "duration_ms": 80,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/flash_attack/flash_attack_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_attack_01.png",
+        "duration_ms": 80,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/flash_attack/flash_attack_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_attack_02.png",
+        "duration_ms": 80,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/flash_attack/flash_attack_02.png"
+      }
+    ],
+    "phantom_pause": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_pause_00.png",
+        "duration_ms": 100,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/pause/pause_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_pause_01.png",
+        "duration_ms": 100,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/pause/pause_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_pause_02.png",
+        "duration_ms": 100,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/pause/pause_02.png"
+      }
+    ],
+    "phantom_shark_emerge": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_emerge_00.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/emerge_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_emerge_01.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/emerge_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_emerge_02.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/emerge_02.png"
+      }
+    ],
+    "phantom_shark_charge": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_charge_00.png",
+        "duration_ms": 104,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/charge_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_charge_01.png",
+        "duration_ms": 104,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/charge_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_charge_02.png",
+        "duration_ms": 104,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/charge_02.png"
+      }
+    ],
+    "phantom_shark_recover": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_recover_00.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/recover_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_recover_01.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/recover_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_recover_02.png",
+        "duration_ms": 70,
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/shark/recover_02.png"
+      }
+    ]
+  },
+  "effects": {
+    "orb": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_orb_00.png",
+        "size": [
+          56,
+          56
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_flash_orb_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_orb_01.png",
+        "size": [
+          56,
+          56
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_flash_orb_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_orb_02.png",
+        "size": [
+          56,
+          56
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_flash_orb_02.png"
+      }
+    ],
+    "shark": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_shark_00.png",
+        "size": [
+          320,
+          104
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_shark_00.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_shark_01.png",
+        "size": [
+          320,
+          104
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_shark_01.png"
+      },
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_shark_02.png",
+        "size": [
+          320,
+          104
+        ],
+        "runtime_destination": "assets/frames/shadow_ninja/phantom/fx/phantom_shark_02.png"
+      }
+    ],
+    "reveal": [
+      {
+        "file": "shadow_ninja_phantom_flash_v1_fx_reveal_00.png",
+        "size": [
+          320,
+          104
+        ]
+      }
+    ]
+  },
+  "generation": [
+    {
+      "phase": "vanish",
+      "file": "shadow_ninja_phantom_flash_v1_vanish_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The figure is the exact approved reference character: a black-violet ghost ninja in a smooth opaque shadow bodysuit, with long dark violet hair trailing left, one slim purple-white eye, paired legs and low purple ankle fog, no weapons. Use a strongly dark silhouette without anatomical surface detail. Maintain correct near/far layering, visible near right arm on the front side, far arm and leg stay behind the torso; no duplicated arms or intersecting body parts. If smoke replaces part of the sprite, it is a magical shadow transformation with smoothly blending smoke outlines. Preserve the original scale and pivot even when a partial shape is shorter. Exactly THREE isolated cels in a one-row, three-column horizontal strip, equal cell sizes, no visible dividers. This is a TOP-TO-BOTTOM VANISH transition, three internal frames between exact upright idle and complete transparency. LEFT, first: silhouette remains at the original scale, feet and most of torso solid, only crown and forehead dissolve into a few black-purple smoke curls. Violet eye is still bright and leg outline remains clear. CENTER, second: no solid head or eyes; shoulder line, upper torso and long hair erode into smoke, lower torso and paired shadow legs remain in place; top smoke is dispersing, not a second body. RIGHT, third: no humanoid parts remain, only a very low dark puddle of smoky shadow and two dim violet wisps hugging the ground. Keep the shadow footprints at the same x anchor in all cells. No fog blobs floating above this last sprite. Use distinct readable successive silhouettes."
+    },
+    {
+      "phase": "appear",
+      "file": "shadow_ninja_phantom_flash_v1_appear_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The figure is the exact approved reference character: a black-violet ghost ninja in a smooth opaque shadow bodysuit, with long dark violet hair trailing left, one slim purple-white eye, paired legs and low purple ankle fog, no weapons. Use a strongly dark silhouette without anatomical surface detail. Maintain correct near/far layering, visible near right arm on the front side, far arm and leg stay behind the torso; no duplicated arms or intersecting body parts. If smoke replaces part of the sprite, it is a magical shadow transformation with smoothly blending smoke outlines. Preserve the original scale and pivot even when a partial shape is shorter. EXACTLY FOUR sprites in a 2-column 2-row square grid, equal cells. This is a ground-up APPEAR animation, original full silhouette only in final forming cel. TOP LEFT: only a shallow flattened violet-black elliptical shadow on the ground, gathering inward, no figure. TOP RIGHT: black shadow feet and lower calves rise from a tightly rolled cloud; no head or torso exists yet, hazy edges soften as they form. BOTTOM LEFT: shadow has risen to almost full height, mostly solid paired legs, hips, torso and two relaxed arms, neck dissolving into thin smoky air, no head and no eyes yet. BOTTOM RIGHT: nearly complete exact reference silhouette; head and long left-flowing hair form from wisps and the single thin bright violet eye ignites, remaining faint gaps occur only at hair ends. These are four different progressive heights on the identical ground level, never zoom in on partial silhouettes."
+    },
+    {
+      "phase": "attack",
+      "file": "shadow_ninja_phantom_flash_v1_attack_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The figure is the exact approved reference character: a black-violet ghost ninja in a smooth opaque shadow bodysuit, with long dark violet hair trailing left, one slim purple-white eye, paired legs and low purple ankle fog, no weapons. Use a strongly dark silhouette without anatomical surface detail. Maintain correct near/far layering, visible near right arm on the front side, far arm and leg stay behind the torso; no duplicated arms or intersecting body parts. If smoke replaces part of the sprite, it is a magical shadow transformation with smoothly blending smoke outlines. Preserve the original scale and pivot even when a partial shape is shorter. Exactly THREE isolated cels in a one-row, three-column horizontal strip, equal cell sizes, no visible dividers. Animate the exact character doing a deliberate standing palm push. LEFT: near RIGHT arm bends at the elbow, relaxed open palm held just out in front of her own upper chest as if gathering magic, fingers believable, far hand behind torso. CENTER: same near RIGHT arm extends towards the right at shoulder-to-eye height, open vertical palm with visible fingertips, slight forward lean, hair trails left; lower body stays anchored in ankle smoke. RIGHT: recover, near elbow bent lower and hand comes back toward right hip, shoulders relax towards idle, knees and feet remain paired. Strongly distinct silhouette of the palm extension in the middle; no lunge or walking. All hands completely empty. Do not draw a ball, glow in front of the hand, projectile, impact flash, energy trail, sparks or attached weapon. Those will be separate effect layers."
+    },
+    {
+      "phase": "pause",
+      "file": "shadow_ninja_phantom_flash_v1_pause_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The figure is the exact approved reference character: a black-violet ghost ninja in a smooth opaque shadow bodysuit, with long dark violet hair trailing left, one slim purple-white eye, paired legs and low purple ankle fog, no weapons. Use a strongly dark silhouette without anatomical surface detail. Maintain correct near/far layering, visible near right arm on the front side, far arm and leg stay behind the torso; no duplicated arms or intersecting body parts. If smoke replaces part of the sprite, it is a magical shadow transformation with smoothly blending smoke outlines. Preserve the original scale and pivot even when a partial shape is shorter. Exactly TWO isolated cels in a one-row, two-column horizontal strip, equal cell sizes, no visible dividers. A visual pause as this exact ghost sinks into her dark ankle fog before turning into a shark. LEFT: her recognizable head with single bright violet eye is already sliding rapidly downward, body compressed by its dissolving pose with long hair bending down and left into dark smoke. One violet eye remains in the descending shadow head at about half the normal body's height, above the low broad ankle cloud, no floating second eye or second head. RIGHT: the black figure has collapsed to a low faint hazy, crouched silhouette with only a tiny almost-hidden violet gleam low inside churning ground fog, no upright human form, no shark or fin yet. Full scale for remaining details; major clear difference in height from left to right, identical ground baseline."
+    },
+    {
+      "phase": "ground",
+      "file": "shadow_ninja_phantom_flash_v1_ground_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The input is ONLY a color reference for the dense black-violet ankle fog. Exactly SIX effects in a 3-column 2-row equal-cell grid, transparent gutters. Use cohesive bold black-violet paint with fine purple edges. These are ground shadow layers for a ghost attack; do not draw a person, a shark, an animal, a fin, a face, a snout, legs, water, rings or scenery. TOP LEFT: a moderately high black fog mound bulges up with saturated violet edges. TOP MIDDLE: the black ground fog flares apart to leave a gap along its top surface; the same cloud banks sweep to the sides. TOP RIGHT: low broad fog parts further and rolls left, making space for a separate animal effect; darker and lower than top middle. BOTTOM LEFT: low quick oblong bank of dark ink smoke heading right, feathered narrow tail trailing left. BOTTOM MIDDLE: same very low bank slightly stretched horizontally, tiny narrow violet gleam near its forward tip. BOTTOM RIGHT: broad low bank breaks up into curling left-trailing wisps while its dark core dims. Keep the ground line consistent. The bottom row must all be less than one quarter of a standing sprite's height and mostly black to serve as a dark underlay under a separate effect."
+    },
+    {
+      "phase": "recovery",
+      "file": "shadow_ninja_phantom_flash_v1_recovery_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. The figure is the exact approved reference character: a black-violet ghost ninja in a smooth opaque shadow bodysuit, with long dark violet hair trailing left, one slim purple-white eye, paired legs and low purple ankle fog, no weapons. Use a strongly dark silhouette without anatomical surface detail. Maintain correct near/far layering, visible near right arm on the front side, far arm and leg stay behind the torso; no duplicated arms or intersecting body parts. If smoke replaces part of the sprite, it is a magical shadow transformation with smoothly blending smoke outlines. Preserve the original scale and pivot even when a partial shape is shorter. Exactly TWO isolated cels in a one-row, two-column horizontal strip, equal cell sizes, no visible dividers. The original ghost emerges again from the collapsing shadow of a ground-level dash. LEFT: all that remains is a stretched low shadow bank, curling leftward and dissipating, with no visible shark, eye, fin, snout, or humanoid. RIGHT: upper half of the EXACT ghost from reference rises out of that cloud; arms relaxed, near right arm visible, long wind-swept hair and the reference violet eye, lower hips and legs still blend into black-violet smoke with a compact ground contact. This partial figure should reach about 60\u201370 percent of the reference standing height while keeping the exact same head size and shoulder scale. Do not draw a smaller full body or human clothing details. Same invisible ground level in both cels."
+    },
+    {
+      "phase": "orb",
+      "file": "shadow_ninja_phantom_flash_v1_orb_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. Exactly THREE isolated cels in a one-row, three-column horizontal strip, equal cell sizes, no visible dividers. Abstract VFX only, no person, hand, eye or prop. Create three cels of a small round shadow magic projectile, round centered dark purple-black spherical core with two or three curling saturated violet ribbons around its outer surface. Isotropic centered design, symmetric enough for both flight directions, no directional long tail. No planet, metallic reflections, lightning, magic circle symbols, wide bloom or particles away from the shape. LEFT violet ribbon tightening; CENTER slightly brighter narrow purple rim, a differently rotated spiral that does not change size; RIGHT ribbon rolls back and darkens with a tiny soft shadow petal. These are looping VFX frames, same center, same proportions, same diameter, clean transparency. Make it readable at 56 pixels, saturated violet rim and dark dense core."
+    },
+    {
+      "phase": "shark",
+      "file": "shadow_ninja_phantom_flash_v1_shark_source.png",
+      "prompt": "Production cutout cels for a fantasy fighting game, true RGBA PNG. Each sprite is strictly facing right in exact side profile, viewed at the same scale as the supplied reference. Keep a shared ground baseline, camera distance, perspective, body and head proportions, keep all art inside its own cell. Transparent zero-alpha around and between cels. No checkerboard, scenery, text, numbers, borders, studio glow, ground plane or extraneous elements. Exactly THREE isolated shark sprites in a 1-row 3-column landscape strip, each equal cell wide enough for a very horizontal ground-hugging silhouette. Stylized fantasy shadow shark VFX, NO person or objects, no water, no blood, no gore, no obvious cartoon teeth. True side profile heading right. One sleek, long pointed shark snout, strong central triangular dorsal fin, subtly violet-outlined deep charcoal and black-violet solid core, narrow sinister violet highlight at eye, shadow body melts into tapering black-violet ground-fog tail to the left. Low profile with flattened underside that scrapes the ground. All three have the same central body scale, baseline, low height and position; the silhouette should be about 3.3 times as wide as tall. LEFT: lunging nose, firm complete forebody, long ink-smoke trail. CENTER: most complete and legible form, pointed nose drives forward, dorsal edge brighter with violet glow localized on contour, dark opaque body. RIGHT: front silhouette still legible but dorsal and tail start breaking into dark curling ground fog, pulse subsides. Transparent negative space, no wide bloom, no cast shadow, and no detached particles. Match the saturated violet and charcoal brushwork from the supplied fog reference. The shark should read immediately at game size. Keep the stroke of the dorsal fin clean and recognizably shark-like."
+    }
+  ],
+  "preview_files": [
+    "shadow_ninja_phantom_flash_v1_preview.png",
+    "shadow_ninja_phantom_flash_v1_preview.gif",
+    "shadow_ninja_phantom_flash_v1_storyboard.png"
+  ],
+  "effect_composition": {
+    "orb_pivot": [
+      28,
+      28
+    ],
+    "orb_preview_hand_position": [
+      230,
+      201
+    ],
+    "orb_launch_preview": "The preview blends from the painted palm to the configured launch path over 80 ms.",
+    "shark_pivot": [
+      160,
+      104
+    ],
+    "shark_ground_y_offset": 6,
+    "emerge_01": "composite the independent shark reveal cel behind the character fog",
+    "emerge_02": "composite shark fx 00 behind the character fog",
+    "charge": "three standalone shark cels over the three shadow-fog body cels",
+    "reveal_usage": "supplemental emergence cel; core shark charge remains three frames"
+  }
+}

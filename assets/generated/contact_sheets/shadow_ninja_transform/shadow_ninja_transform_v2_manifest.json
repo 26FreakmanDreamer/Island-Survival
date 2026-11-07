@@ -1,0 +1,117 @@
+{
+  "action": "transform",
+  "version": 2,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 1360,
+  "frames": [
+    {
+      "file": "shadow_ninja_transform_v2_00.png",
+      "duration_ms": 80,
+      "beat": "Gather",
+      "v1_index": 0,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_transform_v2_01.png",
+      "duration_ms": 80,
+      "beat": "Blade erodes",
+      "v1_index": 1,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_02.png",
+      "duration_ms": 80,
+      "beat": "Shadow climbs",
+      "v1_index": null,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_03.png",
+      "duration_ms": 80,
+      "beat": "Grip clears",
+      "v1_index": null,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_04.png",
+      "duration_ms": 80,
+      "beat": "Unarmed",
+      "v1_index": 2,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_05.png",
+      "duration_ms": 80,
+      "beat": "Phantom",
+      "v1_index": 3,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_transform_v2_06.png",
+      "duration_ms": 80,
+      "beat": "Idle",
+      "v1_index": 4,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_transform_v2_07.png",
+      "duration_ms": 100,
+      "beat": "Aura burst",
+      "v1_index": 5,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_transform_v2_08.png",
+      "duration_ms": 500,
+      "beat": "Full aura",
+      "v1_index": 6,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_09.png",
+      "duration_ms": 100,
+      "beat": "Retract",
+      "v1_index": 7,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_transform_v2_10.png",
+      "duration_ms": 100,
+      "beat": "Idle",
+      "v1_index": 8,
+      "unchanged_from_v1": true
+    }
+  ],
+  "references": {
+    "normal_idle": "assets/frames/shadow_ninja/idle/idle_00.png",
+    "phantom_idle": "assets/generated/contact_sheets/shadow_ninja_phantom_idle/shadow_ninja_phantom_idle_v2_00.png",
+    "full_aura": "assets/generated/base/shadow_ninja_phantom_shadow_side_base.png"
+  },
+  "contact_sheet": "shadow_ninja_transform_v2_sheet.png",
+  "preview": "shadow_ninja_transform_v2_preview.gif",
+  "generation": [
+    {
+      "phase": "shift",
+      "source": "shadow_ninja_transform_v2_shift_source.png",
+      "prompt": "Faithful adjacent animation cels for an existing painted side-view fighting game sprite. Output real RGBA transparency: pure zero-alpha surroundings and gutters with no background or cast shadow, labels, borders, checkerboard or extra elements. Keep the reference identity, exact side profile facing right, camera, head size, shoulder width, limbs, body scale, violet-black palette and baseline; do not zoom, stretch, widen or change the pose beyond the requested evolution. Full figure inside each grid cell with generous margins. Near right arm and leg layer in front, far arm and leg behind torso. No extra limb, hand or digit, no interpenetration. Preserve the original small triangular ring-hilt purple kunai wherever it remains, held by the same near right hand around the hilt, never duplicate or let it cross the body. Violet shadow belongs to the silhouette, no atmosphere around the whole image and no ring. The supplied first image is the start pose, second image is the destination pose and third is its next frame. Create exactly FOUR sprites in a precise 2x2 square grid with four equal cells. TOP LEFT A: copy ref 1 exactly (bowed hood, right hand at chest, dark purple wisps around knees), EXCEPT render the pointed end of its kunai visibly eroded with an irregular missing tip dispersing into a few tiny purple smoke wisps; this is a visible progressive dissolution, no solid triangular blade point. TOP RIGHT B: new adjacent in-between, hips and knees obscured by dark shadow coils rising from boots to belt; upper half still recognizable with original hood, bare near shoulder and sleeve, same right hand held at chest; only the ring handle and a tiny, blunt fragmented stump of the original kunai remain in that hand. Bottom half reads clearly shadow-wrapped. BOTTOM LEFT C: new adjacent in-between, slightly leaning back; coils now cover lower half and curl around right arm up to shoulder, head still half hood / half purple shadow with first small violet eye; hair starts turning to shadow. The blade is entirely gone. The hand at chest is relaxing open and near the body, a tiny round cloud of purple dissolving residue only, no object silhouette. BOTTOM RIGHT D: use ref 2 precisely for hair, stance and dark swirls; character nearly entirely a violet-black phantom with both feet in low shadow and small violet eye, BUT her near right hand is open and visibly empty, no weapon, metal, hilt, fragment, spark or object remaining. Darken her formerly human hand to match the phantom. This pose must lead smoothly into ref 3. A to D must read as distinct successive stages with grounded alignment and no scale shifts. Exactly 4 sprites, reading order A/B/C/D."
+    },
+    {
+      "phase": "aura_fx",
+      "source": "shadow_ninja_transform_v2_aura_fx_source.png",
+      "prompt": "An isolated abstract game visual effect sprite, genuine RGBA transparency, no characters or objects of any kind. Use the two references only for violet color and soft curling brushwork. Draw a pair of small connected curling tendrils made of violet-black ink vapor, with a subtle purple edge, horizontal aspect ratio about 2:1. Their shared thicker origin is on the right and tapers to a fine wispy attachment, the wisps curl a little upward and trail to the left as if slowly retracting back right. One longer upper curl and a shorter lower curl. The entire silhouette is small and restrained, not an explosion, no bloom, no halo, no circles or sparkles, no shadow below, no text. Keep only wisps on completely transparent surroundings with all edges and ends intact. This is an overlay for an established animation. Paint deep dark-violet interiors and crisp, controlled violet highlights with natural alpha antialiasing. Center this isolated pair on a wide transparent landscape canvas."
+    }
+  ],
+  "eye_reference": "assets/generated/contact_sheets/shadow_ninja_transform/shadow_ninja_transform_v1_05.png"
+}

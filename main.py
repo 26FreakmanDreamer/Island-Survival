@@ -3856,7 +3856,12 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and shadow.__class__.__name__ == "ShadowNinja"
         and len(scene.enemies) == 1
         and shadow.skill_slots
-        == ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", None]
+        == [
+            "shadow_kunai_slash",
+            "shadow_kunai_throw",
+            "shadow_dash",
+            "shadow_phantom_form",
+        ]
     )
     shadow_ninja_stats_ok = (
         shadow.max_hp == shadow_player.max_hp
@@ -3874,13 +3879,16 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
             < 1e-6
         )
 
-    # Skill 1: 0.35s action, 0.5s cooldown from cast, high hitbox.
+    # Slot 4 now triggers the phantom transform; reset before the skill tests.
     shadow, shadow_player = _place_shadow(450.0, 400.0)
     shadow.facing = -1
     shadow_ninja_slots_ok = (
-        not shadow.force_skill(scene, shadow_player, 3)
-        and shadow.attack_id is None
+        shadow.force_skill(scene, shadow_player, 3)
+        and shadow.phantom_form
+        and shadow.state == FighterState.TRANSFORM
     )
+    shadow, shadow_player = _place_shadow(450.0, 400.0)
+    shadow.facing = -1
     hp_before = shadow_player.hp
     shadow.force_skill(scene, shadow_player, 0)
     slash_cd_set = abs(shadow.slash_cd - shadow.slash_cd_max) < 1e-6
@@ -4043,6 +4051,9 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
 
     shadow, shadow_player = _place_shadow(450.0, 600.0)
     shadow.hp = shadow.max_hp * 0.3
+    # Keep skill 4 on cooldown so this test still covers the normal-form
+    # disengage dash instead of the phantom transform.
+    shadow.transform_cd = shadow.transform_cd_max
     shadow.opening_cd = 0.0
     shadow.throw_cd = 5.0
     shadow.dash_cd = 0.0
@@ -4274,6 +4285,371 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     )
     scene.reset()
 
+    # --- Phase I: Shadow Ninja phantom form (skill 4) ---
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("shadow_ninja")
+    scene.reset()
+
+    def _place_phantom(ex: float, px: float, py: float = 620.0):
+        shadow, target = _place_shadow(ex, px, py)
+        shadow.ai_enabled = False
+        return shadow, target
+
+    def _run_phantom_ticks(count: int) -> None:
+        for _ in range(count):
+            scene.tick(FIXED_DT)
+
+    def _to_phantom(shadow, target):
+        shadow.transform_cd = 0.0
+        started = shadow.start_transform(scene)
+        _run_phantom_ticks(100)
+        return started
+
+    shadow, shadow_player = _place_phantom(450.0, 400.0)
+    shadow_ninja_phantom_present = (
+        shadow.skill_slots[3] == "shadow_phantom_form"
+        and "shadow_ninja_phantom_clips" in scene.store.animations
+        and all(
+            key in scene.store.attacks
+            for key in (
+                "shadow_phantom_form",
+                "shadow_phantom_rend",
+                "shadow_phantom_bind",
+                "shadow_phantom_flash",
+            )
+        )
+    )
+
+    # Transform: frame 0 invincibility, self-clear, player marks survive.
+    shadow, shadow_player = _place_phantom(450.0, 400.0)
+    shadow_player.facing = 1
+    shadow.facing = -1
+    shadow.marks = 2
+    shadow.shadow_marks = 3
+    shadow.hitstun = 0.3
+    shadow.statuses.add("poison", 1.0, dps=2.0)
+    shadow_player.shadow_marks = 2
+    hp_before = shadow.hp
+    transform_started = shadow.start_transform(scene)
+    phantom_frame0_ok = (
+        shadow.invincible
+        and shadow.phantom_form
+        and shadow.phantom_phase == "transform"
+        and shadow.marks == 0
+        and shadow.shadow_marks == 0
+        and shadow.hitstun == 0.0
+        and not shadow.statuses.has("poison")
+    )
+    phantom_no_damage = not shadow.take_hit(999.0, 0.0, 0.0, 1)
+    _run_phantom_ticks(100)
+    shadow_ninja_phantom_transform_ok = (
+        transform_started
+        and phantom_frame0_ok
+        and phantom_no_damage
+        and shadow.hp == hp_before
+        and shadow.phantom_phase == "phantom"
+        and shadow.anim.variant == "flame"
+        and shadow.anim.clip_name == "idle"
+        and shadow.invincible
+        and shadow_player.shadow_marks == 2
+    )
+    shadow_ninja_phantom_invincible_ok = (
+        shadow.invincible
+        and not shadow.take_hit(999.0, 0.0, 0.0, 1)
+        and shadow.hp == hp_before
+    )
+    shadow.statuses.add("stun", 0.5)
+    shadow.statuses.add("poison", 1.0, dps=2.0)
+    _run_phantom_ticks(10)
+    shadow_ninja_phantom_clear_ok = (
+        phantom_frame0_ok
+        and not shadow.statuses.has("stun")
+        and not shadow.statuses.has("poison")
+    )
+    shadow_ninja_phantom_marks_separate_ok = shadow_player.shadow_marks == 2
+
+    # No combat hitbox: player attacks and projectiles pass through.
+    shadow, shadow_player = _place_phantom(600.0, 400.0)
+    _to_phantom(shadow, shadow_player)
+    shadow_player.facing = 1
+    phantom_not_targeted = shadow not in scene.targets_for(shadow_player)
+    scene.projectiles = []
+    phantom_probe_attack = {
+        "duration": 1.0,
+        "basic_mult": 1.0,
+        "events": [
+            {
+                "type": "projectile",
+                "projectile": "q_wave",
+                "lane": "mid",
+                "speed": 700,
+                "range": 900,
+            }
+        ],
+    }
+    scene.spawn_projectile_from_event(
+        shadow_player, phantom_probe_attack, phantom_probe_attack["events"][0]
+    )
+    phantom_probe = scene.projectiles[-1]
+    phantom_hp_before = shadow.hp
+    _run_phantom_ticks(30)
+    shadow_ninja_phantom_no_hitbox_ok = (
+        phantom_not_targeted
+        and phantom_probe.alive
+        and shadow.hp == phantom_hp_before
+    )
+
+    # P1 影爪: high hitbox, crouch dodge, 1.0 atk, no marks, one use.
+    shadow, shadow_player = _place_phantom(450.0, 400.0)
+    _to_phantom(shadow, shadow_player)
+    rend_rect = local_box_to_rect(shadow, [20, -195, 240, 55])
+    shadow_player.state = FighterState.IDLE
+    rend_standing = rend_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.CROUCH
+    rend_crouch_miss = not rend_rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.IDLE
+    hp_before = shadow_player.hp
+    marks_before = shadow_player.shadow_marks
+    rend_started = shadow.force_skill(scene, shadow_player, 0)
+    _run_phantom_ticks(45)
+    shadow_ninja_phantom_rend_ok = (
+        rend_started
+        and rend_standing
+        and rend_crouch_miss
+        and abs((hp_before - shadow_player.hp) - shadow.atk) < 0.01
+        and shadow_player.shadow_marks == marks_before
+        and shadow.skill_used("shadow_phantom_rend")
+        and not shadow.force_skill(scene, shadow_player, 0)
+    )
+
+    # P2 影缚: low lane, 1.2 atk + 1s stun, pierces barriers, jump dodge.
+    shadow, shadow_player = _place_phantom(400.0, 900.0)
+    _to_phantom(shadow, shadow_player)
+    saved_blocks = scene.stage.blocks
+    saved_barriers = scene.stage.barriers
+    phantom_barrier = pygame.Rect(600, 560, 90, 60)
+    scene.stage.blocks = [phantom_barrier]
+    scene.stage.barriers = [phantom_barrier]
+    hp_before = shadow_player.hp
+    bind_started = shadow.force_skill(scene, shadow_player, 1)
+    _run_phantom_ticks(90)
+    bind_damage = hp_before - shadow_player.hp
+    bind_stun = shadow_player.statuses.has("stun")
+    scene.stage.blocks = saved_blocks
+    scene.stage.barriers = saved_barriers
+    from game.projectile import ShadowBindProjectile
+
+    bind_probe = ShadowBindProjectile(
+        owner=shadow,
+        target=shadow_player,
+        x=900.0,
+        y=560.0,
+        direction=1,
+        speed=900.0,
+        max_range=700.0,
+        damage=0.0,
+        knockback=0.0,
+        hitstun=0.0,
+        hitstop=0.0,
+        radius=20.0,
+    )
+    shadow_player.state = FighterState.AIR
+    shadow_player.on_ground = False
+    shadow_player.y = 489.0
+    bind_jump_miss = not bind_probe.rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.CROUCH
+    shadow_player.y = 620.0
+    bind_crouch_hit = bind_probe.rect.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.IDLE
+    shadow_player.on_ground = True
+    shadow_ninja_phantom_bind_ok = (
+        bind_started
+        and abs(bind_damage - shadow.atk * 1.2) < 0.01
+        and bind_stun
+        and bind_jump_miss
+        and bind_crouch_hit
+        and shadow.skill_used("shadow_phantom_bind")
+    )
+
+    # P3 影闪: all phases, one-damage hand/bolt, shark low, crouch/jump mix.
+    shadow, shadow_player = _place_phantom(400.0, 900.0)
+    _to_phantom(shadow, shadow_player)
+    shadow_player.facing = -1
+    hp_before = shadow_player.hp
+    flash_started = shadow.force_skill(scene, shadow_player, 2)
+    flash_phases: set[str] = set()
+    for _ in range(65):
+        _run_phantom_ticks(1)
+        if shadow.phantom_flash_phase:
+            flash_phases.add(shadow.phantom_flash_phase)
+    flash_first_damage = hp_before - shadow_player.hp
+    for _ in range(105):
+        _run_phantom_ticks(1)
+        if shadow.phantom_flash_phase:
+            flash_phases.add(shadow.phantom_flash_phase)
+    flash_total_damage = hp_before - shadow_player.hp
+    shadow.x = 800.0
+    shadow.y = 620.0
+    shadow.facing = 1
+    hand_box = local_box_to_rect(shadow, [20, -195, 90, 55])
+    shark_box = local_box_to_rect(shadow, [-20, -85, 220, 85])
+    shadow_player.state = FighterState.CROUCH
+    flash_hand_crouch_miss = not hand_box.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.AIR
+    shadow_player.on_ground = False
+    shadow_player.y = 489.0
+    flash_shark_jump_miss = not shark_box.colliderect(shadow_player.hurtbox())
+    shadow_player.state = FighterState.IDLE
+    shadow_player.on_ground = True
+    shadow_player.y = 620.0
+    shadow_ninja_phantom_flash_ok = (
+        flash_started
+        and {
+            "vanish",
+            "appear",
+            "attack",
+            "flight",
+            "appear_far",
+            "pause",
+            "emerge",
+            "charge",
+            "recover",
+        }.issubset(flash_phases)
+        and abs(flash_first_damage - shadow.atk * 0.8) < 0.01
+        and flash_total_damage <= shadow.atk * 1.6 + 0.01
+        and flash_hand_crouch_miss
+        and flash_shark_jump_miss
+        and shadow.skill_used("shadow_phantom_flash")
+    )
+
+    # One use per skill, auto revert, cooldown starts after revert.
+    shadow, shadow_player = _place_phantom(450.0, 400.0)
+    _to_phantom(shadow, shadow_player)
+    rend_once = shadow.force_skill(scene, shadow_player, 0)
+    _run_phantom_ticks(35)
+    rend_again_denied = not shadow.force_skill(scene, shadow_player, 0)
+    bind_once = shadow.force_skill(scene, shadow_player, 1)
+    _run_phantom_ticks(35)
+    flash_once = shadow.force_skill(scene, shadow_player, 2)
+    _run_phantom_ticks(160)
+    phantom_auto_revert_started = (
+        shadow.phantom_phase == "revert"
+        and all(
+            shadow.phantom_used.get(key, False)
+            for key in shadow._PHANTOM_SKILL_IDS
+        )
+        and shadow.transform_cd == 0.0
+    )
+    _run_phantom_ticks(40)
+    phantom_revert_ok = (
+        shadow.phantom_phase == "normal"
+        and not shadow.phantom_form
+        and not shadow.invincible
+        and not shadow.ignore_terrain
+        and shadow.anim.variant == "normal"
+        and 0.0 < shadow.transform_cd <= shadow.transform_cd_max
+    )
+    shadow_ninja_phantom_once_ok = (
+        rend_once and rend_again_denied and bind_once and flash_once
+    )
+    shadow_ninja_phantom_auto_revert_ok = (
+        phantom_auto_revert_started and phantom_revert_ok
+    )
+    shadow_ninja_phantom_cd_ok = (
+        phantom_auto_revert_started and phantom_revert_ok
+    )
+
+    # AI: low HP / incoming big hit trigger, then P2 -> P3 order.
+    shadow, shadow_player = _place_phantom(450.0, 600.0)
+    shadow.opening_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow.hp = shadow.max_hp * 0.3
+    shadow._think(scene, shadow_player)
+    ai_phantom_low_hp = shadow.phantom_form and shadow.state == FighterState.TRANSFORM
+    _run_phantom_ticks(100)
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow._think_phantom(scene, shadow_player)
+    ai_phantom_bind = shadow.attack_id == "shadow_phantom_bind"
+    _run_phantom_ticks(40)
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow.phantom_used["shadow_phantom_bind"] = True
+    shadow_player.x = 900.0
+    shadow_player.facing = 1
+    shadow._think_phantom(scene, shadow_player)
+    ai_phantom_flash = shadow.attack_id == "shadow_phantom_flash"
+
+    shadow, shadow_player = _place_phantom(450.0, 600.0)
+    shadow.opening_cd = 0.0
+    shadow.decision_cd = 0.0
+    shadow.skill_gap = 0.0
+    shadow_player.facing = -1
+    shadow_player.attack_runtime = AttackRuntime(
+        shadow_player,
+        "test_phantom_big_hit",
+        {
+            "duration": 1.0,
+            "events": [
+                {
+                    "t": 0.0,
+                    "until": 1.0,
+                    "type": "hitbox",
+                    "box": [20, -195, 130, 55],
+                    "damage": 30.0,
+                }
+            ],
+        },
+        shadow,
+        scene,
+    )
+    shadow._think(scene, shadow_player)
+    ai_phantom_incoming = shadow.phantom_form
+    shadow_player.attack_runtime = None
+    shadow_ninja_phantom_ai_ok = (
+        ai_phantom_low_hp
+        and ai_phantom_incoming
+        and ai_phantom_bind
+        and ai_phantom_flash
+    )
+
+    # Reset leaves no phantom state or projectiles behind.
+    shadow, shadow_player = _place_phantom(450.0, 400.0)
+    _to_phantom(shadow, shadow_player)
+    scene.reset()
+    shadow = scene.enemy
+    shadow_ninja_phantom_reset_ok = (
+        not shadow.phantom_form
+        and shadow.phantom_phase == "normal"
+        and not shadow.invincible
+        and not shadow.ignore_terrain
+        and shadow.transform_cd == 0.0
+        and shadow.anim.variant == "normal"
+        and not scene.projectiles
+    )
+
+    shadow_ninja_phantom_missing_frames = 0
+    for phantom_clip in shadow.anim.flame_clips.values():
+        for rel in phantom_clip.get("frames", []):
+            if not (ASSETS_DIR / "frames" / "shadow_ninja" / rel).exists():
+                shadow_ninja_phantom_missing_frames += 1
+    phantom_fx_dir = ASSETS_DIR / "frames" / "shadow_ninja" / "phantom" / "fx"
+    shadow_ninja_phantom_fx_missing = 0
+    for prefix, count in (
+        ("phantom_rend_trail", 3),
+        ("phantom_bind_tentacle", 4),
+        ("phantom_bind_front", 6),
+        ("phantom_bind_back", 6),
+        ("phantom_flash_orb", 3),
+        ("phantom_shark", 3),
+    ):
+        for index in range(count):
+            if not (phantom_fx_dir / f"{prefix}_{index:02d}.png").exists():
+                shadow_ninja_phantom_fx_missing += 1
+    scene.reset()
+
     print(
         "SMOKE "
         f"ticks={smoke_ticks} "
@@ -4425,6 +4801,22 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"shadow_marks_independent={shadow_marks_independent} "
         f"shadow_ninja_missing_frames={shadow_ninja_missing_frames} "
         f"shadow_ninja_fx_missing={shadow_ninja_fx_missing} "
+        f"shadow_ninja_phantom_present={shadow_ninja_phantom_present} "
+        f"shadow_ninja_phantom_transform_ok={shadow_ninja_phantom_transform_ok} "
+        f"shadow_ninja_phantom_invincible_ok={shadow_ninja_phantom_invincible_ok} "
+        f"shadow_ninja_phantom_clear_ok={shadow_ninja_phantom_clear_ok} "
+        f"shadow_ninja_phantom_marks_separate_ok={shadow_ninja_phantom_marks_separate_ok} "
+        f"shadow_ninja_phantom_no_hitbox_ok={shadow_ninja_phantom_no_hitbox_ok} "
+        f"shadow_ninja_phantom_rend_ok={shadow_ninja_phantom_rend_ok} "
+        f"shadow_ninja_phantom_bind_ok={shadow_ninja_phantom_bind_ok} "
+        f"shadow_ninja_phantom_flash_ok={shadow_ninja_phantom_flash_ok} "
+        f"shadow_ninja_phantom_once_ok={shadow_ninja_phantom_once_ok} "
+        f"shadow_ninja_phantom_auto_revert_ok={shadow_ninja_phantom_auto_revert_ok} "
+        f"shadow_ninja_phantom_cd_ok={shadow_ninja_phantom_cd_ok} "
+        f"shadow_ninja_phantom_ai_ok={shadow_ninja_phantom_ai_ok} "
+        f"shadow_ninja_phantom_reset_ok={shadow_ninja_phantom_reset_ok} "
+        f"shadow_ninja_phantom_missing_frames={shadow_ninja_phantom_missing_frames} "
+        f"shadow_ninja_phantom_fx_missing={shadow_ninja_phantom_fx_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -4639,6 +5031,22 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and shadow_marks_independent
         and shadow_ninja_missing_frames == 0
         and shadow_ninja_fx_missing == 0
+        and shadow_ninja_phantom_present
+        and shadow_ninja_phantom_transform_ok
+        and shadow_ninja_phantom_invincible_ok
+        and shadow_ninja_phantom_clear_ok
+        and shadow_ninja_phantom_marks_separate_ok
+        and shadow_ninja_phantom_no_hitbox_ok
+        and shadow_ninja_phantom_rend_ok
+        and shadow_ninja_phantom_bind_ok
+        and shadow_ninja_phantom_flash_ok
+        and shadow_ninja_phantom_once_ok
+        and shadow_ninja_phantom_auto_revert_ok
+        and shadow_ninja_phantom_cd_ok
+        and shadow_ninja_phantom_ai_ok
+        and shadow_ninja_phantom_reset_ok
+        and shadow_ninja_phantom_missing_frames == 0
+        and shadow_ninja_phantom_fx_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok

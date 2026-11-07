@@ -1,0 +1,57 @@
+{
+  "action": "revert",
+  "version": 1,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 400,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_revert_v1_00.png",
+      "duration_ms": 100,
+      "beat": "Mist rises"
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v1_01.png",
+      "duration_ms": 100,
+      "beat": "Collapse"
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v1_02.png",
+      "duration_ms": 100,
+      "beat": "Re-form"
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v1_03.png",
+      "duration_ms": 100,
+      "beat": "Normal"
+    }
+  ],
+  "references": {
+    "normal_idle": "assets/frames/shadow_ninja/idle/idle_00.png",
+    "phantom_idle": "assets/generated/contact_sheets/shadow_ninja_phantom_idle/shadow_ninja_phantom_idle_v2_00.png"
+  },
+  "contact_sheet": "shadow_ninja_phantom_revert_v1_sheet.png",
+  "preview": "shadow_ninja_phantom_revert_v1_preview.gif",
+  "generation": [
+    {
+      "phase": "revert",
+      "source": "shadow_ninja_phantom_revert_v1_revert_source.png",
+      "prompt": "Create hand-painted game sprites as ACTUAL isolated RGBA art. Reference 1 is the exact normal-form idle: violet-black hood and veil, purple ponytail, asymmetrical armor and cloth, dark boots, a single small purple kunai held in the NEAR right hand. Reference 2 is the exact unarmed phantom: true right-facing profile, very dark violet shadow body, long hair sweeping left, one narrow glowing violet eye, paired shadow legs blending into low ankle mist. They are the SAME adult woman. Preserve the references' precise identity, palette, lighting, proportions, stance and head-to-ground scale, one consistent game camera. Keep her strictly facing right throughout; never face front, left, or the viewer. The near right arm and leg always layer in front; far arm and leg stay behind her torso. Maintain readable hands, clean overlap, no intersections or doubled silhouettes, no extra fingers or limbs. The single kunai is small, shaped exactly like the reference and its handle must be visibly wrapped by the right-hand fingers whenever any of it remains. Never duplicate it or let it intersect the body. Do not zoom, stretch, shrink or expand the figure; posture or dissolution may alter the outline. Keep feet centered against the same invisible baseline; all art inside each cell. Transparent blank background and transparent gutters, no drawn checkerboard, haze around the image, grid lines, text, floor, cast shadow, circles, magic ring, scenery or decorations. Contain any violet mist in deliberate sprite silhouettes, with true zero-alpha pixels around and between sprites. EXACTLY FOUR sprites in a precise 2-column, 2-row equal-cell square grid; reading order top-left, top-right, bottom-left, bottom-right. Show the entire sprite in all four frames, with enough transparent margins and the body about 78% of cell height when upright. Create the separately drawn return-to-normal animation in four chronological poses. TOP LEFT frame 00: match reference 2 in pose and silhouette, a right-facing no-aura phantom with no weapon and both arms relaxed. Only increase the ankle mist rolling around feet and give a fleeting violet rim accent. TOP RIGHT frame 01: the top of her silhouette bows forward slightly and breaks into smoky shadow; violet edge dims, long hair folds downward as the elongated shape starts sinking into a compressed bank of mist drawing inward at her ankles. Continuous mist connects the obscured figure to the ankle cloud, no free-floating body pieces and no weapon at all. BOTTOM LEFT frame 02: normal hood and veil, long ponytail, near-side armor, layered hip cloth and paired planted boots from reference 1 are taking shape again at original scale and position. Glowing phantom eye is fading to a normal eye. The same single short purple kunai is forming in the hanging near RIGHT hand at her right hip, clearly gripped by its handle, its pointed tip partly smoky. Residual fog remains close to boots. BOTTOM RIGHT frame 03: EXACT normal idle pose, wardrobe and weapon from reference 1 with stance, face, feet, near arm and fully formed small kunai all in the same position; only a small residual low violet smoke wisp curling away around the boots, as the next idle clip will show no mist. A single heroine, true right profile, at the exact same character scale and camera throughout. Keep the start and end visually very close to their references so the game can cut from and to those idle frames cleanly.",
+      "fixed_form_scales": [
+        0.3787610619469027,
+        0.4076190476190476
+      ]
+    }
+  ]
+}

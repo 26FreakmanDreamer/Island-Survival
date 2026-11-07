@@ -1,0 +1,47 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "idle",
+  "version": 2,
+  "review_status": "candidate",
+  "description": "Quiet breathing. Small changes in the hair, violet eye and grounded ankle mist.",
+  "generated_with": "built-in ImageGen",
+  "approved_reference": "assets/generated/base/shadow_ninja_phantom_side_base.png",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "source_to_canvas_scale": 0.38768115942028986,
+  "facing": "right",
+  "loop": true,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_idle_v2_00.png",
+      "duration_ms": 300
+    },
+    {
+      "file": "shadow_ninja_phantom_idle_v2_01.png",
+      "duration_ms": 300
+    },
+    {
+      "file": "shadow_ninja_phantom_idle_v2_02.png",
+      "duration_ms": 300
+    },
+    {
+      "file": "shadow_ninja_phantom_idle_v2_03.png",
+      "duration_ms": 300
+    }
+  ],
+  "duration_ms": 1200,
+  "contact_sheet": "shadow_ninja_phantom_idle_v2_sheet.png",
+  "preview": "shadow_ninja_phantom_idle_v2_preview.gif",
+  "imagegen_sheet": "shadow_ninja_phantom_idle_v2_source.png",
+  "generation_prompt": "The attached approved image is the sole character reference. Produce a production 2D game sprite animation strip of Shadow Ninja's phantom form (no aura) with genuine RGBA transparency. Match the reference as closely as possible: full right-facing exact side profile, same face silhouette and narrow glowing violet eye, same black and deep-violet shadow body, same figure, long black-purple wind-swept hair, bare relaxed hands, the same two elongated close-set legs fading into a low purple-black bank of shadow fog. Preserve character identity, scale, head size, shoulder width, limbs, facing, rendering, lighting and narrow violet accents. It is a single sprite design repeated at different moments. No weapon, no armor, no hood addition, no tentacles, no halo, no extra limbs, no changes in near/far leg or arm layering, no clipping, no see-through holes in the body, no extra elements, no particles detached from silhouette, no glow above the ankles except the reference eye and subtle contour highlights. Exact side view, not 3/4. Composition is positioning only: no per-frame zoom, no stretch, no change in viewpoint. Keep background truly transparent even through clear gaps between individual hair wisps; no drawn checkerboard, studio background, shadow under the fog, labels, dividers, borders, numbers or text. Keep each sprite isolated inside its implied grid cell with wide fully transparent gutters; no strand crosses into another cell. Match the sprite's same head, hip, ankle and fog ground anchor against a consistent invisible baseline in every cell. All sprites approximately 75\u201380% of cell height. Return the complete sheet. Make exactly FOUR sprites laid out in a precise 2 by 2 equal-cell grid on a square image. Reading order top left frame 00, top right 01, bottom left 02, bottom right 03. Keep the lower-body pose and foot placement identical across the four. This is a restrained standing idle at 300ms per frame, not four new poses. 00: reproduce the reference silhouette, resting long hair and compact foot fog, dim violet eye. 01: a barely visible inhalation, 1\u20132 px upward motion at target scale of the upper body, subtly lifting a few outer tips of hair and foot mist, a slightly brighter violet eye. 02: breathing at crest, tiny backward sway, outer hair tips and ankle fog drift a little left, brightest small violet eye, no bloom. 03: settle back nearly into 00, hair and fog beginning to rest and eye brightness in between. A smooth 00-01-02-03-00 cycle. Keep the core body and face visually registered, exact same scale and two-leg pose. For this quiet animation only the peripheral hair tips, a very slight torso sway, violet eye intensity and fog movement should noticeably vary.",
+  "imagegen_references": [
+    "assets/generated/base/shadow_ninja_phantom_side_base.png"
+  ]
+}

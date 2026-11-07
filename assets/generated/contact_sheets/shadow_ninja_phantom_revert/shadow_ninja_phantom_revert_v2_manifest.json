@@ -1,0 +1,75 @@
+{
+  "action": "revert",
+  "version": 2,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 600,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_revert_v2_00.png",
+      "duration_ms": 100,
+      "beat": "Mist rises",
+      "v1_index": 0,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v2_01.png",
+      "duration_ms": 100,
+      "beat": "Collapse",
+      "v1_index": 1,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v2_02.png",
+      "duration_ms": 100,
+      "beat": "Head clears",
+      "v1_index": null,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v2_03.png",
+      "duration_ms": 100,
+      "beat": "Torso clears",
+      "v1_index": null,
+      "unchanged_from_v1": false
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v2_04.png",
+      "duration_ms": 100,
+      "beat": "Re-form",
+      "v1_index": 2,
+      "unchanged_from_v1": true
+    },
+    {
+      "file": "shadow_ninja_phantom_revert_v2_05.png",
+      "duration_ms": 100,
+      "beat": "Normal",
+      "v1_index": 3,
+      "unchanged_from_v1": true
+    }
+  ],
+  "references": {
+    "normal_idle": "assets/frames/shadow_ninja/idle/idle_00.png",
+    "phantom_idle": "assets/generated/contact_sheets/shadow_ninja_phantom_idle/shadow_ninja_phantom_idle_v2_00.png"
+  },
+  "contact_sheet": "shadow_ninja_phantom_revert_v2_sheet.png",
+  "preview": "shadow_ninja_phantom_revert_v2_preview.gif",
+  "generation": [
+    {
+      "phase": "revert",
+      "source": "shadow_ninja_phantom_revert_v2_revert_source.png",
+      "prompt": "Faithful adjacent animation cels for an existing painted side-view fighting game sprite. Output real RGBA transparency: pure zero-alpha surroundings and gutters with no background or cast shadow, labels, borders, checkerboard or extra elements. Keep the reference identity, exact side profile facing right, camera, head size, shoulder width, limbs, body scale, violet-black palette and baseline; do not zoom, stretch, widen or change the pose beyond the requested evolution. Full figure inside each grid cell with generous margins. Near right arm and leg layer in front, far arm and leg behind torso. No extra limb, hand or digit, no interpenetration. Preserve the original small triangular ring-hilt purple kunai wherever it remains, held by the same near right hand around the hilt, never duplicate or let it cross the body. Violet shadow belongs to the silhouette, no atmosphere around the whole image and no ring. Make EXACTLY TWO new consecutive in-between cels in a two-column, one-row landscape layout. Reference 1 is prior frame, the bowed shadow phantom with violet smoke down to the ankles. Reference 2 is the later frame, the exact normal-form woman with purple hood, ponytail, veil, near shoulder armor, waist cloth, boots and right hand. In both new cels, shadow dissipates clearly TOP TO BOTTOM. LEFT: first new in-between, smoke vanishes at the very top first; now her real normal purple hood, mask, forehead ornament and eye clearly reappear through dissipating strands around the face, with the authentic normal ponytail starting to appear behind the hood. Below the neck everything still reads as dark shadow silhouette wrapped in purple vapor. Keep the head slightly bowed at an intermediate height between refs. No visible weapon or handle. RIGHT: second new in-between, normal hood, face, ponytail, shoulder, near sleeve and torso now clearly visible, crisp in the top half. Her right arm has eased toward her normal lowered posture. At the waist the shadow falls away, but the entire lower legs and boot area remain mostly wrapped in tight ground-bound dark purple smoke. Show emerging garment edge only at the hips; boots remain a faint shadow. The right hand is empty as the kunai starts forming in the following existing frame. Keep the two phases visually distinct, using ref 1 at the feet and ref 2 at the head, same character scale and grounding. No extra silhouettes, no split face, no new armor or cape. Keep the blank regions actually transparent."
+    }
+  ]
+}

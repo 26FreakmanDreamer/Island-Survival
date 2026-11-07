@@ -1,0 +1,56 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "walk",
+  "version": 2,
+  "review_status": "candidate",
+  "description": "Right-facing glide. The legs remain together in a fixed pose while the hair and low mist trail backwards.",
+  "generated_with": "built-in ImageGen",
+  "approved_reference": "assets/generated/base/shadow_ninja_phantom_side_base.png",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "source_to_canvas_scale": 0.5119617224880383,
+  "facing": "right",
+  "loop": true,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_walk_v2_00.png",
+      "duration_ms": 100
+    },
+    {
+      "file": "shadow_ninja_phantom_walk_v2_01.png",
+      "duration_ms": 100
+    },
+    {
+      "file": "shadow_ninja_phantom_walk_v2_02.png",
+      "duration_ms": 100
+    },
+    {
+      "file": "shadow_ninja_phantom_walk_v2_03.png",
+      "duration_ms": 100
+    },
+    {
+      "file": "shadow_ninja_phantom_walk_v2_04.png",
+      "duration_ms": 100
+    },
+    {
+      "file": "shadow_ninja_phantom_walk_v2_05.png",
+      "duration_ms": 100
+    }
+  ],
+  "duration_ms": 600,
+  "contact_sheet": "shadow_ninja_phantom_walk_v2_sheet.png",
+  "preview": "shadow_ninja_phantom_walk_v2_preview.gif",
+  "imagegen_sheet": "shadow_ninja_phantom_walk_v2_source.png",
+  "generation_prompt": "Production game sprites on ACTUAL fully transparent alpha outside the sprite. Reference 1 is a transparent sprite sheet that establishes the exact appearance and alpha cutout quality. Reference 2 is the approved single design. Output exactly six isolated sprites in a rigid 3-column by 2-row layout, equal cells on a wide landscape PNG. Empty pixels MUST have zero opacity. Keep each sprite and each fog tail inside its own cell, with wide pure transparent gutters. No grid lines, no background, no bloom, no halos, no vignette, no volumetric atmosphere around the head or body, no ambient light, no floor or shadow underneath. Crisp outline with clean true alpha around and inside hair gaps, just like reference 1. Draw the fog as dark violet shapes physically confined to the foot area, a narrow low cloud trailing back on some frames, no surrounding glow. Retain the reference's black and purple shadow body, violet eye, long windswept hair, hands and feet unarmed, no extra parts and no near/far overlap changes. Same full right-facing exact profile, same head size, dimensions, lighting and shoulder width, camera distance and consistent ground baseline, no scale or framing changes. Body visually locked across the six cells, knees and ankles paired and in exactly the same fixed pose, no leg separation, no stride, no alternating feet, no foot reaching forward. Relaxed near hand, far arm behind torso. Almost upright, a very small forward lean (2\u20133 degrees); don't bow. It is six adjacent keyframes of a restrained rightward ghost glide, animated by the wispy hair tips and ankle fog sweeping to the left. Frame 00 short hair tail and compact fog, frame 01 lengthening hair and fog tail, frame 02 full tail stretch and highest body (only 5 px upward at gameplay scale), frame 03 long trailing tips that curl softly, frame 04 ease tail and hover down, frame 05 compact tail almost back to 00. Hold the bottom of the fog at the same baseline under the feet on every frame. Keep the near/far silhouette and exact sizes constant, no interpenetration or added halo. Treat the transparent gutters and cutout silhouette as the highest priority.",
+  "imagegen_references": [
+    "assets/generated/contact_sheets/shadow_ninja_phantom_idle/shadow_ninja_phantom_idle_v2_source.png",
+    "assets/generated/base/shadow_ninja_phantom_side_base.png"
+  ]
+}

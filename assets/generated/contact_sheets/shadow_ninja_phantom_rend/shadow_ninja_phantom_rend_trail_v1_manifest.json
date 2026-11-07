@@ -1,0 +1,50 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "shadow_phantom_rend",
+  "effect": "phantom_rend_trail",
+  "version": 1,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "character_animation": "shadow_ninja_phantom_rend_v2_manifest.json",
+  "canvas": [
+    384,
+    112
+  ],
+  "pivot": [
+    0,
+    56
+  ],
+  "character_pivot_offset": [
+    30,
+    -150
+  ],
+  "facing": "right",
+  "loop": false,
+  "layer": "behind_character",
+  "start_ms": 180,
+  "duration_ms": 180,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_rend_trail_v1_00.png",
+      "start_ms": 180,
+      "duration_ms": 60,
+      "phase": "Claw streaks"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_trail_v1_01.png",
+      "start_ms": 240,
+      "duration_ms": 60,
+      "phase": "Trail fades"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_trail_v1_02.png",
+      "start_ms": 300,
+      "duration_ms": 60,
+      "phase": "Embers disperse"
+    }
+  ],
+  "imagegen_sheet": "shadow_ninja_phantom_rend_trail_v1_source.png",
+  "contact_sheet": "shadow_ninja_phantom_rend_trail_v1_sheet.png",
+  "composite_preview": "shadow_ninja_phantom_rend_trail_v1_preview.gif",
+  "preview_idle_lead_in_ms": 540
+}

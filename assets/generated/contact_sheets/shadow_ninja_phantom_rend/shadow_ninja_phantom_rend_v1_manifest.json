@@ -1,0 +1,53 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "shadow_phantom_rend",
+  "version": 1,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "approved_reference": "assets/generated/base/shadow_ninja_phantom_side_base.png",
+  "idle_comparison": "assets/frames/shadow_ninja/phantom/idle/idle_00.png",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "source_to_canvas_scale": 0.4495798319327731,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 450,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_rend_v1_00.png",
+      "duration_ms": 90,
+      "phase": "Wind-up"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_v1_01.png",
+      "duration_ms": 90,
+      "phase": "Claw forms"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_v1_02.png",
+      "duration_ms": 90,
+      "phase": "Sweep"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_v1_03.png",
+      "duration_ms": 90,
+      "phase": "Dissolve"
+    },
+    {
+      "file": "shadow_ninja_phantom_rend_v1_04.png",
+      "duration_ms": 90,
+      "phase": "Settle"
+    }
+  ],
+  "contact_sheet": "shadow_ninja_phantom_rend_v1_sheet.png",
+  "preview": "shadow_ninja_phantom_rend_v1_preview.gif",
+  "preview_idle_lead_in_ms": 540,
+  "imagegen_sheet": "shadow_ninja_phantom_rend_v1_source.png"
+}

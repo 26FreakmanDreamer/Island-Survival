@@ -1,0 +1,180 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "shadow_phantom_bind",
+  "version": 1,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "approved_reference": "assets/generated/base/shadow_ninja_phantom_side_base.png",
+  "idle_comparison": "assets/frames/shadow_ninja/phantom/idle/idle_00.png",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "source_to_canvas_scale": 0.46120689655172414,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 500,
+  "frames": [
+    {
+      "file": "shadow_ninja_phantom_bind_v1_00.png",
+      "start_ms": 0,
+      "duration_ms": 100,
+      "phase": "Lower into stance"
+    },
+    {
+      "file": "shadow_ninja_phantom_bind_v1_01.png",
+      "start_ms": 100,
+      "duration_ms": 100,
+      "phase": "Both palms down"
+    },
+    {
+      "file": "shadow_ninja_phantom_bind_v1_02.png",
+      "start_ms": 200,
+      "duration_ms": 100,
+      "phase": "Release"
+    },
+    {
+      "file": "shadow_ninja_phantom_bind_v1_03.png",
+      "start_ms": 300,
+      "duration_ms": 100,
+      "phase": "Lift hands"
+    },
+    {
+      "file": "shadow_ninja_phantom_bind_v1_04.png",
+      "start_ms": 400,
+      "duration_ms": 100,
+      "phase": "Return to idle"
+    }
+  ],
+  "imagegen_sheet": "shadow_ninja_phantom_bind_v1_source.png",
+  "projectile_fx": {
+    "id": "phantom_bind_tentacle",
+    "canvas": [
+      120,
+      128
+    ],
+    "pivot": [
+      60,
+      64
+    ],
+    "source_to_canvas_scale": 0.16,
+    "launch_ms": 200,
+    "loop": true,
+    "frames": [
+      {
+        "file": "shadow_ninja_phantom_bind_v1_tentacle_00.png",
+        "duration_ms": 50,
+        "phase": "Surge"
+      },
+      {
+        "file": "shadow_ninja_phantom_bind_v1_tentacle_01.png",
+        "duration_ms": 50,
+        "phase": "Reach"
+      },
+      {
+        "file": "shadow_ninja_phantom_bind_v1_tentacle_02.png",
+        "duration_ms": 50,
+        "phase": "Dip"
+      },
+      {
+        "file": "shadow_ninja_phantom_bind_v1_tentacle_03.png",
+        "duration_ms": 50,
+        "phase": "Recoil"
+      }
+    ],
+    "imagegen_sheet": "shadow_ninja_phantom_bind_v1_tentacle_source.png"
+  },
+  "preview": {
+    "file": "shadow_ninja_phantom_bind_v1_preview.gif",
+    "idle_lead_in_ms": 460,
+    "target_sprite": "assets/frames/lina/idle/idle_00.png",
+    "projectile_speed_px_s": 900,
+    "impact_ms": 520,
+    "target_bind_duration_ms": 1000,
+    "target_bind_source": "game.fx.PhantomBindFx",
+    "animation_sample_times_ms": [
+      -1,
+      0,
+      100,
+      200,
+      220,
+      250,
+      270,
+      300,
+      320,
+      350,
+      370,
+      400,
+      420,
+      450,
+      470,
+      500,
+      520,
+      570,
+      620,
+      670,
+      720,
+      770,
+      820,
+      870,
+      920,
+      970,
+      1020,
+      1070,
+      1120,
+      1170,
+      1220,
+      1270,
+      1320,
+      1370,
+      1420,
+      1470,
+      1520
+    ],
+    "frame_durations_ms": [
+      460,
+      100,
+      100,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      50,
+      300
+    ]
+  },
+  "contact_sheet": "shadow_ninja_phantom_bind_v1_sheet.png"
+}

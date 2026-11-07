@@ -588,6 +588,7 @@ class ShurikenProjectile:
         bonus_vs_poison_max_hp_pct: float = 0.0,
         bonus_vs_poison_source: str | None = None,
         penetrates_blocks: bool = False,
+        pierces_targets: bool = False,
     ) -> None:
         self.owner = owner
         self.target = target
@@ -615,6 +616,8 @@ class ShurikenProjectile:
         self.bonus_vs_poison_max_hp_pct = float(bonus_vs_poison_max_hp_pct)
         self.bonus_vs_poison_source = bonus_vs_poison_source
         self.penetrates_blocks = bool(penetrates_blocks)
+        self.pierces_targets = bool(pierces_targets)
+        self.hit_target_ids: set[int] = set()
         if kind == "rhea_poison_shuriken":
             self.hit_color = (120, 230, 130)
         else:
@@ -626,6 +629,10 @@ class ShurikenProjectile:
         self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
         self.rect.center = (round(self.x), round(self.y))
 
+    def _can_damage(self) -> bool:
+        """Owner hook for one-hit-per-skill projectiles."""
+        return True
+
     def _close_range_hit(self, scene) -> bool:
         """Point-blank throws hit an adjacent body before the star travels.
 
@@ -636,12 +643,18 @@ class ShurikenProjectile:
         for target in scene.targets_for(self.owner):
             if target.hp <= 0.0 or target.invincible:
                 continue
+            if id(target) in self.hit_target_ids:
+                continue
             if owner_box.colliderect(target.hurtbox()):
                 self.hit = True
                 self.target = target
-                resolve_projectile_hit(scene, self)
-                self.alive = False
-                return True
+                self.hit_target_ids.add(id(target))
+                if self._can_damage():
+                    resolve_projectile_hit(scene, self)
+                if not self.pierces_targets:
+                    self.alive = False
+                    return True
+                return False
         return False
 
     def update(self, dt: float, scene) -> None:
@@ -675,12 +688,16 @@ class ShurikenProjectile:
                     self.alive = False
                     return
 
-        if not self.hit:
-            for target in scene.targets_for(self.owner):
-                if target.hp > 0.0 and self.rect.colliderect(target.hurtbox()):
-                    self.hit = True
-                    self.target = target
+        for target in scene.targets_for(self.owner):
+            if target.hp <= 0.0 or id(target) in self.hit_target_ids:
+                continue
+            if self.rect.colliderect(target.hurtbox()):
+                self.hit = True
+                self.target = target
+                self.hit_target_ids.add(id(target))
+                if self._can_damage():
                     resolve_projectile_hit(scene, self)
+                if not self.pierces_targets:
                     self.alive = False
                     break
 
@@ -822,6 +839,177 @@ class ShadowKunaiProjectile(ShurikenProjectile):
             (240, 220, 255),
             (round(self.x - self.direction * 12.0), round(self.y)),
             3,
+        )
+
+
+_PHANTOM_FX_CACHE: dict[tuple[str, float, int, int], pygame.Surface | None] = {}
+
+
+def _phantom_fx_image(
+    prefix: str,
+    frame_count: int,
+    frame: int,
+    width: int,
+) -> pygame.Surface | None:
+    """Load one approved phantom FX frame and scale it to a fixed width."""
+    index = frame % frame_count
+    path = (
+        ASSETS_DIR / "frames" / "shadow_ninja" / "phantom" / "fx"
+        / f"{prefix}_{index:02d}.png"
+    )
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    key = (str(path), mtime, index, width)
+    if key in _PHANTOM_FX_CACHE:
+        cached = _PHANTOM_FX_CACHE[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _PHANTOM_FX_CACHE[key] = None
+        return None
+    if image.get_width() > 0 and image.get_width() != width:
+        height = max(1, round(image.get_height() * width / image.get_width()))
+        image = pygame.transform.smoothscale(image, (width, height))
+    _PHANTOM_FX_CACHE[key] = image
+    return image.copy()
+
+
+class ShadowBindProjectile(ShurikenProjectile):
+    """Phantom 影缚: ground-hugging tentacle, stops on the first target."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 20.0,
+        status: str | None = None,
+        status_duration: float = 0.0,
+        penetrates_blocks: bool = True,
+    ) -> None:
+        super().__init__(
+            owner=owner,
+            target=target,
+            x=x,
+            y=y,
+            direction=direction,
+            speed=speed,
+            max_range=max_range,
+            damage=damage,
+            knockback=knockback,
+            hitstun=hitstun,
+            hitstop=hitstop,
+            kind="shadow_phantom_bind",
+            radius=radius,
+            status=status,
+            status_duration=status_duration,
+            penetrates_blocks=penetrates_blocks,
+        )
+        self.visual_kind = "shadow_phantom_bind"
+        self.hit_color = (185, 110, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        image = _phantom_fx_image(
+            "phantom_bind_tentacle", 4, int(self.age * 20.0), 120
+        )
+        if image is not None:
+            if self.direction < 0:
+                image = pygame.transform.flip(image, True, False)
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+        # Fallback: a low purple tendril wave.
+        for index in range(4):
+            phase = self.age * 10.0 + index * 1.3
+            px = self.x - self.direction * index * 18.0
+            py = self.y + math.sin(phase) * 4.0
+            pygame.draw.circle(
+                surface, (150, 80, 235),
+                (round(px), round(py)), max(3, 9 - index * 2),
+            )
+        pygame.draw.circle(
+            surface, (235, 215, 255),
+            (round(self.x + self.direction * 8.0), round(self.y)),
+            3,
+        )
+
+
+class ShadowFlashProjectile(ShurikenProjectile):
+    """Phantom 影闪: high shadow bolt that pierces barriers and the player."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        speed: float,
+        max_range: float,
+        damage: float,
+        knockback: float,
+        hitstun: float,
+        hitstop: float,
+        radius: float = 18.0,
+        penetrates_blocks: bool = True,
+    ) -> None:
+        super().__init__(
+            owner=owner,
+            target=target,
+            x=x,
+            y=y,
+            direction=direction,
+            speed=speed,
+            max_range=max_range,
+            damage=damage,
+            knockback=knockback,
+            hitstun=hitstun,
+            hitstop=hitstop,
+            kind="shadow_phantom_flash",
+            radius=radius,
+            penetrates_blocks=penetrates_blocks,
+            pierces_targets=True,
+        )
+        self.visual_kind = "shadow_phantom_flash"
+        self.hit_color = (205, 145, 255)
+
+    def _can_damage(self) -> bool:
+        return not bool(getattr(self.owner, "phantom_flash_hit", False))
+
+    def draw(self, surface: pygame.Surface) -> None:
+        image = _phantom_fx_image(
+            "phantom_flash_orb", 3, int(self.age * 20.0), 56
+        )
+        if image is not None:
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+        # Fallback: a pulsing purple orb with a short trail.
+        for index in range(3):
+            px = self.x - self.direction * index * 12.0
+            pygame.draw.circle(
+                surface,
+                (120, 60, 210),
+                (round(px), round(self.y)), max(2, 10 - index * 3),
+            )
+        pygame.draw.circle(
+            surface, (225, 200, 255),
+            (round(self.x), round(self.y)), 6,
         )
 
 

@@ -57,12 +57,16 @@ stun), the leap slam (8s cooldown, 0.8s warning, fixed reticle, terrain-ignoring
 100px AoE, platform landing), the 1s skill gap, V/C/X/Z mapping, WIN, cleanup, AI priority and
 `mech_crab_missing_frames` / `mech_crab_fx_missing`.
 Phase H switches to Shadow Ninja and checks its flat stage variant (spawn 1000,620), HP/ATK copied
-from the current character, 1.5× walk, the four slots with an empty slot 4, the 0.35s/0.5s high
+from the current character, 1.5× walk, the four slots with slot 4 `shadow_phantom_form`, the 0.35s/0.5s high
 slash (standing hit, crouching dodge), the 5s low kunai (1.2atk, 1s stun, one mark, no block
 penetration), the 8s dash (~640px, player pass-through, low jump-dodgeable hitbox), the independent
 mark stack (1→2→3→detonate→1, extra atk + 1s stun, KO/reset clears, super armor only blocks the
 stun), the close/far/low-HP AI, crouch/jump defense, barrier hop, WIN/cleanup and
 `shadow_ninja_missing_frames` / `shadow_ninja_fx_missing`.
+Phase I switches to the phantom form and checks slot 4 `shadow_phantom_form`, the Z transform, the
+11-frame/1.36s transform with frame-0 invincibility and self-clear, no-hitbox pass-through, P1/P2/P3,
+one-use flags, auto-revert (6 frames/0.60s), the 15s cooldown after revert, the AI trigger/order,
+reset, and `shadow_ninja_phantom_missing_frames` / `shadow_ninja_phantom_fx_missing`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the early midpoint mount
@@ -112,8 +116,11 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
 `creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns;
 for Mech-Crab they show `mech_laser`, `mech_charge`, `mech_claw_slam` and `mech_leap_slam`; for
-Shadow Ninja they show `shadow_kunai_slash`, `shadow_kunai_throw`, `shadow_dash` and `-`, and the
-panel adds `SHADOW MARKS n/3 BURST ... LAST ...` for the player-side marks. Both lock reticles are
+Shadow Ninja they show `shadow_kunai_slash`, `shadow_kunai_throw`, `shadow_dash` and
+`shadow_phantom_form`; during the phantom form the panel adds `PHANTOM n/3 P1/P2/P3 READY/USED`,
+`PHANTOM FLASH <phase>`, `PHANTOM TRANSFORM`/`PHANTOM REVERT` and, after revert, `PHANTOM CD
+15.0s`, while S1–S3 keep the normal cooldowns. The panel also adds `SHADOW MARKS n/3 BURST ...
+LAST ...` for the player-side marks. Both lock reticles are
 draw-only. Poison and stun appear in the status list. The three mark pips above each living enemy,
 the three purple pips above the player during a Shadow Ninja fight, the green poison pulse and the
 stun stars are draw-only.
@@ -264,14 +271,29 @@ stun stars are draw-only.
 12b. Shadow Ninja checks: F7 selects it after Mech-Crab (the startup default remains Creepy
     Shooter) on the flat variant (no blocks/ladders, spawn 1000,620). HP/ATK follow the current
     character and walk is 1.5×; switching Lina/Nyra/Rhea or F9 keeps them in sync. V/C/X/Z are
-    slash/throw/dash/empty; Z is a no-op. F1 shows the 56×210 standing / 56×130 crouching hurtbox,
-    the high slash box, the low dash box and the low lane. F2 shows the four slots (S4 `-`), the
-    three cooldowns, current clip/frame and `SHADOW MARKS n/3`. Four consecutive hits (slash or
-    throw) stack 1→2→3→detonate→1 with extra atk damage + 1s stun; the purple pips are above the
-    player and coexist with Nyra's blue marks. The kunai is blocked by barriers/platforms; jump
-    over it. A full jump clears the dash low hitbox; crouch does not. The AI crouches against high
-    attacks, jumps against low/mid threats, hops barriers, tracks its own kunai into a dash, and
-    never uses skill 4. Smoke flags: `shadow_ninja_*` plus `shadow_ninja_fx_missing == 0`.
+    slash/throw/dash/transform in normal form; Z transforms, and in phantom V/C/X map to
+    影爪/影缚/影闪 while Z is a no-op. F1 shows the 56×210 standing / 56×130 crouching hurtbox,
+    the high slash box, the low dash box and the low lane; while `phantom_form` it hides the enemy
+    hurtbox but keeps the phantom skill hitboxes. F2 shows the four slots (S4
+    `shadow_phantom_form`), the three normal cooldowns, current clip/frame, `SHADOW MARKS n/3`, and
+    the phantom lines listed above. Four consecutive normal hits (slash or throw) stack
+    1→2→3→detonate→1 with extra atk damage + 1s stun; the purple pips are above the player and
+    coexist with Nyra's blue marks. The kunai is blocked by barriers/platforms; jump over it. A
+    full jump clears the dash low hitbox; crouch does not. The normal AI crouches against high
+    attacks, jumps against low/mid threats, hops barriers, and tracks its own kunai into a dash.
+    Smoke flags: `shadow_ninja_*` plus `shadow_ninja_fx_missing == 0`.
+12c. Phantom form checks: Z transforms (11 frames/1.36s: normal → no-aura → shadow hold 0.50s →
+    no-aura). Frame 0 is invincible and clears self marks/negatives/hitstun/KB; the player's
+    attacks/projectiles pass through (no target, no marks/passives), the phantom phases through
+    barriers/platforms, keeps normal cooldowns ticking, and has no jump/crouch/hurt/KO clips.
+    V/C/X are 影爪 (high, crouch dodge, 1.0atk), 影缚 (low, jump dodge, 1.2atk + 1s stun, pierces
+    barriers) and 影闪 (crouch-dodge the high hand/bolt 0.8, then jump-dodge the low shark 0.8;
+    teleport behind, reappear at the bolt's far point, pause, shark charge). Each is one-use; the
+    third auto-reverts (6 frames/0.60s); the 15s cooldown starts after the revert. The AI
+    transforms at ≤40% HP or when the largest incoming hit is ≥25% max HP, then uses P2→P1 close or
+    P2→P3→P1 far; there is no forced revert. F9/F7/reset clears the form. Smoke flags:
+    `shadow_ninja_phantom_*`, `shadow_ninja_phantom_missing_frames == 0`,
+    `shadow_ninja_phantom_fx_missing == 0`.
 13. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
     triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
     jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left

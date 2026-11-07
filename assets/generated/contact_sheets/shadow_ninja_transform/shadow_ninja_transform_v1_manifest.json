@@ -1,0 +1,94 @@
+{
+  "action": "transform",
+  "version": 1,
+  "review_status": "candidate",
+  "generated_with": "built-in ImageGen",
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "body_height_px_reference": 214,
+  "facing": "right",
+  "loop": false,
+  "duration_ms": 1200,
+  "frames": [
+    {
+      "file": "shadow_ninja_transform_v1_00.png",
+      "duration_ms": 80,
+      "beat": "Gather"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_01.png",
+      "duration_ms": 80,
+      "beat": "Seal"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_02.png",
+      "duration_ms": 80,
+      "beat": "Dissolve"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_03.png",
+      "duration_ms": 80,
+      "beat": "Phantom"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_04.png",
+      "duration_ms": 80,
+      "beat": "Idle",
+      "reference": "phantom_idle"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_05.png",
+      "duration_ms": 100,
+      "beat": "Aura burst"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_06.png",
+      "duration_ms": 500,
+      "beat": "Full aura",
+      "reference": "full_aura"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_07.png",
+      "duration_ms": 100,
+      "beat": "Retract"
+    },
+    {
+      "file": "shadow_ninja_transform_v1_08.png",
+      "duration_ms": 100,
+      "beat": "Idle",
+      "reference": "phantom_idle"
+    }
+  ],
+  "references": {
+    "normal_idle": "assets/frames/shadow_ninja/idle/idle_00.png",
+    "phantom_idle": "assets/generated/contact_sheets/shadow_ninja_phantom_idle/shadow_ninja_phantom_idle_v2_00.png",
+    "full_aura": "assets/generated/base/shadow_ninja_phantom_shadow_side_base.png"
+  },
+  "contact_sheet": "shadow_ninja_transform_v1_sheet.png",
+  "preview": "shadow_ninja_transform_v1_preview.gif",
+  "generation": [
+    {
+      "phase": "shift",
+      "source": "shadow_ninja_transform_v1_shift_source.png",
+      "prompt": "Create hand-painted game sprites as ACTUAL isolated RGBA art. Reference 1 is the exact normal-form idle: violet-black hood and veil, purple ponytail, asymmetrical armor and cloth, dark boots, a single small purple kunai held in the NEAR right hand. Reference 2 is the exact unarmed phantom: true right-facing profile, very dark violet shadow body, long hair sweeping left, one narrow glowing violet eye, paired shadow legs blending into low ankle mist. They are the SAME adult woman. Preserve the references' precise identity, palette, lighting, proportions, stance and head-to-ground scale, one consistent game camera. Keep her strictly facing right throughout; never face front, left, or the viewer. The near right arm and leg always layer in front; far arm and leg stay behind her torso. Maintain readable hands, clean overlap, no intersections or doubled silhouettes, no extra fingers or limbs. The single kunai is small, shaped exactly like the reference and its handle must be visibly wrapped by the right-hand fingers whenever any of it remains. Never duplicate it or let it intersect the body. Do not zoom, stretch, shrink or expand the figure; posture or dissolution may alter the outline. Keep feet centered against the same invisible baseline; all art inside each cell. Transparent blank background and transparent gutters, no drawn checkerboard, haze around the image, grid lines, text, floor, cast shadow, circles, magic ring, scenery or decorations. Contain any violet mist in deliberate sprite silhouettes, with true zero-alpha pixels around and between sprites. EXACTLY FOUR sprites in a precise 2-column, 2-row equal-cell square grid; reading order top-left, top-right, bottom-left, bottom-right. Show the entire sprite in all four frames, with enough transparent margins and the body about 78% of cell height when upright. The four cells depict the first half of a single Shadow Ninja TRANSFORMATION into her ghost form. TOP LEFT frame 00: exact normal reference idle with boots planted and right hand lowered holding the complete single kunai, faint purple rim, small shadow mist just gathering at ankles. TOP RIGHT frame 01: she lowers her chin, with the near right elbow bent and that same right hand gripping the small kunai horizontally out in front of her chest, blade pointing right away from the body; the tip visibly dissolves into just a few tiny connected violet wisps. Far hand stays behind torso, no second weapon. Ponytail starts rising, dark purple shadow curls up to knees. BOTTOM LEFT frame 02: her head and shoulders lean back a little as the normal hood and garment edges melt into the dark violet phantom silhouette; eye begins to glow, hair turns looser and sweeps left. Low mist curls to waist. The same small kunai has only the hilt and half its blade left, visibly still in the near right hand in front of the body, with the remaining blade disintegrating at its right-facing end. BOTTOM RIGHT frame 03: an exact match to the unarmed phantom reference at the reference size, upright, flowing long hair, bright violet eye and somewhat heightened foot mist. All clothing and all traces of weapon are gone, both shadow arms hang low. This frame closely anticipates the provided phantom idle, with no aura tendrils. Full body always visible and all four figures in fixed scale.",
+      "fixed_form_scales": [
+        0.4254473161033797,
+        0.39338235294117646
+      ]
+    },
+    {
+      "phase": "aura",
+      "source": "shadow_ninja_transform_v1_aura_source.png",
+      "prompt": "Create EXACTLY TWO side-by-side animated game sprite cels on true transparent RGBA, one wide landscape 2-column grid with equal cells. Reference 1 is the precise no-aura shadow woman in strict right profile, long flowing black purple hair left, near arm down, feet in a violet shadow cloud, narrow violet eye. Reference 2 is the established full-aura version of that exact same body. Preserve reference 1 body, hair silhouette, eye, near/far limbs, feet, pose, black and violet palette, same rendering, same size and position. No new clothing or weapon, no other arms, no claws, no cut edges or intersections, no zoom or viewpoint change. Full body in both cells, consistent head and ground baseline. LEFT cell is the first burst of shadow aura, visible as a few sleek pointed purple smoke wisps sprouting from BEHIND the waist and under the hair, partially unfolded, clearly less extended than ref 2. Give the same eyes and body edge a brief controlled violet intensity. RIGHT cell is a separate later frame with the aura drawn back towards the back and ankle mist, wisps already thin and short, edge slightly dimmer. Body shape stays the same. Match the flame-like wisp silhouette and dark saturated violet look of reference 2; no full purple halo, no bright background glow, no magic ring, no graphics, no lettering, no division lines, no checkerboard drawn into the asset. Transparent empty pixels around each figure and in the gutter, physically isolated figures. Character is at the same scale in both cells, centered in the same spot against an invisible ground line. Keep all artwork inside the cells. Do not include full-aura pose as a third cell.",
+      "fixed_form_scales": [
+        0.26583850931677017
+      ]
+    }
+  ]
+}

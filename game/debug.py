@@ -42,7 +42,8 @@ class DebugOverlay:
             surface.blit(self.font.render(label, True, color), (1100, round(y) - 15))
 
         pygame.draw.rect(surface, (70, 220, 130), scene.player.hurtbox(), 1)
-        pygame.draw.rect(surface, (70, 220, 130), scene.enemy.hurtbox(), 1)
+        if not getattr(scene.enemy, "phantom_form", False):
+            pygame.draw.rect(surface, (70, 220, 130), scene.enemy.hurtbox(), 1)
         for rect in scene.debug_hitboxes:
             pygame.draw.rect(surface, (255, 70, 70), rect, 2)
 
@@ -142,6 +143,28 @@ class DebugPanel:
                 f"BURST {getattr(player, 'shadow_mark_burst_time', 0.0):.2f} "
                 f"LAST {getattr(player, 'shadow_mark_burst_damage', 0.0):.0f}"
             )
+            phantom_phase = getattr(enemy, "phantom_phase", "normal")
+            if phantom_phase == "phantom":
+                phantom_ids = getattr(enemy, "_PHANTOM_SKILL_IDS", ())
+                used = [
+                    bool(getattr(enemy, "phantom_used", {}).get(attack_id, False))
+                    for attack_id in phantom_ids
+                ]
+                if len(used) >= 3:
+                    lines.append(
+                        f"PHANTOM {sum(used)}/3  P1 {'USED' if used[0] else 'READY'}"
+                        f"  P2 {'USED' if used[1] else 'READY'}"
+                        f"  P3 {'USED' if used[2] else 'READY'}"
+                    )
+                flash_phase = getattr(enemy, "phantom_flash_phase", "")
+                if flash_phase:
+                    lines.append(f"PHANTOM FLASH {flash_phase}")
+            elif phantom_phase == "transform":
+                lines.append("PHANTOM TRANSFORM")
+            elif phantom_phase == "revert":
+                lines.append("PHANTOM REVERT")
+            elif getattr(enemy, "transform_cd", 0.0) > 0.0:
+                lines.append(f"PHANTOM CD {enemy.transform_cd:.1f}s")
         if all(
             hasattr(player, attr)
             for attr in ("flame_time", "flame_hits", "current_flame_bonus")

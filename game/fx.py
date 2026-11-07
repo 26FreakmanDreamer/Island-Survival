@@ -216,10 +216,45 @@ def web_sprite(height: int, angle: float) -> pygame.Surface | None:
     return rotated
 
 
+PHANTOM_FX_DIR = ASSETS_DIR / "frames" / "shadow_ninja" / "phantom" / "fx"
+_phantom_fx_cache: dict[tuple[str, float, int, int], pygame.Surface | None] = {}
+
+
+def phantom_fx_image(
+    prefix: str,
+    frame: int,
+    frame_count: int,
+    width: int,
+) -> pygame.Surface | None:
+    """Load one approved phantom FX frame and scale it to a fixed width."""
+    index = frame % frame_count
+    path = PHANTOM_FX_DIR / f"{prefix}_{index:02d}.png"
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        mtime = 0.0
+    key = (str(path), mtime, index, width)
+    if key in _phantom_fx_cache:
+        cached = _phantom_fx_cache[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _phantom_fx_cache[key] = None
+        return None
+    if width > 0 and image.get_width() != width:
+        height = max(1, round(image.get_height() * width / image.get_width()))
+        image = pygame.transform.smoothscale(image, (width, height))
+    _phantom_fx_cache[key] = image
+    return image.copy()
+
+
 class FxEffect:
     """Base class for short, draw-only effects."""
 
     kind = "fx"
+    # Draw before the fighters when the effect belongs behind the body.
+    behind = False
 
     def __init__(self, life: float, kind: str | None = None) -> None:
         self.life = max(0.001, float(life))
@@ -485,3 +520,175 @@ class SilkCastFx(FxEffect):
             pygame.draw.lines(layer, (210, 255, 190, alpha), False, points, 2)
             pygame.draw.lines(layer, (250, 255, 240, alpha), False, points, 1)
         surface.blit(layer, (round(self.x - center), round(self.y - center)))
+
+
+class PhantomClawFx(FxEffect):
+    """P1 影爪: the long claw trail drawn separately from the character."""
+
+    kind = "phantom_claw"
+    behind = True
+
+    def __init__(
+        self, attacker, life: float = 0.36, delay: float = 0.18
+    ) -> None:
+        super().__init__(life, "phantom_claw")
+        self.attacker = attacker
+        self.delay = float(delay)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        if self.age < self.delay:
+            return
+        facing = 1 if self.attacker.facing >= 0 else -1
+        frame = min(2, int((self.age - self.delay) / 0.06))
+        image = phantom_fx_image("phantom_rend_trail", frame, 3, 384)
+        ax = self.attacker.x + facing * 30.0
+        ay = self.attacker.y - 150.0
+        if image is not None:
+            if facing < 0:
+                image = pygame.transform.flip(image, True, False)
+            if facing > 0:
+                rect = image.get_rect(midleft=(round(ax), round(ay)))
+            else:
+                rect = image.get_rect(midright=(round(ax), round(ay)))
+            surface.blit(image, rect)
+            return
+        # Placeholder trail until the approved strip exists.
+        for index in range(3):
+            start = (
+                round(self.attacker.x + facing * (24 + index * 8)),
+                round(self.attacker.y - 158 + index * 6),
+            )
+            end = (
+                round(self.attacker.x + facing * (120 + index * 55)),
+                round(self.attacker.y - 158 + index * 14),
+            )
+            pygame.draw.line(
+                surface, (190, 120, 255), start, end, max(1, 4 - index)
+            )
+            pygame.draw.line(
+                surface, (235, 215, 255), start, end, 1
+            )
+
+
+class PhantomSharkFx(FxEffect):
+    """P3 影闪: the shark silhouette drawn over the charging body."""
+
+    kind = "phantom_shark"
+
+    def __init__(self, attacker, life: float = 0.40) -> None:
+        super().__init__(life, "phantom_shark")
+        self.attacker = attacker
+
+    def draw(self, surface: pygame.Surface) -> None:
+        facing = 1 if self.attacker.facing >= 0 else -1
+        frame = min(2, int(self.age / 0.104))
+        image = phantom_fx_image("phantom_shark", frame, 3, 320)
+        if image is not None:
+            if facing < 0:
+                image = pygame.transform.flip(image, True, False)
+            rect = image.get_rect(
+                midbottom=(
+                    round(self.attacker.x),
+                    round(self.attacker.y + 6.0),
+                )
+            )
+            surface.blit(image, rect)
+            return
+        # Placeholder: black snout + purple dorsal fin.
+        x = self.attacker.x
+        y = self.attacker.y
+        pygame.draw.polygon(
+            surface,
+            (26, 10, 42),
+            [
+                (round(x + facing * 100), round(y - 30)),
+                (round(x - facing * 90), round(y - 12)),
+                (round(x - facing * 70), round(y - 58)),
+                (round(x + facing * 40), round(y - 58)),
+            ],
+        )
+        pygame.draw.polygon(
+            surface,
+            (145, 75, 235),
+            [
+                (round(x - facing * 10), round(y - 52)),
+                (round(x - facing * 44), round(y - 100)),
+                (round(x + facing * 28), round(y - 58)),
+            ],
+        )
+        pygame.draw.circle(
+            surface, (215, 165, 255),
+            (round(x + facing * 62), round(y - 42)), 4,
+        )
+
+
+_PHANTOM_BIND_FRAME_DURATIONS = (0.07, 0.09, 0.11, 0.51, 0.13, 0.09)
+
+
+class PhantomBindWrapFx(FxEffect):
+    """P2 影缚: v2 front/back tendril wrap around the bound target."""
+
+    kind = "phantom_bind_wrap"
+    side = "front"
+    behind = False
+
+    def __init__(self, target, life: float = 1.0) -> None:
+        super().__init__(life, "phantom_bind_wrap")
+        self.target = target
+
+    def _frame_index(self) -> int:
+        elapsed = self.age
+        total = 0.0
+        for index, duration in enumerate(_PHANTOM_BIND_FRAME_DURATIONS):
+            total += duration
+            if elapsed < total:
+                return index
+        return len(_PHANTOM_BIND_FRAME_DURATIONS) - 1
+
+    def draw(self, surface: pygame.Surface) -> None:
+        target = self.target
+        if target is None or getattr(target, "hp", 0.0) <= 0.0:
+            return
+        image = phantom_fx_image(
+            f"phantom_bind_{self.side}", self._frame_index(), 6, 208
+        )
+        if image is not None:
+            surface.blit(
+                image,
+                (round(target.x - 104.0), round(target.y - 224.0)),
+            )
+            return
+        # Fallback when the approved wrap strip is missing.
+        progress = self.progress
+        alpha = max(0, round(220 * (1.0 - progress)))
+        pad = 80
+        layer = pygame.Surface((pad * 2, pad * 2), pygame.SRCALPHA)
+        center = pad
+        pygame.draw.circle(
+            layer, (150, 80, 235, alpha), (center, center), 34, 3
+        )
+        pygame.draw.circle(
+            layer, (215, 175, 255, alpha), (center, center), 24, 2
+        )
+        for index in range(5):
+            angle = index * math.tau / 5.0 + self.age * 2.2
+            px = center + math.cos(angle) * 44.0
+            py = center + math.sin(angle) * 24.0
+            pygame.draw.line(
+                layer, (190, 120, 255, alpha),
+                (center, center), (round(px), round(py)), 2,
+            )
+        surface.blit(
+            layer,
+            (round(target.x - center), round(target.y - 100.0 - center)),
+        )
+
+
+class PhantomBindFrontFx(PhantomBindWrapFx):
+    side = "front"
+    behind = False
+
+
+class PhantomBindBackFx(PhantomBindWrapFx):
+    side = "back"
+    behind = True

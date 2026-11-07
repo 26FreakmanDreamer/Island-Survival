@@ -1,0 +1,105 @@
+{
+  "character": "shadow_ninja_phantom",
+  "action": "shadow_phantom_bind",
+  "version": 2,
+  "review_status": "candidate",
+  "revision_of": "shadow_ninja_phantom_bind_v1_manifest.json",
+  "revision": "Black tendrils replace the preview impact ring, with rear and foreground passes around the target.",
+  "cast_and_projectile_source": "shadow_ninja_phantom_bind_v1_manifest.json",
+  "impact_fx": {
+    "id": "phantom_bind_wrap",
+    "canvas": [
+      208,
+      232
+    ],
+    "pivot": [
+      104,
+      224
+    ],
+    "anchor": "target_ground",
+    "duration_ms": 1000,
+    "loop": false,
+    "draw_order": [
+      "back",
+      "target",
+      "front"
+    ],
+    "frames": [
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_00.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_00.png",
+        "start_ms": 0,
+        "duration_ms": 70,
+        "phase": "Emerge at ankles"
+      },
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_01.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_01.png",
+        "start_ms": 70,
+        "duration_ms": 90,
+        "phase": "Wind around legs"
+      },
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_02.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_02.png",
+        "start_ms": 160,
+        "duration_ms": 110,
+        "phase": "Cinch at waist"
+      },
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_03.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_03.png",
+        "start_ms": 270,
+        "duration_ms": 510,
+        "phase": "Hold tight"
+      },
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_04.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_04.png",
+        "start_ms": 780,
+        "duration_ms": 130,
+        "phase": "Uncoil"
+      },
+      {
+        "front_file": "shadow_ninja_phantom_bind_v2_hit_front_05.png",
+        "back_file": "shadow_ninja_phantom_bind_v2_hit_back_05.png",
+        "start_ms": 910,
+        "duration_ms": 90,
+        "phase": "Sink into mist"
+      }
+    ],
+    "imagegen_sheet": "shadow_ninja_phantom_bind_v2_hit_source.png"
+  },
+  "preview": {
+    "file": "shadow_ninja_phantom_bind_v2_preview.gif",
+    "target_sprite": "assets/frames/lina/idle/idle_00.png",
+    "impact_ms": 520,
+    "target_bind_duration_ms": 1000,
+    "frame_durations_ms": [
+      460,
+      100,
+      100,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      30,
+      20,
+      70,
+      90,
+      110,
+      510,
+      130,
+      90,
+      300
+    ]
+  },
+  "contact_sheet": "shadow_ninja_phantom_bind_v2_hit_sheet.png"
+}

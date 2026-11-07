@@ -596,7 +596,7 @@ class Fighter:
         surface: pygame.Surface,
         tint: tuple[int, int, int] | None = None,
     ) -> None:
-        if self.anim is not None:
+        if self.anim is not None and not getattr(self, "phantom_hidden", False):
             flame = bool(getattr(self, "flame_time", 0.0) > 0.0)
             # In flame form, only dedicated flame art may be drawn. A normal
             # variant (e.g. an interrupted transform) draws its normal frames

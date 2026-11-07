@@ -530,5 +530,84 @@
       {"t": 0.06, "until": 0.45, "type": "dash", "speed": 1600},
       {"t": 0.06, "until": 0.45, "type": "hitbox", "box": [0, -80, 90, 80], "knockback": 120, "hit_fx": "shadow_dash_hit"}
     ]
+  },
+  "shadow_phantom_form": {
+    "basic_mult": 0.0,
+    "extra_mult": 0.0,
+    "duration": 1.36,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.0,
+    "hitstop": 0.0,
+    "events": []
+  },
+  "shadow_phantom_rend": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.45,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.18, "until": 0.36, "type": "hitbox", "box": [20, -195, 240, 55], "knockback": 80, "hit_fx": "shadow_phantom_rend_hit"}
+    ]
+  },
+  "shadow_phantom_bind": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.5,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.05,
+    "events": [
+      {
+        "t": 0.2,
+        "type": "projectile",
+        "id": "shadow_phantom_bind",
+        "projectile": "shadow_phantom_bind",
+        "lane": "low",
+        "speed": 900,
+        "range": 700,
+        "origin_forward": 30,
+        "hitbox_radius": 20,
+        "knockback": 0,
+        "status": "stun",
+        "status_duration": 1.0,
+        "penetrates_blocks": true
+      }
+    ]
+  },
+  "shadow_phantom_flash": {
+    "basic_mult": 0.8,
+    "extra_mult": 0.8,
+    "duration": 2.482,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "events": [
+      {"t": 0.68, "until": 0.76, "type": "hitbox", "box": [20, -195, 90, 55], "knockback": 40, "hit_group": "flash_hand", "hit_fx": "shadow_phantom_flash_hit"},
+      {
+        "t": 0.68,
+        "type": "projectile",
+        "id": "shadow_phantom_flash",
+        "projectile": "shadow_phantom_flash",
+        "lane": "high",
+        "speed": 900,
+        "range": 420,
+        "origin_forward": 30,
+        "hitbox_radius": 18,
+        "knockback": 60,
+        "penetrates_blocks": true
+      },
+      {"t": 1.96, "until": 2.272, "type": "dash", "speed": 1600},
+      {"t": 1.96, "until": 2.272, "type": "hitbox", "box": [-20, -85, 220, 85], "knockback": 120, "hit_group": "shark", "hit_fx": "shadow_phantom_shark_hit"}
+    ]
   }
 }

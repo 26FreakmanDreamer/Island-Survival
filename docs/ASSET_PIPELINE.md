@@ -24,14 +24,17 @@
   with the leap reticle in `assets/frames/mech_crab/fx/`; Rhea frames in
   `assets/frames/rhea/<action>/` with the six star strips in `assets/frames/rhea/fx/`;
   Shadow Ninja frames in `assets/frames/shadow_ninja/<action>/` with the two-frame kunai in
-  `assets/frames/shadow_ninja/fx/`.
+  `assets/frames/shadow_ninja/fx/`; phantom frames in `assets/frames/shadow_ninja/transform/` and
+  `assets/frames/shadow_ninja/phantom/<action>/` with the phantom FX in
+  `assets/frames/shadow_ninja/phantom/fx/`.
 - `game/data/animations.json` defines Lina's `clips`/`flame_clips`, Warrior's
   `warrior_clips`/`warrior_frame_size`/`warrior_pivot`, Bat's
   `bat_clips`/`bat_frame_size`/`bat_pivot`, Creepy Shooter's
   `creepy_shooter_clips`/`creepy_shooter_frame_size`/`creepy_shooter_pivot`,
   `mech_crab_clips`/`mech_crab_frame_size`/`mech_crab_pivot`, Rhea's
   `rhea_clips`/`rhea_frame_size`/`rhea_pivot`, and Shadow Ninja's
-  `shadow_ninja_clips`/`shadow_ninja_frame_size`/`shadow_ninja_pivot`.
+  `shadow_ninja_clips`/`shadow_ninja_phantom_clips` (`flame_clips`)/
+  `shadow_ninja_frame_size`/`shadow_ninja_pivot`.
 
 ## Frame inventory
 
@@ -51,12 +54,16 @@
 - Shadow Ninja (35): idle 4, walk 6, jump 2, crouch 1, hurt 2, KO 4, shadow_kunai_slash 5,
   shadow_kunai_throw 5, shadow_dash 5, stun 1; plus two 32x32 horizontal kunai FX
   (`shadow_kunai_00..01`).
+- Shadow Ninja phantom (62): transform 11, idle 4, walk 6, shadow_phantom_rend 5,
+  shadow_phantom_bind 5, phantom_vanish 5, phantom_appear 5, phantom_flash_attack 3,
+  phantom_pause 3, shark emerge/charge/recover 3+3+3, revert 6; plus 25 FX frames
+  (trail 3, tentacle 4, bind front/back 6+6, orb 3, shark 3).
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
   150px. Creepy Shooter: 384x384 RGBA, pivot (192,372), body 214 (roll imported at 0.9x).
   Mech-Crab: 640x640 RGBA, pivot (320,628), body 230 (front-facing, mirrored at runtime).
-  Rhea: 384x384 RGBA, pivot (192,372), body 214. Shadow Ninja: 384x384 RGBA, pivot (192,372),
-  body 214.
+  Rhea: 384x384 RGBA, pivot (192,372), body 214. Shadow Ninja + phantom: 384x384 RGBA, pivot
+  (192,372), body 214.
 - Durations are per action in `animations.json`; punch is 0.25s and kick is 0.4s per the spec.
 
 ## Normal frame generation
@@ -393,7 +400,7 @@ py tools/import_frames.py --action mech_laser --src <raw> --out assets/generated
   `Image/Enemy/shadow-ninja-256.png`. Runtime canvas 384x384, pivot (192,372), body 214; hurtbox
   56x210 standing / 56x130 crouching, `stage_body_width` 100. The normal form faces right; the
   kunai is held in the near/right hand and the far/left hand stays behind the hip. The phantom form
-  is not part of this asset set.
+  is a separate section below.
 - Frame inventory (35): idle 4, walk 6, jump 2, crouch 1, hurt 2, KO 4, `shadow_kunai_slash` 5,
   `shadow_kunai_throw` 5, `shadow_dash` 5, stun 1. Runtime folders:
   `assets/frames/shadow_ninja/idle/`, `walk/`, `jump/`, `crouch/`, `hurt/`, `ko/`,
@@ -430,6 +437,50 @@ py tools/import_frames.py --action idle --src <raw> --out assets/generated/stage
 - Approval gate: the base, each action contact sheet, the kunai FX and the in-game preview were
   reviewed. Keep the two-frame horizontal kunai, the throw frame-02 release (no kunai in the
   character frame), the closed-eye KO final frame and the fixed-scale walk/dash normalization.
+
+## Shadow Ninja phantom form (2026-11-07)
+
+- Approved bases (full right-facing side view, **not** 3/4):
+  - `assets/generated/base/shadow_ninja_phantom_side_base.png` — no-aura, fit 256 (from the 2048
+    candidate 2).
+  - `assets/generated/base/shadow_ninja_phantom_shadow_side_base.png` — shadow/aura variant, 256
+    aligned to the no-aura body.
+  - Runtime canvas 384×384, pivot (192,372), body 214; hurtbox 56×210 standing / 56×130 crouching,
+    `stage_body_width` 100. The phantom has no jump/crouch/hurt/KO/stun frames.
+- Frame inventory (62):
+  - `transform` 11 in `shadow_ninja_clips`:
+    `assets/frames/shadow_ninja/transform/transform_00..10.png`, 1.36s.
+  - `shadow_ninja_phantom_clips` (roster `flame_clips`): `idle` 4 (`phantom/idle/`), `walk` 6
+    (`phantom/walk/`), `shadow_phantom_rend` 5 (`phantom/shadow_phantom_rend/`),
+    `shadow_phantom_bind` 5 (`phantom/shadow_phantom_bind/`), `phantom_vanish` 5
+    (`phantom/vanish/`), `phantom_appear` 5 (`phantom/appear/`), `phantom_flash_attack` 3
+    (`phantom/flash_attack/`), `phantom_pause` 3 (`phantom/pause/`), `phantom_shark_emerge` /
+    `_charge` / `_recover` 3+3+3 (`phantom/shark/`), `revert` 6 (`phantom/revert/`).
+  - P3's `phantom_flash_attack` / `phantom_vanish` use the v2 strips; appear / pause / emerge /
+    charge / recover use v1.
+- FX inventory (25):
+  - `phantom/fx/phantom_rend_trail_00..02.png` — 3, 384×112, pivot (0,56), character offset
+    (30,-150), 0.18–0.36s (3×60ms), behind the character.
+  - `phantom/fx/phantom_bind_tentacle_00..03.png` — 4, 120×128, pivot (60,64), 50ms/frame, loop.
+  - `phantom/fx/phantom_bind_front_00..05.png` + `phantom_bind_back_00..05.png` — 6+6, 208×232,
+    pivot (104,224), 1s (70/90/110/510/130/90ms), draw order back → target → front.
+  - `phantom/fx/phantom_flash_orb_00..02.png` — 3, 56×56.
+  - `phantom/fx/phantom_shark_00..02.png` — 3, 320×104, ground offset 6.
+- Clip durations: transform 1.36s; rend 0.45s; bind 0.50s; vanish/appear 0.30s each; flash_attack
+  0.24s; pause 0.30s; emerge 0.21s; charge 0.312s; recover 0.21s; revert 0.60s.
+  `attacks.json shadow_phantom_form.duration` must match the transform (1.36).
+- Import pattern (future regeneration): the v2 frames were authored at 384×384 and installed
+  directly; for a raw 2048 sheet use the no-aura 2048 source as the base:
+```text
+py tools/import_frames.py --action <clip> --src <raw> --out assets/generated/staged/shadow_ninja/phantom/<clip> --base assets/generated/raw/shadow_ninja_phantom/phantom_side_base_v1/2026-11-07/image_to_image/phantom_side_base_v1_2_20261107_145954_406_c1c9d270.png --body-height 214 --canvas 384 --pivot-x 192 --pivot-y 372 --expect <n>
+```
+  Use `--anchor image-center` for the glide walk; use the feet anchor for idle/P1/P2/P3. Do not
+  shrink the character to fit the hair/mist; expand the canvas/whitespace or stop and ask.
+- Approval / verification: bases, idle/walk v2, transform v2, revert v2, P1 v2, P2 v1 cast + v2
+  wrap, P3 v1 + v2 attack/vanish. Contact sheets are in
+  `assets/generated/contact_sheets/shadow_ninja_phantom_*`, `shadow_ninja_transform/` and
+  `shadow_ninja_phantom_flash/`. Smoke: `shadow_ninja_phantom_missing_frames == 0`,
+  `shadow_ninja_phantom_fx_missing == 0`, `main.py --smoke-test` exit 0.
 
 ## Projectile / skill VFX (2026-10-24)
 

@@ -264,11 +264,24 @@
     "cooldowns": {
       "slash": 0.5,
       "throw": 5.0,
-      "dash": 8.0
+      "dash": 8.0,
+      "phantom_form": 15.0
     },
     "hurtbox": {
       "standing": [56, 210],
       "crouching": [56, 130]
+    },
+    "phantom": {
+      "damage_threshold_pct": 0.25,
+      "claw_range": 260.0,
+      "bind_range": 700.0,
+      "flash_range": 700.0,
+      "behind_offset": 90.0,
+      "appear_min_wall_margin": 40.0,
+      "shadow_max_range": 420.0,
+      "shadow_speed": 900.0,
+      "shark_charge_distance": 500.0,
+      "shark_charge_speed": 1600.0
     },
     "ai": {
       "close_range": 170.0,

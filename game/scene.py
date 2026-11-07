@@ -14,6 +14,8 @@ from .fighter import Fighter, FighterState
 from .fx import (
     BiteArcFx,
     FxEffect,
+    PhantomBindBackFx,
+    PhantomBindFrontFx,
     PoisonSplashFx,
     Q_WAVE_DRAW_OFFSET_Y,
     RingBurstFx,
@@ -30,6 +32,8 @@ from .projectile import (
     CreepyDownBullet,
     CreepyHomingBullet,
     QWave,
+    ShadowBindProjectile,
+    ShadowFlashProjectile,
     ShadowKunaiProjectile,
     ShurikenProjectile,
     SonicWave,
@@ -362,7 +366,13 @@ class ArenaScene:
     def targets_for(self, attacker) -> list:
         """Living targets for a melee hitbox or projectile."""
         if attacker is self.player:
-            return [enemy for enemy in self.enemies if enemy.hp > 0.0]
+            # The phantom form has no combat hitbox: player attacks and
+            # projectiles pass through instead of being consumed.
+            return [
+                enemy
+                for enemy in self.enemies
+                if enemy.hp > 0.0 and not getattr(enemy, "phantom_form", False)
+            ]
         if attacker in self.enemies:
             return [self.player] if self.player.hp > 0.0 else []
         return []
@@ -670,6 +680,29 @@ class ArenaScene:
                 x + ux * 8.0, y + uy * 8.0, (205, 150, 255), 4,
                 speed=140.0, life=(0.08, 0.16),
             )
+        elif visual_kind == "shadow_phantom_bind":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (150, 80, 235), life=0.14,
+                    start_radius=6.0, end_radius=26.0, width=2,
+                    sparks=4, spark_color=(235, 215, 255),
+                    kind="shadow_phantom_bind_cast",
+                )
+            )
+            self.particles.emit_mist(x, y, color=(120, 70, 200), count=4)
+        elif visual_kind == "shadow_phantom_flash":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (190, 120, 255), life=0.12,
+                    start_radius=5.0, end_radius=22.0, width=2,
+                    sparks=4, spark_color=(240, 220, 255),
+                    kind="shadow_phantom_flash_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (215, 170, 255), 4,
+                speed=140.0, life=(0.08, 0.16),
+            )
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
                 RingBurstFx(
@@ -805,6 +838,28 @@ class ArenaScene:
                 )
             )
             self.particles.emit_burst(x, y, (205, 150, 255), 8, speed=180.0)
+        elif visual_kind == "shadow_phantom_bind":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (150, 80, 235), life=0.20,
+                    start_radius=8.0, end_radius=38.0, width=3,
+                    sparks=5, spark_color=(235, 215, 255),
+                    kind="shadow_phantom_bind_impact",
+                )
+            )
+            self.fx_effects.append(PhantomBindBackFx(target, life=1.0))
+            self.fx_effects.append(PhantomBindFrontFx(target, life=1.0))
+            self.particles.emit_burst(x, y, (175, 110, 255), 8, speed=170.0)
+        elif visual_kind == "shadow_phantom_flash":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (200, 140, 255), life=0.18,
+                    start_radius=8.0, end_radius=40.0, width=3,
+                    sparks=6, spark_color=(245, 225, 255),
+                    kind="shadow_phantom_flash_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (210, 160, 255), 9, speed=190.0)
         elif visual_kind == "bat_sonic":
             self.fx_effects.append(
                 RingBurstFx(
@@ -892,6 +947,48 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (195, 125, 255), 8, speed=190.0,
                 life=(0.10, 0.22), gravity=180.0,
+            )
+        elif kind == "shadow_phantom_rend_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (180, 100, 255), life=0.18,
+                    start_radius=8.0, end_radius=46.0, width=4,
+                    sparks=6, spark_color=(240, 220, 255),
+                    kind="shadow_phantom_rend_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (200, 130, 255), 8, speed=190.0,
+                life=(0.10, 0.22), gravity=140.0,
+            )
+        elif kind == "shadow_phantom_flash_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (205, 145, 255), life=0.16,
+                    start_radius=6.0, end_radius=34.0, width=3,
+                    sparks=5, spark_color=(245, 225, 255),
+                    kind="shadow_phantom_flash_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (215, 165, 255), 7, speed=170.0,
+                life=(0.08, 0.18), gravity=120.0,
+            )
+        elif kind == "shadow_phantom_shark_hit":
+            y = float(target.y) - 40.0
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (150, 70, 240), life=0.22,
+                    start_radius=12.0, end_radius=64.0, width=5,
+                    sparks=8, spark_color=(235, 210, 255),
+                    kind="shadow_phantom_shark_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (180, 100, 255), 10, speed=220.0,
+                life=(0.10, 0.24), gravity=240.0,
             )
         elif kind == "mech_laser_hit":
             y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
@@ -1092,6 +1189,48 @@ class ArenaScene:
                 penetrates_blocks=bool(event.get("penetrates_blocks", False)),
             )
             projectile.scene = self
+        elif projectile_kind == "shadow_phantom_bind":
+            projectile = ShadowBindProjectile(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 30.0)),
+                y=lane_y,
+                direction=direction,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 700.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(event.get("hitbox_radius", 20.0)),
+                status=event.get("status"),
+                status_duration=float(event.get("status_duration", 0.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", True)),
+            )
+        elif projectile_kind == "shadow_phantom_flash":
+            projectile = ShadowFlashProjectile(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 30.0)),
+                y=lane_y,
+                direction=direction,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 420.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(event.get("hitbox_radius", 18.0)),
+                penetrates_blocks=bool(event.get("penetrates_blocks", True)),
+            )
         elif projectile_kind == "sonic_wave":
             origin_height = float(event.get("origin_height", 30.0))
             origin_forward = float(event.get("origin_forward", 46.0))
@@ -1446,6 +1585,9 @@ class ArenaScene:
     def draw(self, surface: pygame.Surface) -> None:
         self.stage.draw(surface)
         self._draw_knock_up_effects(surface)
+        for effect in self.fx_effects:
+            if getattr(effect, "behind", False):
+                effect.draw(surface)
         for enemy in self.enemies:
             enemy.draw(surface, tint=self._poison_tint(enemy))
             self._draw_status_fx(surface, enemy)
@@ -1460,7 +1602,8 @@ class ArenaScene:
         for effect in self.slash_effects:
             effect.draw(surface)
         for effect in self.fx_effects:
-            effect.draw(surface)
+            if not getattr(effect, "behind", False):
+                effect.draw(surface)
         self._draw_status_fx(surface, self.player)
         self._draw_mark_fx(surface)
         self._draw_shadow_mark_fx(surface)

@@ -596,6 +596,73 @@
       "loop": false,
       "frames": ["stun/stun_00.png"],
       "durations": [0.50]
+    },
+    "transform": {
+      "loop": false,
+      "frames": ["transform/transform_00.png", "transform/transform_01.png", "transform/transform_02.png", "transform/transform_03.png", "transform/transform_04.png", "transform/transform_05.png", "transform/transform_06.png", "transform/transform_07.png", "transform/transform_08.png", "transform/transform_09.png", "transform/transform_10.png"],
+      "durations": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.10, 0.50, 0.10, 0.10]
+    }
+  },
+  "shadow_ninja_phantom_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["phantom/idle/idle_00.png", "phantom/idle/idle_01.png", "phantom/idle/idle_02.png", "phantom/idle/idle_03.png"],
+      "durations": [0.30, 0.30, 0.30, 0.30]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["phantom/walk/walk_00.png", "phantom/walk/walk_01.png", "phantom/walk/walk_02.png", "phantom/walk/walk_03.png", "phantom/walk/walk_04.png", "phantom/walk/walk_05.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+    },
+    "shadow_phantom_rend": {
+      "loop": false,
+      "frames": ["phantom/shadow_phantom_rend/shadow_phantom_rend_00.png", "phantom/shadow_phantom_rend/shadow_phantom_rend_01.png", "phantom/shadow_phantom_rend/shadow_phantom_rend_02.png", "phantom/shadow_phantom_rend/shadow_phantom_rend_03.png", "phantom/shadow_phantom_rend/shadow_phantom_rend_04.png"],
+      "durations": [0.09, 0.09, 0.09, 0.09, 0.09]
+    },
+    "shadow_phantom_bind": {
+      "loop": false,
+      "frames": ["phantom/shadow_phantom_bind/shadow_phantom_bind_00.png", "phantom/shadow_phantom_bind/shadow_phantom_bind_01.png", "phantom/shadow_phantom_bind/shadow_phantom_bind_02.png", "phantom/shadow_phantom_bind/shadow_phantom_bind_03.png", "phantom/shadow_phantom_bind/shadow_phantom_bind_04.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10]
+    },
+    "phantom_vanish": {
+      "loop": false,
+      "frames": ["phantom/vanish/vanish_00.png", "phantom/vanish/vanish_01.png", "phantom/vanish/vanish_02.png", "phantom/vanish/vanish_03.png", "phantom/vanish/vanish_04.png"],
+      "durations": [0.06, 0.06, 0.06, 0.06, 0.06]
+    },
+    "phantom_appear": {
+      "loop": false,
+      "frames": ["phantom/appear/appear_00.png", "phantom/appear/appear_01.png", "phantom/appear/appear_02.png", "phantom/appear/appear_03.png", "phantom/appear/appear_04.png"],
+      "durations": [0.06, 0.06, 0.06, 0.06, 0.06]
+    },
+    "phantom_flash_attack": {
+      "loop": false,
+      "frames": ["phantom/flash_attack/flash_attack_00.png", "phantom/flash_attack/flash_attack_01.png", "phantom/flash_attack/flash_attack_02.png"],
+      "durations": [0.08, 0.08, 0.08]
+    },
+    "phantom_pause": {
+      "loop": false,
+      "frames": ["phantom/pause/pause_00.png", "phantom/pause/pause_01.png", "phantom/pause/pause_02.png"],
+      "durations": [0.10, 0.10, 0.10]
+    },
+    "phantom_shark_emerge": {
+      "loop": false,
+      "frames": ["phantom/shark/emerge_00.png", "phantom/shark/emerge_01.png", "phantom/shark/emerge_02.png"],
+      "durations": [0.07, 0.07, 0.07]
+    },
+    "phantom_shark_charge": {
+      "loop": false,
+      "frames": ["phantom/shark/charge_00.png", "phantom/shark/charge_01.png", "phantom/shark/charge_02.png"],
+      "durations": [0.104, 0.104, 0.104]
+    },
+    "phantom_shark_recover": {
+      "loop": false,
+      "frames": ["phantom/shark/recover_00.png", "phantom/shark/recover_01.png", "phantom/shark/recover_02.png"],
+      "durations": [0.07, 0.07, 0.07]
+    },
+    "revert": {
+      "loop": false,
+      "frames": ["phantom/revert/revert_00.png", "phantom/revert/revert_01.png", "phantom/revert/revert_02.png", "phantom/revert/revert_03.png", "phantom/revert/revert_04.png", "phantom/revert/revert_05.png"],
+      "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
     }
   }
 }
