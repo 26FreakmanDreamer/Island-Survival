@@ -34,6 +34,18 @@
       "pivot": "rhea_pivot",
       "frames_dir": "rhea",
       "fallback": "Image/Character/rhea-thorn-256.png"
+    },
+    "eira": {
+      "name": "Eira Frostveil",
+      "class": "eira",
+      "stats": "eira",
+      "spawn": "player_spawn",
+      "clips": "eira_clips",
+      "frame_offsets": "eira_offsets",
+      "frame_size": "eira_frame_size",
+      "pivot": "eira_pivot",
+      "frames_dir": "eira",
+      "fallback": "Image/Character/eira-frostveil-256.png"
     }
   },
   "enemies": {
@@ -134,6 +146,21 @@
       "frames_dir": "shadow_ninja",
       "fallback": "Image/Enemy/shadow-ninja-256.png",
       "skill_slots": ["shadow_kunai_slash", "shadow_kunai_throw", "shadow_dash", "shadow_phantom_form"],
+      "separates": true,
+      "decides_match": true
+    },
+    "crooked_witch": {
+      "name": "Crooked Witch",
+      "class": "crooked_witch",
+      "stats": "crooked_witch",
+      "spawn": "crooked_witch_spawn",
+      "stage_variant": "crooked_witch",
+      "clips": "crooked_witch_clips",
+      "frame_size": "crooked_witch_frame_size",
+      "pivot": "crooked_witch_pivot",
+      "frames_dir": "crooked_witch",
+      "fallback": "Image/Enemy/crooked-witch-256.png",
+      "skill_slots": ["witch_lightning", "witch_ice_spike", "witch_potion", "witch_fire_rain"],
       "separates": true,
       "decides_match": true
     },

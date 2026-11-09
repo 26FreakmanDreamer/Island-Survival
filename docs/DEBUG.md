@@ -67,6 +67,21 @@ Phase I switches to the phantom form and checks slot 4 `shadow_phantom_form`, th
 11-frame/1.36s transform with frame-0 invincibility and self-clear, no-hitbox pass-through, P1/P2/P3,
 one-use flags, auto-revert (6 frames/0.60s), the 15s cooldown after revert, the AI trigger/order,
 reset, and `shadow_ninja_phantom_missing_frames` / `shadow_ninja_phantom_fx_missing`.
+The Crooked Witch phase checks the F7 caster on its no-barrier platform variant (spawn 965,220;
+four teleport points), HP 400 / ATK 30 and the four slots: the 8s teleport (damage priority, 8s
+no-damage auto-teleport, nearest-point exclusion, invincible/no-hitbox/hidden), the one-time <50%
+heal (5×24, return to the trigger position), lightning 36 + 20% vulnerable ×3 (damage first), the
+1s ice-spike warning (30 + 1.5s freeze, dodgeable), the potion's direct 24 + 3%/s poison + 30% slow
+versus its 6s miss zone (2%/s + 20% slow, independent source), fire rain (15s cooldown starting
+after the skill, 10×0.8s x-locked vertical fireballs, 36 + burn, no first-skill use), the ground
+1>2>3>4 / platform 3>1>2>4 AI priority, reset and `crooked_witch_missing_frames` /
+`crooked_witch_fx_missing`.
+The Eira phase checks the fourth playable character (15 clips / 48 frames, roster order, Lina still
+the startup default): LMB 20 + 20 freeze and crouch dodge, RMB 20 + 20 with one hitbox,
+Q 24/44 with pierce and +30 freeze, the E state machine (12s normal / 6s cancel cooldown, 0.40s
+raise, targeting prompt, 0.08s spawn, ~1s fall, multi-target 30/54, super armor, KO end, 3s ground
+FX), freeze threshold/clear/no-gain-while-frozen/equal slow/independent targets, climb, reset and
+`eira_missing_frames` / `eira_fx_missing`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the early midpoint mount
@@ -100,7 +115,7 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   magenta with green/red top/bottom lines. The green box is the combat hurtbox; grounded stage
   movement uses a wider invisible body (`stage_body_width`), so Lina stops with her boots short of
   a barrier/platform before the green box touches it. Climb sprites are draw-scaled around the
-  feet pivot (Lina 1.2×, Nyra 1.1×, Rhea 1.1×); the F1 boxes and combat hurtboxes are not scaled,
+  feet pivot (Lina 1.2×, Nyra 1.1×, Rhea 1.1×, Eira 1.15×); the F1 boxes and combat hurtboxes are not scaled,
   so the climb sprite intentionally looks larger than the green box.
 - **F2 panel**: FPS/tick/sim time, current character/enemy ids and roster positions, result, block
   counts (`BARRIERS n PLATFORMS n LADDERS n`), `CLIMB up/down/idle`, and lock-on state, Lina
@@ -112,6 +127,9 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   For Nyra the panel shows `Q ... E ...` without an energy line and adds the primary enemy's
   `MARKS n/3 BURST ... LAST ...` plus Nyra's total `BURSTS`. For Rhea it shows `CHAR rhea 3/3`,
   Q/E cooldowns and the target's `poison[rhea_poison]` line without an energy or passive gauge.
+  For Eira it shows `EIRA E <raise/hold/release/recover> TARGET ON/OFF X <selected x> FREEZE
+  <n>/100` plus the Q/E cooldowns; the hold phase draws the `Click the left mouse to choose an
+  area.` prompt and the vertical mouse guide.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
   (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
 `creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns;
@@ -120,10 +138,12 @@ Shadow Ninja they show `shadow_kunai_slash`, `shadow_kunai_throw`, `shadow_dash`
 `shadow_phantom_form`; during the phantom form the panel adds `PHANTOM n/3 P1/P2/P3 READY/USED`,
 `PHANTOM FLASH <phase>`, `PHANTOM TRANSFORM`/`PHANTOM REVERT` and, after revert, `PHANTOM CD
 15.0s`, while S1–S3 keep the normal cooldowns. The panel also adds `SHADOW MARKS n/3 BURST ...
-LAST ...` for the player-side marks. Both lock reticles are
-draw-only. Poison and stun appear in the status list. The three mark pips above each living enemy,
-the three purple pips above the player during a Shadow Ninja fight, the green poison pulse and the
-stun stars are draw-only.
+LAST ...` for the player-side marks. For the Crooked Witch the panel adds `WITCH PHASE <phase>`,
+`HEAL READY/USED`, `TP <cooldown>s`, `WITCH CD L/I/P/F`, `WITCH NO HITBOX/HIDDEN/INVINCIBLE` flags
+and `WITCH VULN <percent>`; F1 also draws the four teleport points. Both lock reticles are
+draw-only. Poison, vulnerable and stun appear in the status list. The three mark pips above each
+living enemy, the three purple pips above the player during a Shadow Ninja fight, the green poison
+pulse and the stun stars are draw-only.
 
 ## Simulation controls
 
@@ -139,8 +159,8 @@ stun stars are draw-only.
 
 | Key | Action |
 |---|---|
-| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → Mech-Crab → Shadow Ninja → training Dummy → …) |
-| [ / ] | Cycle the playable character roster (Lina ↔ Nyra ↔ Rhea) |
+| F7 | Cycle the enemy roster (Warrior → Veno-Spider ×3 → Bat ×5 → Creepy Shooter → Mech-Crab → Shadow Ninja → Crooked Witch → training Dummy → …) |
+| [ / ] | Cycle the playable character roster (Lina ↔ Nyra ↔ Rhea ↔ Eira) |
 | F8 | Toggle enemy AI when present, otherwise invincibility |
 | F9 | Full scene reset |
 | F10 | Fill energy and force the flame transform |
@@ -270,7 +290,7 @@ stun stars are draw-only.
     `mech_crab_*` plus `mech_crab_fx_missing == 0`.
 12b. Shadow Ninja checks: F7 selects it after Mech-Crab (the startup default remains Creepy
     Shooter) on the flat variant (no blocks/ladders, spawn 1000,620). HP/ATK follow the current
-    character and walk is 1.5×; switching Lina/Nyra/Rhea or F9 keeps them in sync. V/C/X/Z are
+    character and walk is 1.5×; switching Lina/Nyra/Rhea/Eira or F9 keeps them in sync. V/C/X/Z are
     slash/throw/dash/transform in normal form; Z transforms, and in phantom V/C/X map to
     影爪/影缚/影闪 while Z is a no-op. F1 shows the 56×210 standing / 56×130 crouching hurtbox,
     the high slash box, the low dash box and the low lane; while `phantom_form` it hides the enemy
@@ -294,13 +314,28 @@ stun stars are draw-only.
     P2→P3→P1 far; there is no forced revert. F9/F7/reset clears the form. Smoke flags:
     `shadow_ninja_phantom_*`, `shadow_ninja_phantom_missing_frames == 0`,
     `shadow_ninja_phantom_fx_missing == 0`.
+12d. Crooked Witch checks: F7 selects it after Shadow Ninja (the startup default remains Creepy
+    Shooter) on the no-barrier platform variant (spawn 965,220; platforms 158–472 and 808–1122 at
+    220; ladders 420–484 and 796–860). F1 draws the four teleport points; F2 shows `WITCH PHASE`,
+    `HEAL READY/USED`, `TP`, the L/I/P/F cooldowns, the no-hitbox/hidden/invincible flags and
+    `WITCH VULN`. Teleport triggers on damage (and after 8s without damage), excludes the nearest
+    and current points, and is untargetable during the 0.3s out/in. Heal forces once below 50%:
+    5×24 HP, untargetable, flies to center and back; while her hands are open the independent
+    staff appears on the facing side, and the fly frames keep only her own staff. Lightning resolves
+    damage before adding 20% vulnerable (three stacks, 3s). The ice-spike warning ring and the
+    erupted spike sit at the target's feet; walking out during the 1s warning dodges it. The potion
+    hit applies poison/slow; a miss leaves a grounded 6s pool. Fire rain cannot be the first
+    numbered skill; its 15s cooldown starts only after the return flight, the hold pose stays on
+    the raised frame, and the summon pillar is staff-width. Walking between AI decisions stays on
+    the 4-frame 0.12s walk cycle without flickering to idle. Smoke flags: `crooked_witch_*`,
+    `crooked_witch_missing_frames == 0`, `crooked_witch_fx_missing == 0`.
 13. Scene/props: F1 shows barrier (yellow), platform (cyan) and ladder (magenta) boxes; ladder
     triggers have green/red top/bottom lines. Hold W near a ladder to climb, S to descend, Space to
     jump off; Shift never climbs down. The climb clip is a direct back view: frame 0 has the left
     hand/right leg high, frame 1 the right hand/left leg high; moving loops it, stopping holds the
-    frame, and it is not horizontally flipped. Lina normal, Lina flame, Nyra and Rhea each have
-    their own clip; Nyra's sword stays sheathed diagonally on her back and Rhea's two shuriken stay
-    stowed on her back band. Platform tops/sides/undersides are solid; walking off an outer edge
+    frame, and it is not horizontally flipped. Lina normal, Lina flame, Nyra, Rhea and Eira each
+    have their own clip; Nyra's sword stays sheathed diagonally on her back and Rhea's two shuriken
+    stay stowed on her back band. Platform tops/sides/undersides are solid; walking off an outer edge
     falls (no fall damage). A climb with a top platform mounts early at the platform midpoint minus
     6px (default long platform: last climb y≈255 → snap y=220). A hit while climbing clears the
     climb and applies knockback; if the feet are inside a platform it snaps to the platform top,

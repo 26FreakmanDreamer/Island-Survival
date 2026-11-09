@@ -1,0 +1,277 @@
+{
+  "character": "Eira Frostveil",
+  "animation": "e",
+  "version": 2,
+  "purpose": "art review",
+  "direction": "right",
+  "reference": "../../base/eira_side_base.png",
+  "character_art": "ChatGPT ImageGen",
+  "canvas_px": [
+    627,
+    627
+  ],
+  "pivot_px": [
+    323,
+    574
+  ],
+  "hold_start_uses_final_raise_cel": true,
+  "segments": {
+    "e_raise": {
+      "duration_ms": 400,
+      "loop": false,
+      "frames": [
+        {
+          "file": "../eira_e_raise/eira_e_raise_v1_00.png",
+          "pose": "draw back",
+          "start_ms": 0,
+          "duration_ms": 120,
+          "crystal_px": [
+            360,
+            305
+          ]
+        },
+        {
+          "file": "../eira_e_raise/eira_e_raise_v1_01.png",
+          "pose": "lift past shoulder",
+          "start_ms": 120,
+          "duration_ms": 140,
+          "crystal_px": [
+            363,
+            274
+          ]
+        },
+        {
+          "file": "../eira_e_raise/eira_e_raise_v1_02.png",
+          "pose": "raise high",
+          "start_ms": 260,
+          "duration_ms": 140,
+          "crystal_px": [
+            371,
+            235
+          ]
+        }
+      ]
+    },
+    "e_hold": {
+      "duration_ms": 360,
+      "loop": true,
+      "frames": [
+        {
+          "file": "../eira_e_hold/eira_e_hold_v1_00.png",
+          "pose": "hold high",
+          "start_ms": 0,
+          "duration_ms": 180,
+          "crystal_px": [
+            371,
+            235
+          ]
+        },
+        {
+          "file": "../eira_e_hold/eira_e_hold_v1_01.png",
+          "pose": "breathing motion",
+          "start_ms": 180,
+          "duration_ms": 180,
+          "crystal_px": [
+            358,
+            232
+          ]
+        }
+      ]
+    },
+    "e_release": {
+      "duration_ms": 300,
+      "loop": false,
+      "frames": [
+        {
+          "file": "eira_e_release_v1_00.png",
+          "pose": "wind up high",
+          "start_ms": 0,
+          "duration_ms": 80,
+          "crystal_px": [
+            375,
+            241
+          ]
+        },
+        {
+          "file": "eira_e_release_v1_01.png",
+          "pose": "press wrist and spawn ball",
+          "start_ms": 80,
+          "duration_ms": 100,
+          "crystal_px": [
+            427,
+            288
+          ]
+        },
+        {
+          "file": "eira_e_release_v1_02.png",
+          "pose": "start withdrawal",
+          "start_ms": 180,
+          "duration_ms": 120,
+          "crystal_px": [
+            390,
+            268
+          ]
+        }
+      ]
+    },
+    "e_recover": {
+      "duration_ms": 300,
+      "loop": false,
+      "frames": [
+        {
+          "file": "../eira_e_recover/eira_e_recover_v1_00.png",
+          "pose": "lower the staff",
+          "start_ms": 0,
+          "duration_ms": 120,
+          "crystal_px": [
+            367,
+            272
+          ]
+        },
+        {
+          "file": "../eira_e_recover/eira_e_recover_v1_01.png",
+          "pose": "settle to idle",
+          "start_ms": 120,
+          "duration_ms": 180,
+          "crystal_px": [
+            363,
+            295
+          ]
+        }
+      ]
+    }
+  },
+  "targeting": {
+    "prompt": "Click the left mouse to choose an area.",
+    "input": "left mouse",
+    "axis": "world x"
+  },
+  "release": {
+    "spawn_frame": 1,
+    "spawn_delay_after_selection_ms": 80,
+    "caster_recovery_after_selection_ms": 600,
+    "drop_duration_ms": 1000,
+    "motion": "vertical at selected x"
+  },
+  "effects": {
+    "charge": {
+      "files": [
+        "eira_e_release_v1_fx_charge_00.png",
+        "eira_e_release_v1_fx_charge_01.png",
+        "eira_e_release_v1_fx_charge_02.png"
+      ],
+      "pivot_px": [
+        96,
+        128
+      ],
+      "frame_durations_ms": [
+        90,
+        90,
+        100
+      ]
+    },
+    "ball": {
+      "file": "eira_e_release_v2_fx_ball.png",
+      "pivot_px": [
+        256,
+        256
+      ],
+      "art_radius_px": 219
+    },
+    "fall_trail": {
+      "file": "eira_e_release_v1_fx_fall_trail.png",
+      "pivot_px": [
+        160,
+        302
+      ]
+    },
+    "hit": {
+      "files": [
+        "eira_e_release_v1_fx_hit_00.png",
+        "eira_e_release_v1_fx_hit_01.png",
+        "eira_e_release_v1_fx_hit_02.png"
+      ],
+      "pivot_px": [
+        128,
+        112
+      ],
+      "frame_durations_ms": [
+        50,
+        70,
+        100
+      ]
+    },
+    "frozen_hit": {
+      "files": [
+        "eira_e_release_v1_fx_frozen_hit_00.png",
+        "eira_e_release_v1_fx_frozen_hit_01.png",
+        "eira_e_release_v1_fx_frozen_hit_02.png"
+      ],
+      "pivot_px": [
+        144,
+        128
+      ],
+      "frame_durations_ms": [
+        50,
+        70,
+        100
+      ]
+    },
+    "ground": {
+      "files": [
+        "eira_e_release_v1_fx_ground_00.png",
+        "eira_e_release_v1_fx_ground_01.png",
+        "eira_e_release_v1_fx_ground_02.png",
+        "eira_e_release_v1_fx_ground_03.png"
+      ],
+      "pivot_px": [
+        288,
+        246
+      ],
+      "frame_durations_ms": [
+        50,
+        70,
+        90,
+        120
+      ]
+    },
+    "fragment": {
+      "files": [
+        "eira_e_release_v1_fx_fragment_00.png",
+        "eira_e_release_v1_fx_fragment_01.png",
+        "eira_e_release_v1_fx_fragment_02.png"
+      ],
+      "pivot_px": [
+        26,
+        26
+      ],
+      "lifetime_ms": 3000
+    },
+    "ground_breakup": {
+      "crack_duration_ms": 60,
+      "settles_after_ground_ms": 740,
+      "lifetime_after_ground_ms": 3000,
+      "piece_order": [
+        "upper left",
+        "upper right",
+        "lower left",
+        "lower right"
+      ],
+      "files": [
+        "eira_e_release_v2_fx_chunk_00.png",
+        "eira_e_release_v2_fx_chunk_01.png",
+        "eira_e_release_v2_fx_chunk_02.png",
+        "eira_e_release_v2_fx_chunk_03.png"
+      ],
+      "pivot_px": [
+        208,
+        176
+      ]
+    }
+  },
+  "contact_sheet": "eira_e_release_v1_sheet.png",
+  "effects_sheet": "eira_e_release_v2_fx_sheet.png",
+  "preview": "eira_e_release_v2_preview.gif",
+  "based_on": "eira_e_release_v1_manifest.json",
+  "ice_ball_art": "ChatGPT ImageGen"
+}

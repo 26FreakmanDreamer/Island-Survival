@@ -8,7 +8,7 @@ CONTROL_EFFECTS = ("knockback", "knock_up", "freeze", "stun")
 IMMUNE_EFFECTS = CONTROL_EFFECTS + ("slow",)
 ALL_EFFECTS = (
     "knockback", "burn", "poison", "slow", "knock_up",
-    "freeze", "stun", "super_armor", "damage_reduction",
+    "freeze", "stun", "super_armor", "damage_reduction", "vulnerable",
 )
 TICK = 0.2
 POISON_TICK = 0.5
@@ -69,6 +69,59 @@ class StatusSet:
                 return True
         return False
 
+    def refresh_poison(self, source: str, duration: float, dps: float) -> bool:
+        """Reset an existing poison's timer without extending it.
+
+        Used by the Witch's poison zone: standing inside refreshes the
+        remaining duration instead of stacking a second instance.
+        """
+        for poison in self.poisons:
+            if poison.source == source:
+                poison.remaining = duration
+                poison.dps = dps
+                return True
+        return False
+
+    def add_vulnerable(
+        self,
+        step: float,
+        duration: float,
+        max_stacks: int = 3,
+        source: str | None = None,
+    ) -> None:
+        """Add one vulnerability stack, capped, and refresh all stacks."""
+        if step <= 0.0 or max_stacks <= 0:
+            return
+        current = self.effects.get("vulnerable")
+        stacks = 0
+        if current is not None and step > 0.0:
+            stacks = int(round(current.value / step))
+        stacks = min(max_stacks, stacks + 1)
+        self.effects["vulnerable"] = Effect(
+            duration, source, step * stacks, total=duration
+        )
+
+    def add_slow(
+        self,
+        value: float,
+        duration: float,
+        source: str | None = None,
+    ) -> None:
+        """Apply a slow multiplier, keeping the strongest one and refreshing."""
+        if value >= 1.0:
+            return
+        if self.has("super_armor"):
+            return
+        current = self.effects.get("slow")
+        if current is None or value < current.value:
+            self.effects["slow"] = Effect(
+                duration, source, value, total=duration
+            )
+        else:
+            current.remaining = duration
+            current.total = duration
+            current.source = source
+
     def has(self, kind: str) -> bool:
         if kind == "poison":
             return bool(self.poisons)
@@ -128,6 +181,10 @@ class StatusSet:
         effect = self.effects.get("damage_reduction")
         return effect.value if effect is not None else 0.0
 
+    def vulnerable_amount(self) -> float:
+        effect = self.effects.get("vulnerable")
+        return effect.value if effect is not None else 0.0
+
     def slow_factor(self) -> float:
         if self.has("super_armor"):
             return 1.0
@@ -137,7 +194,12 @@ class StatusSet:
     def describe(self) -> list[str]:
         lines: list[str] = []
         for kind, effect in sorted(self.effects.items()):
-            suffix = f" ({effect.value:.0%})" if kind == "damage_reduction" else ""
+            if kind in ("damage_reduction", "vulnerable"):
+                suffix = f" ({effect.value:.0%})"
+            elif kind == "slow":
+                suffix = f" ({1.0 - effect.value:.0%} slow)"
+            else:
+                suffix = ""
             lines.append(f"{kind}: {effect.remaining:.2f}s{suffix}")
         for poison in self.poisons:
             lines.append(f"poison[{poison.source}]: {poison.remaining:.2f}s")

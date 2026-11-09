@@ -1,0 +1,85 @@
+{
+  "title": "Crooked Witch WALK v4 | left step redrawn",
+  "columns": 3,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v1_00.png",
+        "label": "00  Right heel strike",
+        "duration": "0.16"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v1_01.png",
+        "label": "01  Right support",
+        "duration": "0.16"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v1_02.png",
+        "label": "02  Left leg swings forward",
+        "duration": "0.16"
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v4_03.png",
+        "label": "03  Left heel strike",
+        "duration": "0.16"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v4_04.png",
+        "label": "04  Left foot takes weight",
+        "duration": "0.16"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v4_05.png",
+        "label": "05  Left support / right leg recovers",
+        "duration": "0.16"
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v4",
+  "tool": "built-in image_gen",
+  "status": "pending_user_review",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "visual_ground_y": 1186,
+  "frame_durations_ms": [
+    160,
+    160,
+    160,
+    160,
+    160,
+    160
+  ],
+  "loop": true,
+  "alignment_translation_px": {
+    "03": [
+      0,
+      20
+    ],
+    "04": [
+      0,
+      13
+    ],
+    "05": [
+      0,
+      13
+    ]
+  },
+  "reference": "assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png",
+  "palette_and_edit_reference": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v1_00.png",
+  "prompt_prefix": "Edit IMAGE 1, the ORIGINAL RIGHT-STEP WALK FRAME 00, into a single new frame of the same game sprite. IMAGE 2 is the approved primary identity/reference design. Use image 1 as the actual edit canvas, exact pixel-art palette and fixed apparent scale. Strictly preserve image 1's pixel edges, linework, light, and exact colors (deep plum outer gown and hat, pale warm gold embroidery, ivory-rose ruffles, lilac silver hair, rich brown leather, bronze staff, strong violet gems). Keep its upper section above the hips as literally identical as possible, especially hat tip, eyes, and the right near arm's single handed wrapped grip on the bronze staff. Keep the entire staff where it is in reference 1, especially foreground visibility of the shaft in front of the skirt and both boots, without any gap, leg clipping or intersection. Far left arm is empty at far hip. Fixed 1254x1254 square transparent canvas with original margins and unchanged hat apex and soles baseline. Preserve the exact same character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, foot position baseline and lighting as the reference. Right-facing three-quarter side view, full body and the entire weapon inside the frame, flat transparent background, no shadow, no text, no border, no scenery. Centering and framing are positioning choices only: never zoom, scale, stretch or shrink the character to center it or to fit the full body or weapon. Correct near/far layering: near right arm and right leg visibly originate on the near side of the torso. Far left arm and left leg stay behind in depth, even when left foot advances far to screen right. The weapon is held by the same right hand with a believable grip around the haft; fingers wrap the haft, and the hand and weapon do not intersect torso, head, legs, hair or clothing. No interpenetration, merged or extra limbs, floating parts, or duplicated weapon. Crop the dress open naturally just enough to clearly identify two separate boots and to see which leg attaches where. Both toes point SCREEN RIGHT. Matching boot sizes and leg length. Image 1 shows the WRONG stride for this half of the loop: the exposed near-side thigh leads in Image 1, so make that exact thigh and its boot TRAIL, even though the near thigh and boot should still be clearly visible in front of the far-side anatomy. The advancing left boot must visibly emerge from BEHIND the near thigh or farther skirt panel. This change in leg connectivity and occlusion is the only major edit.",
+  "frame_prompts": {
+    "03": "Only change the pose: WALK 03 left heel strike. The far LEFT leg reaches diagonally forward from behind the near thigh to screen right; its leading boot lands heel-first on the baseline and has toes a little above that line. The near RIGHT exposed thigh slopes backward to screen left, clearly connecting to the trailing right boot well to the left of the staff, right heel raised and toe at baseline. A clearly readable broad stride with reversed limb identities relative to the input. The far left boot is visible at least around its knee, shin and heel beyond the skirt opening and beyond the staff. No mirrored sprite.",
+    "04": "Only change the pose: WALK 04 weight transfer onto the forward left foot. The far LEFT leg has advanced from behind the near thigh and is planted flat, slightly to the right of the staff, its boot emerges from the far side of the skirt opening. The near RIGHT exposed thigh and shin bend visibly back toward screen left, right boot well left of the staff, heel clearly lifted with the toes barely at baseline pushing off. Left and right boot silhouettes separated by a substantial gap. Make the stance slightly narrower than the big heel-strike, with left knee slightly bent to bear weight. No mirrored sprite.",
+    "05": "Only change the pose: WALK 05 left-foot support with recovery of the right. The far LEFT leg is visibly weight-bearing on the baseline, boot planted slightly ahead to screen right near or just right of the staff. The near RIGHT leg is in midair recovering forward but still to the LEFT of the left ankle. Near exposed right knee is bent and drawn forward under her hip, while the near right boot is tucked just behind the grounded left ankle, around a boot heel-height above the ground, and neither toe nor heel touches the ground. The near right thigh and suspended shin must be visible and layered in FRONT if the legs cross. Leave a clear gap from the bottom of the lifted boot to baseline. The two boots are obvious and the grounded left boot still leads in screen x. No mirrored sprite."
+  }
+}

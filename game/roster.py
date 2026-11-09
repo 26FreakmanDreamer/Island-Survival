@@ -6,7 +6,9 @@ from .animation import AnimationPlayer
 from .bat import Bat
 from .config import ASSETS_DIR, ROOT
 from .creepy_shooter import CreepyShooter
+from .crooked_witch import CrookedWitch
 from .dummy import Dummy
+from .eira import Eira
 from .lina import Lina
 from .mech_crab import MechCrab
 from .nyra import Nyra
@@ -21,6 +23,8 @@ FIGHTER_CLASSES = {
     "dummy": Dummy,
     "nyra": Nyra,
     "rhea": Rhea,
+    "eira": Eira,
+    "crooked_witch": CrookedWitch,
     "veno": Veno,
     "bat": Bat,
     "creepy_shooter": CreepyShooter,
@@ -41,7 +45,7 @@ def build_animation(store, entry: dict) -> AnimationPlayer | None:
 
     animations = store.animations
     flame_clips_key = entry.get("flame_clips")
-    flame_offsets_key = entry.get("flame_offsets")
+    offsets_key = entry.get("frame_offsets") or entry.get("flame_offsets")
     return AnimationPlayer(
         animations[clips_key],
         animations.get(flame_clips_key, {}) if flame_clips_key else {},
@@ -49,7 +53,7 @@ def build_animation(store, entry: dict) -> AnimationPlayer | None:
         ROOT / entry["fallback"],
         tuple(animations[entry["pivot"]]),
         frame_size=tuple(animations[entry["frame_size"]]),
-        frame_offsets=animations.get(flame_offsets_key, {}) if flame_offsets_key else None,
+        frame_offsets=animations.get(offsets_key, {}) if offsets_key else None,
     )
 
 

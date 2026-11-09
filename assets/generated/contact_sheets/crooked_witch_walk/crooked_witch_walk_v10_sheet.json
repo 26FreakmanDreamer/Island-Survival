@@ -1,0 +1,80 @@
+{
+  "title": "Crooked Witch WALK v10 | four-frame cycle",
+  "columns": 2,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v10_00.png",
+        "label": "00  Right heel contact",
+        "duration": "0.24",
+        "alignment_translation_px": [
+          0,
+          3
+        ],
+        "pose_reference": "crooked_witch_walk_v9_00.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v10_01.png",
+        "label": "01  Right support / left passes",
+        "duration": "0.24",
+        "alignment_translation_px": [
+          0,
+          -6
+        ],
+        "pose_reference": "crooked_witch_walk_v9_05.png"
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v10_02.png",
+        "label": "02  Left heel contact",
+        "duration": "0.24",
+        "alignment_translation_px": [
+          0,
+          -1
+        ],
+        "pose_reference": "crooked_witch_walk_v9_02.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v10_03.png",
+        "label": "03  Left support / right passes",
+        "duration": "0.24",
+        "alignment_translation_px": [
+          0,
+          3
+        ],
+        "pose_reference": "crooked_witch_walk_v9_04.png"
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v10",
+  "status": "pending_user_review",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "visual_ground_y": 1186,
+  "frame_durations_ms": [
+    240,
+    240,
+    240,
+    240
+  ],
+  "loop": true,
+  "palette_reference": "crooked_witch_walk_v1_00.png",
+  "character_reference": "../crooked_witch_base/crooked_witch_base_v4_02.png",
+  "preview": "crooked_witch_walk_v10_preview.gif",
+  "generator": "built-in image_gen",
+  "frame_prompts": {
+    "00": "Create ONE full-body animation sprite for a new four-keyframe Crooked Witch WALK cycle, using IMAGE 1 as the actual edit canvas and reference for the approximate walking pose, open-front skirt, and sprite placement. IMAGE 2 is the exact frame 00 color and light reference only. IMAGE 3 is the primary approved design reference for identity, face and eyes, anatomy, proportions, hairstyle, right-hand grip and staff. Maintain the same detailed crisp pixel art, deep warm plum velvet, antique pale gold embroidery, ivory-rose ruffles, silver-lilac hair, warm brown lace boots, bronze staff and bright violet gems. Use the exact 1254x1254 RGBA canvas and original alignment of the hat, grip and staff. Fully clear background: every exterior pixel must be transparent except normal thin edge antialiasing. No haze, colored halo, gradient, checkerboard, cast shadow, terrain, decoration, or scene.\n\nThe character is walking toward screen RIGHT in the same fixed three-quarter side view. The near limb is her anatomical RIGHT, the far limb is her anatomical LEFT. The near right thigh, knee and boot occlude the far left leg where projected contours overlap, no matter which foot leads. A subtle contact shade and clean T-junction distinguish the two legs. Keep both distinct below the opaque front skirt, with the two thigh silhouettes and boots readable. Retain the established open-front layered dress, long embroidered side and back train, and ivory ruffles behind the legs. Keep the waist and pelvis covered as in IMAGE 1. Natural matching limb and boot lengths, no toe pointing left. Make each pose feel like a measured grounded walk in heels, no kick, lunge, high knee, flight, or dancing. Keep a constant shoulder width, torso posture, camera, hat scale, sprite placement and ground line at y1186. Preserve the exact same character identity, body height, head size, limb proportions, weapon size, camera distance and lighting as the reference. Never zoom, stretch, shrink, crop, mirror, or change perspective. The whole body and whole weapon fit inside the same canvas.\n\nThe same NEAR RIGHT hand remains in front and holds the same staff one-handed, fingers wrapped naturally, left hand empty and behind at far hip. Keep the identical grip position, staff angle, size, shaft continuously visible and in front of the legs and skirt, with the tip floating clear of the floor. No interpenetration, fused limbs, duplicated weapons, floating parts or extra fingers. Only change the lower-body pose and related small skirt drape according to this exact frame instruction. No labels or lettering in the image.\n\nWALK 00 of 04, near RIGHT heel contact. Start from the contact in Image 1. The near right boot is clearly in front of the far thigh where they meet, and steps toward screen right, with its heel on the baseline around x795–825 and toe gently up around x885–905. The far left leg reaches back to screen left and its boot pushes off the same ground line at the toe, around x455–485, rear heel clearly raised. Keep the stride moderate and both legs legible. Show weight about to transfer to the front right foot, and the left thigh coming from behind the near thigh. The two feet are on separate depth planes. The stance should read as a forward step the instant you see it.",
+    "01": "Edit IMAGE 1 precisely in the lower body only. It shows right support and left passing, correctly layered, but the far lifted boot is too high. Preserve its whole upper body, near flat boot and stance, and identical silhouette and perspective. Keep the near RIGHT leg on screen-left of the raised leg at knee level, fully weight-bearing with boot sole flat on the same floor. Only ease the bend of the far LEFT knee just enough so its boot sole drops 40–45 pixels relative to Image 1, with a clear original-size boot still floating, about 105–115 px above the floor. Its shin still slants down-left from the knee and the sole points slightly down and screen-right, a relaxed passing step. Keep far thigh and inner shin behind the near thigh and boot with clear outline. Keep the lifted toe only a small distance to the right of the support boot, essentially the same x as in Image 1. This should look like a lower, smaller stride. Maintain both boots the same size and original laces. No changes to near leg, dress design or top of sprite.\n\nIMAGE 2 is the frame 00 palette reference only, and IMAGE 3 is the primary approved character design for identity, eye, proportions and single-handed near right grip. Crooked Witch WALK, one full-body 1254x1254 RGBA pixel art sprite. Use same palette as image 2: plum velvet, pale warm gold embroidery, rose ivory ruffles, silver lavender hair, bronze and violet crystals, warm brown boots. Keep the open-front skirt, both legs readable under the fully covered pelvis, whole dress train, upper body, hair, exact eye, outfit and staff of IMAGE 1. Preserve exact body height, head size, shoulder width, limb proportions, weapon size, camera distance, ground baseline and lighting. Same fixed right-facing three-quarter side view, full body and entire weapon inside frame, truly transparent background, no halo, no shadow, text, border or scenery. Never zoom, stretch, mirror, crop or rescale. Near arm and right leg are in front, far arm and left leg behind; the only hand on the staff is the unchanged near RIGHT hand, fingers wrapped around the haft. Unbroken staff overlays skirt and legs. No interpenetration, extra or merged limbs, floating parts or duplicate staff.",
+    "02": "IMAGE 1 is already the correct far LEFT heel contact pose, with the foreground RIGHT leg trailing. Preserve Image 1's leg pose and depth ordering LITERALLY. Do not redesign or trade places. The unmistakable NEAR right thigh is the one directly under the near embroidered flap on SCREEN-LEFT. It is brighter and in the foreground, attaches to the rear left-of-screen boot whose heel is lifted. Draw the exact same continuous near thigh edge on the inside of this trailing leg. The darker far thigh touches and disappears BEHIND the right thigh at a T-junction immediately under the embroidered hem, then angles to SCREEN-RIGHT, connecting to the extended far left boot. The leading far LEFT foot, the RIGHTMOST foot in the image, has heel contacting floor and toe gently raised. Its thigh edge must end at the edge of the near RIGHT trailing thigh, never the opposite. The front foot is not the near leg. Existing overlap in IMAGE 1 is the correct solution and must be retained with the same knees and shoes. The edit is a faithful refinement: soften the highlights and shade the far thigh very slightly more than the near one, keep exact pose, apparent size, positions, outfit and stride. Same head and grip and staff as image 1. Clear all halo or extraneous background; render on transparent alpha.\n\nIMAGE 2 is the frame 00 palette reference only, and IMAGE 3 is the primary approved character design for identity, eye, proportions and single-handed near right grip. Crooked Witch WALK, one full-body 1254x1254 RGBA pixel art sprite. Use same palette as image 2: plum velvet, pale warm gold embroidery, rose ivory ruffles, silver lavender hair, bronze and violet crystals, warm brown boots. Keep the open-front skirt, both legs readable under the fully covered pelvis, whole dress train, upper body, hair, exact eye, outfit and staff of IMAGE 1. Preserve exact body height, head size, shoulder width, limb proportions, weapon size, camera distance, ground baseline and lighting. Same fixed right-facing three-quarter side view, full body and entire weapon inside frame, truly transparent background, no halo, no shadow, text, border or scenery. Never zoom, stretch, mirror, crop or rescale. Near arm and right leg are in front, far arm and left leg behind; the only hand on the staff is the unchanged near RIGHT hand, fingers wrapped around the haft. Unbroken staff overlays skirt and legs. No interpenetration, extra or merged limbs, floating parts or duplicate staff.",
+    "03": "Create ONE full-body animation sprite for a new four-keyframe Crooked Witch WALK cycle, using IMAGE 1 as the actual edit canvas and reference for the approximate walking pose, open-front skirt, and sprite placement. IMAGE 2 is the exact frame 00 color and light reference only. IMAGE 3 is the primary approved design reference for identity, face and eyes, anatomy, proportions, hairstyle, right-hand grip and staff. Maintain the same detailed crisp pixel art, deep warm plum velvet, antique pale gold embroidery, ivory-rose ruffles, silver-lilac hair, warm brown lace boots, bronze staff and bright violet gems. Use the exact 1254x1254 RGBA canvas and original alignment of the hat, grip and staff. Fully clear background: every exterior pixel must be transparent except normal thin edge antialiasing. No haze, colored halo, gradient, checkerboard, cast shadow, terrain, decoration, or scene.\n\nThe character is walking toward screen RIGHT in the same fixed three-quarter side view. The near limb is her anatomical RIGHT, the far limb is her anatomical LEFT. The near right thigh, knee and boot occlude the far left leg where projected contours overlap, no matter which foot leads. A subtle contact shade and clean T-junction distinguish the two legs. Keep both distinct below the opaque front skirt, with the two thigh silhouettes and boots readable. Retain the established open-front layered dress, long embroidered side and back train, and ivory ruffles behind the legs. Keep the waist and pelvis covered as in IMAGE 1. Natural matching limb and boot lengths, no toe pointing left. Make each pose feel like a measured grounded walk in heels, no kick, lunge, high knee, flight, or dancing. Keep a constant shoulder width, torso posture, camera, hat scale, sprite placement and ground line at y1186. Preserve the exact same character identity, body height, head size, limb proportions, weapon size, camera distance and lighting as the reference. Never zoom, stretch, shrink, crop, mirror, or change perspective. The whole body and whole weapon fit inside the same canvas.\n\nThe same NEAR RIGHT hand remains in front and holds the same staff one-handed, fingers wrapped naturally, left hand empty and behind at far hip. Keep the identical grip position, staff angle, size, shaft continuously visible and in front of the legs and skirt, with the tip floating clear of the floor. No interpenetration, fused limbs, duplicated weapons, floating parts or extra fingers. Only change the lower-body pose and related small skirt drape according to this exact frame instruction. No labels or lettering in the image.\n\nWALK 03 of 04, far LEFT supports, near RIGHT passes. Similar to Image 1 but clearly a compact swing that leads into the next right heel strike. The far LEFT supporting shin descends nearly vertically from under the hips and the far LEFT boot stays planted flat at the same y1186 floor; flat boot around x680–775. The near RIGHT knee is bent and slightly forward of the supporting knee, with its thigh and upper boot unmistakably in front of the far left thigh. The lifted right boot folds underneath her, the right toe oriented to screen right, its sole 85–105px above the ground and toe around x630–655. Keep the near right boot a little behind the far planted foot in screen projection while the right knee advances. Do not extend the right leg as a kick. The near right leg partially overlaps the far left upper leg, two boots distinct, right sole clearly floating."
+  }
+}

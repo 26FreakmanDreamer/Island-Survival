@@ -1,0 +1,41 @@
+{
+  "character": "nyra",
+  "animation": "walk",
+  "version": 2,
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "loop": true,
+  "references": [
+    "Image/Character/nyra-steel-256.png",
+    "assets/generated/base/nyra_side_base.png",
+    "assets/frames/nyra/walk"
+  ],
+  "review_frames": [
+    {
+      "file": "nyra_walk_v2_00.png",
+      "duration_ms": 140,
+      "phase": "right_foot_leads"
+    },
+    {
+      "file": "nyra_walk_v2_01.png",
+      "duration_ms": 140,
+      "phase": "left_foot_leads"
+    }
+  ],
+  "preview": "nyra_walk_v2_preview.gif",
+  "contact_sheet": "nyra_walk_v2_sheet.png",
+  "generation": {
+    "tool": "ImageGen",
+    "shared_import_scale": 0.30162086,
+    "prompts": [
+      "Redraw one transparent sprite sheet with exactly TWO complete side-by-side poses, each centered in its own equal square half, for Nyra Steel. Use the reference exact crisp painted pixel-art style and matching silver-white asymmetrical bob, red eyes, navy-black high collar combat coat with silver piping, blue lining, split coattails, black stockings with top bands, matching black ankle boots with blue accents. Same facing and same head, shoulders, sword and posture in both cells. Preserve the single long narrow silver sword with the cool-blue edge, horizontal and pointing screen-right. The hilt is held one-handed by her near-side anatomical RIGHT gloved hand, fingers wrapped at the same point directly behind the guard. Her far left hand stays behind her torso. Sword in front of skirt, no clipping through thigh, no second weapon. Only change the pose: LEFT CELL = contact frame 1 of 2: near-side RIGHT leg with the brightest thigh band passes in front of the other leg and extends FORWARD (screen right) diagonally from hip, right heel down, while far LEFT leg extends BACK (screen left) with left heel raised and toe down. RIGHT CELL = contact frame 2 of 2: far-side LEFT leg extends FORWARD toward screen right, left heel down, while near-side RIGHT leg with the bright thigh band extends BACK toward screen left, right heel raised and toe down. The near right knee always overlaps in front where legs cross. The two poses are opposite-foot contacts with balanced moderate stride, no running or crouching. Both complete sword tips and heels fully visible. Same baseline, no dividing line, leave generous gap between sprites. Preserve the exact same character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, foot position and lighting as the reference. Right-facing three-quarter side view, full body and the entire weapon inside each frame, genuinely transparent alpha, no shadow, no text, no border, no scenery. Centering and framing are positioning choices only: never zoom, scale, stretch or shrink the character or weapon to center it or to fit the full body/weapon. Keep the character and weapon scale fixed and leave more margin if needed. Correct near/far layering: the near right arm and near right leg are in front of the torso and far limbs; the far left arm and leg stay behind. No interpenetration, no merged or extra limbs, no floating parts and no duplicated weapon. Both feet and toes point toward screen right. Do not mirror the art.",
+      "Fix the identical legs in image 1, the two-pose Nyra Steel game sprite sheet. Leave the LEFT sprite untouched. In the RIGHT sprite, preserve everything ABOVE the edge of the skirt and the full horizontal sword. REDRAW BOTH LEGS of the RIGHT sprite: put the silver-and-blue dangling tag and its clearly visible dark stocking band on the UPPER LEG THAT GOES DIAGONALLY BACK toward SCREEN LEFT, as in image 2 (the approved base, which is the correct anatomy guide). That marked near-side RIGHT leg should be bearing back on tiptoe, its thigh and knee crossing over/in front of the opposite leg and its boot visibly at screen left. The UNADORNED far-side LEFT leg should extend FORWARD from the hip toward SCREEN RIGHT and plant its heel at the same ground level as the first pose. Use image 2 specifically as your reference for which thigh owns the tag and the screen-left placement of the thigh, knee and rear boot. Do not just move the tag or copy the left sprite. The two walk contacts must clearly swap leading feet while facing screen right in both. Natural comfortable stride, two articulated legs, believable joint connections. Leave both sprites at the exact same scale with plenty of empty margin. Right-facing three-quarter side view, full body and complete weapon, true transparent alpha, no shadows, no glow, no text or scenery. Keep exact identity, head, shoulder width, leg and boot size, color, weapon length, camera angle, silhouette scale and lighting. Positioning only by translation, no stretching, shrinking, zoom or mirror. The close RIGHT arm stays in front and holds one silver, blue-edged sword, one-handed, same pose, angle and exact grip with fingers wrapped around the same spot just behind the guard. Left far arm stays behind the torso. The blade stays in front of skirt with no interpenetration."
+    ]
+  }
+}

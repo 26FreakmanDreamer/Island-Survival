@@ -1,0 +1,61 @@
+{
+  "character": "lina",
+  "animation": "walk",
+  "version": 1,
+  "canvas": [
+    256,
+    256
+  ],
+  "pivot": [
+    128,
+    244
+  ],
+  "loop": true,
+  "references": [
+    "Image/Character/lina-seabright-v1-256.png",
+    "assets/generated/base/lina_side_base.png",
+    "assets/frames/lina/walk"
+  ],
+  "review_frames": [
+    {
+      "file": "lina_walk_v1_00.png",
+      "duration_ms": 80,
+      "phase": "right_heel_contact"
+    },
+    {
+      "file": "lina_walk_v1_01.png",
+      "duration_ms": 80,
+      "phase": "right_support_left_toe_off"
+    },
+    {
+      "file": "lina_walk_v1_02.png",
+      "duration_ms": 80,
+      "phase": "right_support_left_passing"
+    },
+    {
+      "file": "lina_walk_v1_03.png",
+      "duration_ms": 80,
+      "phase": "left_heel_contact"
+    },
+    {
+      "file": "lina_walk_v1_04.png",
+      "duration_ms": 80,
+      "phase": "left_support_right_toe_off"
+    },
+    {
+      "file": "lina_walk_v1_05.png",
+      "duration_ms": 80,
+      "phase": "left_support_right_passing"
+    }
+  ],
+  "preview": "lina_walk_v1_preview.gif",
+  "contact_sheet": "lina_walk_v1_sheet.png",
+  "generation": {
+    "tool": "ImageGen",
+    "shared_import_scale": 0.48109966,
+    "prompts": [
+      "Redraw one transparent sprite sheet for Lina Seabright, the exact purple-haired sailor fighter in the input. Preserve purple hair, white star clip, pearl earrings, blue anchor cropped jacket, purple sash, black leggings, blue boots, and especially the GOLD ANCHOR CHARM on the camera-side RIGHT thigh in all poses. She is unarmed. Use a regular invisible 3-column by 2-row grid of six equal square cells. Exactly one complete 2D game sprite per cell, same character size and hip x in every cell. Natural walking, not running. Read the grid left to right, top to bottom. Only change the pose: (1) top left, near RIGHT thigh with anchor strides diagonally FORWARD toward screen right, right heel touching down, far LEFT foot behind on its toe. (2) top middle, right foot planted under weight, far left knee bends and left heel lifts behind. (3) top right, far left foot swings through just past near right foot, knee bent, left foot slightly airborne, right foot planted. (4) bottom left, far LEFT leg strides FORWARD toward screen right, left heel touching down, near RIGHT thigh with anchor extends BACK toward screen left, right heel raised. (5) bottom middle, far left foot planted under weight, near right knee bends and right heel lifts behind. (6) bottom right, near right anchor thigh swings through just past far left foot, right foot slightly airborne, left foot planted. Small opposite arm swing, near right elbow and hand in front of torso; far arm stays behind. The lead leg changes between cells 1 and 4 but the anchor thigh stays on the near/right leg. At least 12% clear margin around every sprite. All planted feet share a baseline within the row. Crisp clean pixel-art outlines like the reference. Preserve the exact same character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, foot position and lighting as the reference. Right-facing three-quarter side view, full body and the entire weapon inside each frame, genuinely transparent alpha, no shadow, no text, no border, no scenery. Centering and framing are positioning choices only: never zoom, scale, stretch or shrink the character or weapon to center it or to fit the full body/weapon. Keep the character and weapon scale fixed and leave more margin if needed. Correct near/far layering: the near right arm and near right leg are in front of the torso and far limbs; the far left arm and leg stay behind. No interpenetration, no merged or extra limbs, no floating parts and no duplicated weapon. Both feet and toes point toward screen right. Do not mirror the art.",
+      "Edit image 1, the six-sprite Lina Seabright sheet, preserving its precise 3 columns x 2 rows layout and all six same-size full body, right-facing game sprites. Image 2 is official Lina for identity. Preserve pixel-art, camera, body height, limb lengths, shoulder width, hairstyle, exact outfit, head size and foot positions in the five unchanged poses. Lina is unarmed. The only gait change is to the BOTTOM MIDDLE cell, frame 05 of 06: redraw both legs. Her near, right leg with the GOLD ANCHOR ON ITS THIGH is the airborne leg: bend that right knee slightly and raise that right heel and boot back toward SCREEN LEFT, a little off the ground. Her far, left leg with NO GOLD ANCHOR is the planted leg: visible far left boot centered below the hips, full sole on the row baseline and pointing screen right, supporting her weight. The near anchor thigh occludes the far leg where they cross. Connect the raised back boot directly to the near leg with anchor. Do not copy the top middle pose's leg layering: the anchor must visibly follow the lifted leg. Keep bottom middle upper body and surrounding FIVE sprites as similar to the original as possible. The unchanged bottom left is LEFT-foot forward contact, and the unchanged bottom right is RIGHT-foot swing through. True transparent background around all sprites; no illumination behind, no glow, no ground or foot shadow, no objects, no text, no frame lines. Both feet point right. Right-facing three-quarter side view, accurate near/far anatomical layering, no merged limbs, no interpenetration, no floating parts. Preserve exact head, body and boot size in all frames. Centering may only use translation, no zoom, scaling or stretching. Render complete silhouettes with generous clear gap."
+    ]
+  }
+}

@@ -7,6 +7,10 @@
   "nyra_pivot": [192, 372],
   "rhea_frame_size": [384, 384],
   "rhea_pivot": [192, 372],
+  "eira_frame_size": [384, 384],
+  "eira_pivot": [192, 372],
+  "crooked_witch_frame_size": [640, 640],
+  "crooked_witch_pivot": [320, 628],
   "veno_frame_size": [160, 160],
   "veno_pivot": [80, 154],
   "creepy_shooter_frame_size": [384, 384],
@@ -128,8 +132,8 @@
     },
     "walk": {
       "loop": true,
-      "frames": ["walk/walk_00.png", "walk/walk_01.png"],
-      "durations": [0.14, 0.14]
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png", "walk/walk_04.png", "walk/walk_05.png"],
+      "durations": [0.08, 0.08, 0.08, 0.08, 0.08, 0.08]
     },
     "jump": {
       "loop": false,
@@ -663,6 +667,173 @@
       "loop": false,
       "frames": ["phantom/revert/revert_00.png", "phantom/revert/revert_01.png", "phantom/revert/revert_02.png", "phantom/revert/revert_03.png", "phantom/revert/revert_04.png", "phantom/revert/revert_05.png"],
       "durations": [0.10, 0.10, 0.10, 0.10, 0.10, 0.10]
+    }
+  },
+  "eira_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.20, 0.20, 0.20, 0.20]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png", "walk/walk_04.png", "walk/walk_05.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12, 0.12, 0.12]
+    },
+    "jump": {
+      "loop": false,
+      "frames": ["jump/jump_00.png", "jump/jump_01.png"],
+      "durations": [0.20, 0.20]
+    },
+    "crouch": {
+      "loop": false,
+      "frames": ["crouch/crouch_00.png"],
+      "durations": [0.50]
+    },
+    "climb": {
+      "loop": true,
+      "frames": ["climb/climb_00.png", "climb/climb_01.png", "climb/climb_02.png", "climb/climb_03.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "stun": {
+      "loop": true,
+      "frames": ["stun/stun_00.png"],
+      "durations": [0.50]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
+      "durations": [0.15, 0.20, 0.25, 0.30]
+    },
+    "snowball": {
+      "loop": false,
+      "frames": ["snowball/snowball_00.png", "snowball/snowball_01.png", "snowball/snowball_02.png", "snowball/snowball_03.png"],
+      "durations": [0.10, 0.10, 0.08, 0.16]
+    },
+    "staff_strike": {
+      "loop": false,
+      "frames": ["staff_strike/staff_strike_00.png", "staff_strike/staff_strike_01.png", "staff_strike/staff_strike_02.png", "staff_strike/staff_strike_03.png", "staff_strike/staff_strike_04.png"],
+      "durations": [0.10, 0.10, 0.08, 0.08, 0.18]
+    },
+    "ice_shard": {
+      "loop": false,
+      "frames": ["ice_shard/ice_shard_00.png", "ice_shard/ice_shard_01.png", "ice_shard/ice_shard_02.png", "ice_shard/ice_shard_03.png", "ice_shard/ice_shard_04.png"],
+      "durations": [0.12, 0.10, 0.08, 0.08, 0.18]
+    },
+    "e_raise": {
+      "loop": false,
+      "frames": ["e_raise/e_raise_00.png", "e_raise/e_raise_01.png", "e_raise/e_raise_02.png"],
+      "durations": [0.12, 0.14, 0.14]
+    },
+    "e_hold": {
+      "loop": true,
+      "frames": ["e_hold/e_hold_00.png", "e_hold/e_hold_01.png"],
+      "durations": [0.18, 0.18]
+    },
+    "e_release": {
+      "loop": false,
+      "frames": ["e_release/e_release_00.png", "e_release/e_release_01.png", "e_release/e_release_02.png"],
+      "durations": [0.08, 0.10, 0.12]
+    },
+    "e_recover": {
+      "loop": false,
+      "frames": ["e_recover/e_recover_00.png", "e_recover/e_recover_01.png"],
+      "durations": [0.12, 0.18]
+    }
+  },
+  "eira_offsets": {
+    "ko/ko_03.png": -20
+  },
+  "crooked_witch_clips": {
+    "idle": {
+      "loop": true,
+      "frames": ["idle/idle_00.png", "idle/idle_01.png", "idle/idle_02.png", "idle/idle_03.png"],
+      "durations": [0.18, 0.18, 0.18, 0.18]
+    },
+    "walk": {
+      "loop": true,
+      "frames": ["walk/walk_00.png", "walk/walk_01.png", "walk/walk_02.png", "walk/walk_03.png"],
+      "durations": [0.12, 0.12, 0.12, 0.12]
+    },
+    "fly_takeoff": {
+      "loop": false,
+      "frames": ["fly/fly_00.png", "fly/fly_01.png"],
+      "durations": [0.18, 0.18]
+    },
+    "fly_loop": {
+      "loop": true,
+      "frames": ["fly/fly_02.png", "fly/fly_03.png"],
+      "durations": [0.18, 0.18]
+    },
+    "fly_land": {
+      "loop": false,
+      "frames": ["fly/fly_04.png", "fly/fly_05.png"],
+      "durations": [0.18, 0.18]
+    },
+    "teleport_out": {
+      "loop": false,
+      "frames": ["teleport_out/teleport_out_00.png", "teleport_out/teleport_out_01.png", "teleport_out/teleport_out_02.png"],
+      "durations": [0.10, 0.10, 0.10]
+    },
+    "teleport_in": {
+      "loop": false,
+      "frames": ["teleport_in/teleport_in_00.png", "teleport_in/teleport_in_01.png", "teleport_in/teleport_in_02.png"],
+      "durations": [0.10, 0.10, 0.10]
+    },
+    "hurt": {
+      "loop": false,
+      "frames": ["hurt/hurt_00.png", "hurt/hurt_01.png"],
+      "durations": [0.10, 0.10]
+    },
+    "ko": {
+      "loop": false,
+      "frames": ["ko/ko_00.png", "ko/ko_01.png", "ko/ko_02.png", "ko/ko_03.png"],
+      "durations": [0.15, 0.20, 0.20, 0.20]
+    },
+    "heal": {
+      "loop": false,
+      "frames": ["heal/heal_00.png", "heal/heal_01.png", "heal/heal_02.png", "heal/heal_03.png", "heal/heal_04.png", "heal/heal_05.png"],
+      "durations": [0.20, 0.20, 0.20, 2.50, 2.50, 0.20]
+    },
+    "lightning_forward": {
+      "loop": false,
+      "frames": ["lightning_forward/lightning_forward_00.png", "lightning_forward/lightning_forward_01.png", "lightning_forward/lightning_forward_02.png", "lightning_forward/lightning_forward_03.png"],
+      "durations": [0.15, 0.15, 0.10, 0.20]
+    },
+    "lightning_up": {
+      "loop": false,
+      "frames": ["lightning_up/lightning_up_00.png", "lightning_up/lightning_up_01.png", "lightning_up/lightning_up_02.png", "lightning_up/lightning_up_03.png"],
+      "durations": [0.15, 0.15, 0.10, 0.20]
+    },
+    "lightning_down": {
+      "loop": false,
+      "frames": ["lightning_down/lightning_down_00.png", "lightning_down/lightning_down_01.png", "lightning_down/lightning_down_02.png", "lightning_down/lightning_down_03.png"],
+      "durations": [0.15, 0.15, 0.10, 0.20]
+    },
+    "ice_spike": {
+      "loop": false,
+      "frames": ["ice_spike/ice_spike_00.png", "ice_spike/ice_spike_01.png", "ice_spike/ice_spike_02.png", "ice_spike/ice_spike_03.png"],
+      "durations": [0.15, 0.15, 0.10, 0.20]
+    },
+    "potion": {
+      "loop": false,
+      "frames": ["potion/potion_00.png", "potion/potion_01.png", "potion/potion_02.png", "potion/potion_03.png"],
+      "durations": [0.15, 0.15, 0.15, 0.20]
+    },
+    "fire_rain_intro": {
+      "loop": false,
+      "frames": ["fire_rain/fire_rain_00.png", "fire_rain/fire_rain_01.png", "fire_rain/fire_rain_02.png", "fire_rain/fire_rain_03.png", "fire_rain/fire_rain_04.png"],
+      "durations": [0.22, 0.26, 0.25, 0.26, 0.40]
+    },
+    "fire_rain_hold": {
+      "loop": true,
+      "frames": ["fire_rain/fire_rain_04.png"],
+      "durations": [0.40]
     }
   }
 }

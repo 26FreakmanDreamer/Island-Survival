@@ -65,6 +65,19 @@ This document records the provisional rules used by the sandbox. Values live in
   queues the revert to resume after hitstun; KO keeps the flame frames. An attack that started in
   flame form finishes with flame frames before the revert.
 
+## Walk sets (2026-11-09)
+
+- Lina's normal walk now uses the approved `lina_walk_v1` six-frame set from
+  `assets/generated/contact_sheets/lina_walk/`, installed as `assets/frames/lina/walk/walk_00..05.png`
+  on the existing 256×256 canvas / pivot (128,244). Each frame is 80ms (0.48s cycle). The flame-form
+  walk set is unchanged.
+- Nyra's walk now uses the approved `nyra_walk_v3` six-frame set from
+  `assets/generated/contact_sheets/nyra_walk/`, installed as
+  `assets/frames/nyra/walk/walk_00..05.png` on 384×384 / pivot (192,372), body 214. Each frame is
+  80ms (0.48s cycle). This replaces the old two-frame 0.14s walk and raises Nyra's total frame
+  count from 31 to 35. The v3 manifest's 50/40/50/50/40/50ms reference timing is superseded by the
+  confirmed uniform 80ms runtime timing.
+
 ## Status effects
 
 - The data model includes all nine spec statuses: knockback, burn, poison, slow, knock_up, freeze,
@@ -75,9 +88,20 @@ This document records the provisional rules used by the sandbox. Values live in
   independent instances that each deal damage. Poison settles every 0.5s. `StatusSet.extend_poison`
   only extends an existing source and never creates one; Rhea's LMB/RMB extend `rhea_poison` by 1s,
   while Q does not trigger the passive.
+- Freeze is driven by Eira's per-target `eira_freeze` meter (0–100): LMB/RMB +20, Q +30, E +50.
+  Each gain applies an equal-percent slow (20% / 20% / 30% / 50%) for 2.0s, keeping the strongest
+  value and refreshing its duration. At 100 the meter clears and the target is frozen for 2.0s;
+  frozen targets gain no further freeze until they thaw, and the hit that triggers freeze resolves
+  its damage with the pre-hit (unfrozen) state. Q and the E ice ball add their documented
+  frozen-target bonuses.
+- Vulnerable is a damage-taken multiplier, not a control effect: each stack adds 20%, up to 3
+  stacks (60%) for 3.0s; adding a layer refreshes all existing layers to the full duration. Super
+  armor does not prevent it. The Crooked Witch's lightning resolves its damage first, then adds a
+  stack.
 - Super armor makes the fighter immune to control effects (knockback, knock_up, freeze, stun,
   slow) while it is active; damage still applies and damage reduction is a separate percentage
-  multiplier. Nyra's Q and E and Rhea's E (0.0–1.00s) use it during their armor windows.
+  multiplier. Nyra's Q and E, Rhea's E (0.0–1.00s) and Eira's E cast use it during their armor
+  windows.
 
 - The sandbox naturally triggers burn (flame hits), knockback (kick/Q), and knock-up (Warrior dash);
   stun, freeze, slow, poison, super armor and damage reduction are available through F11.
@@ -90,6 +114,9 @@ This document records the provisional rules used by the sandbox. Values live in
   x=790..880; its left barrier (400..490) was removed on 2026-11-01 at the user's request.
   Two platforms: x=170..649 at surface y=220 and x=796..1110 at surface y=268; each collision
   rect is 78px tall. Ladders: x=508..572 (long, 400px) and x=921..985 (medium, 352px).
+- The Crooked Witch variant has no barriers: short platforms x=158..472 and x=808..1122 at surface
+  y=220, long ladders x=420..484 and x=796..860, spawn (965,220), and teleport points (315,220),
+  (965,220), (315,620), (965,620).
 - Lina spawns at x=280; the dummy and Warrior base spawns are at x=600. Veno and Bat use their
   own stage variants with base x=820 (Bat y=470); roster offsets and `spawn_jitter` move the
   group (see §Multi-body enemy rules). Creepy Shooter spawns at (1000, 220) on its stage variant.
@@ -165,12 +192,13 @@ This document records the provisional rules used by the sandbox. Values live in
   platform's top and is treated as grounded; otherwise they fall. A `ladder_fall` flag, also set
   by a Space jump-off, skips platform side and underside collision until landing so a platform
   behind the ladder cannot shove the falling/jumping body sideways; platform-top landing still
-  applies. There is no automatic re-grab after a ladder hit. Lina, Nyra and Rhea share the
+  applies. There is no automatic re-grab after a ladder hit. Lina, Nyra, Rhea and Eira share the
   implementation in `Fighter`; enemies never call it.
 - `penetrates_blocks` is an optional projectile flag on `QWave`, `SwordWave`, `AimedProjectile`,
   `SonicWave` and `ShurikenProjectile`; every block collision site honours it. It defaults to
-  false; Creepy Shooter's skill-2 homing bolt sets it true. Eira Frostveil's E ice ball remains
-  unimplemented. `AxeThrow` and melee hitboxes remain as before (no block occlusion).
+  false; Creepy Shooter's skill-2 homing bolt sets it true. Eira's E ice ball is a falling
+  `Hazard`, not a projectile, and falls through blocks into the arena ground. `AxeThrow` and melee
+  hitboxes remain as before (no block occlusion).
 - Debug: F1 draws barrier boxes in yellow, platform boxes in cyan, and ladder trigger boxes in
   magenta with green/red top/bottom lines. F2 shows `BARRIERS n PLATFORMS n` and
   `CLIMB up/down/idle`. B toggles barrier+platform rendering/collision; ladders stay visible and
@@ -191,13 +219,15 @@ This document records the provisional rules used by the sandbox. Values live in
   own two-frame back-view clip with both hands free and the two four-blade shuriken stowed on the
   gold-striped back band.
 - Runtime clips live in `game/data/animations.json` under `clips.climb`,
-  `flame_clips.climb`, `nyra_clips.climb` and `rhea_clips.climb`; `game/config.py` requires
-  `climb` for Lina normal, Lina flame, Nyra and Rhea. `FighterState.CLIMB` plus
+  `flame_clips.climb`, `nyra_clips.climb`, `rhea_clips.climb` and `eira_clips.climb`;
+  `game/config.py` requires `climb` for Lina normal, Lina flame, Nyra, Rhea and Eira.
+  `FighterState.CLIMB` plus
   `Fighter.try_start_climb`/`_update_climb` choose the variant-appropriate clip and start frame;
   `_stop_climb` restores facing.
 - The climb sprite is drawn with a character-specific visual scale around the feet pivot:
-  Lina 1.2× (default `CLIMB_DRAW_SCALE`), Nyra 1.1× (`NYRA_CLIMB_DRAW_SCALE`) and Rhea 1.1×
-  (`RHEA_CLIMB_DRAW_SCALE`). `AnimationPlayer.draw(scale=...)` scales the frame and pivot around
+  Lina 1.2× (default `CLIMB_DRAW_SCALE`), Nyra 1.1× (`NYRA_CLIMB_DRAW_SCALE`), Rhea 1.1×
+  (`RHEA_CLIMB_DRAW_SCALE`) and Eira 1.15× (`EIRA_CLIMB_DRAW_SCALE`). `AnimationPlayer.draw(scale=...)`
+  scales the frame and pivot around
   the feet; only the climb clip is scaled. Lina's canonical bbox is ~253px and her climb frames are
   ~209/211px; Nyra's canonical bbox is ~243px and her staged climb frames are ~220/216px; Rhea's
   climb frames are staged at body 214px. Nyra frame 00 is staged 1.02× relative to frame 01 to
@@ -260,10 +290,11 @@ This document records the provisional rules used by the sandbox. Values live in
 
 - Playable character. Canonical art `Image/Character/nyra-steel-256.png`; fallback uses the same
   canonical file. Canvas 384x384, feet-center pivot (192,372), body about 214px.
-- Frames (31 minimal set): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, sword slash 6 (Q), thrust 5,
+- Frames (35): idle 2, walk 6, jump 2, crouch 1, hurt 1, KO 2, sword slash 6 (Q), thrust 5,
   wave 5 (LMB), dash 3, climb 2. Only right-facing frames are stored; the runtime mirrors for left.
-  The back-view climb is the exception and is not horizontally flipped; the sword stays sheathed
-  on her back. The crouch
+  The walk is the approved `nyra_walk_v3` six-frame set at 0.08s per frame (0.48s cycle); it replaced
+  the earlier two-frame 0.14s walk. The back-view climb is the exception and is not horizontally
+  flipped; the sword stays sheathed on her back. The crouch
   frame is imported at ~170px, midway between the original 212px crouch and the 128px deep-crouch
   variant, so it reads smaller than the 214px standing body without becoming tiny. The crouching
   hurtbox remains 56×130; only the image was changed.
@@ -762,6 +793,144 @@ still checking the right-half majority and spread.
 - Frames/assets: 62 phantom character frames = transform 11 + idle 4 + walk 6 + P1 5 + P2 5 + P3 25 + revert 6; plus FX 25 = trail 3 + tentacle 4 + bind front/back 6+6 + orb 3 + shark 3. Approved side bases: `assets/generated/base/shadow_ninja_phantom_side_base.png` and `..._shadow_side_base.png` (384 runtime canvas, pivot (192,372), body 214; full right-facing side view, not 3/4). The runtime uses the `flame_clips` mechanism for the phantom table (`roster.json` `flame_clips: "shadow_ninja_phantom_clips"`); do not use `set_variant("phantom")`.
 - Debug/smoke: F1 skips the enemy hurtbox while `phantom_form`; F2 adds `PHANTOM n/3 P1/P2/P3 READY/USED`, `PHANTOM FLASH <phase>`, `PHANTOM TRANSFORM`/`PHANTOM REVERT`, and `PHANTOM CD 15.0s`; V/C/X map to the three skills and Z transforms only in normal form. Smoke Phase I covers transform, frame-0 invincibility, clear, marks separation, no-hitbox pass-through, P1/P2/P3, one-use, auto-revert, cooldown, AI, reset and `shadow_ninja_phantom_missing_frames == 0` / `shadow_ninja_phantom_fx_missing == 0`. `main.py --smoke-test` exits 0 with all assets installed.
 
+## Eira Frostveil (2026-11-08)
+
+- Playable character. Canonical art `Image/Character/eira-frostveil-256.png`; the runtime uses the
+  approved `assets/generated/base/eira_side_base.png` (side 2) for every normal action and
+  `assets/generated/base/eira_back_base.png` (back 1) for climb. Canvas 384x384, feet-center pivot
+  (192,372). Only right-facing frames are stored; the runtime mirrors for left. Climb draw scale
+  1.15× (the combat hurtbox and stage body are not scaled).
+- Frame groups were calibrated separately because the approved attack frames use different source
+  scales: A idle/walk/jump/hurt/stun/KO/staff_strike at body 253.9px, B climb 236.3, C snowball
+  249.7, D ice_shard 244.6, E e_* 239.0. All groups land on a 209px body (snowball ~212, climb
+  ~211); no FIT fallback or cross-group height mismatch. Frames (48, 15 clips): idle 4 (0.20s),
+  walk 6 (0.12), jump 2 (0.20), crouch 1 (0.50), climb 4 (0.12), hurt 2 (0.10), stun 1 (0.50),
+  KO 4 (0.15/0.20/0.25/0.30), snowball 4 (0.10/0.10/0.08/0.16), staff_strike 5
+  (0.10/0.10/0.08/0.08/0.18), ice_shard 5 (0.12/0.10/0.08/0.08/0.18), e_raise 3 (0.12/0.14/0.14),
+  e_hold 2 (0.18 each), e_release 3 (0.08/0.10/0.12), e_recover 2 (0.12/0.18).
+- Stats: HP 100, basic ATK 20, extra ATK 0, `stage_body_width` 100, hurtbox 56×210 standing /
+  56×130 crouching, walk 260, jump_v 760, gravity 2200. No energy resource. Q cooldown 3s, E 12s;
+  both start ready and are consumed at cast start.
+- Freeze passive: each target tracks an independent `eira_freeze` meter (0–100). Gains are LMB 20,
+  RMB 20, Q 30, E 50. Every gain also applies an equal-percent slow for 2.0s (20/20/30/50%), keeping
+  the strongest value and refreshing it. At 100 the meter clears and the target is frozen for 2.0s;
+  while frozen it gains no more freeze, and the hit that triggers freeze resolves with the pre-hit
+  bonus state (a frozen hit only counts for later attacks). Thawing restarts accumulation from 0.
+- LMB `eira_snowball`: 1.0×basic = 20. 0.44s action, projectile at t=0.20 from the release frame's
+  blue crystal (112px forward, 194px up), high lane, speed 850, range 900, radius 11.2, knockback
+  30, +20 freeze, single hit, disappears on hit and dies on walls/blocks (no penetration). The
+  snowball art is 0.26× (ball ≈23px, matching the crystal and hit radius); it is drawn after the
+  player (`draw_front`) so it sits on top of the staff, with the 0.5× release sparkle above it.
+- RMB `eira_staff_strike`: 1.0×basic + 1.2×extra = 20. 0.54s action, hitbox `[18,-165,90,105]`
+  active t=0.20–0.36, one hit, knockback 50, +20 freeze. The approved frame-2/3 staff trails are
+  separate normalized 384×384 FX with the character pivot; they are bound to their pose frames
+  (fx_02 exists only during frame 2 and is removed on the first tick of frame 3; fx_03 likewise
+  ends when frame 4 starts) instead of using a fixed lifetime, so hitstop cannot make them bleed
+  into the next pose.
+- Q `eira_ice_shard`: 1.2×basic + 1.5×extra = 24; against an already-frozen target +1.0×atk = 44.
+  0.56s action, projectile at t=0.22 from the frame-2 crystal (98px forward, 190px up), high lane,
+  speed 950, range 900, radius 14, pierces enemies (one hit each), does not penetrate blocks,
+  +30 freeze, 3s cooldown from cast. The Q charge sparkle sits on the frame-1 blue crystal
+  (59.5px forward, 223.4px up) and is spawned from that pose frame; there is no hand FX.
+- E `eira_ice_ball`: 1.5×basic + 1.5×extra = 30; against an already-frozen target +1.2×atk +
+  1.5×extra = 54. 12s cooldown from cast start. The cast state machine is raise 0.40s → hold loop
+  (`e_hold`, 2×0.18s) → release 0.30s → recover 0.30s. Super armor starts with the cast: damage
+  lands and flashes but never interrupts; KO force-ends E. During hold, the HUD shows
+  `Click the left mouse to choose an area.` plus a vertical mouse guide; LMB selects the mouse x
+  clamped to the arena walls. RMB cancels; 8s without a selection cancels. Cancelling (RMB or
+  timeout) starts recover immediately and sets a 6s cooldown from the cancel; a normal release
+  keeps the 12s cooldown. The ball spawns 0.08s into release at screen y=-120, radius 80, falls at
+  740px/s through blocks and does not disappear on hit: it damages each target once (multi-target),
+  applies +50 freeze, and only the main ball damages. It always lands on the ground; on contact it
+  shatters into four large chunks plus 14 fragments that bounce under gravity, spread horizontally
+  and fade out; the ground FX lasts 3.0s.
+- HUD/F2: Q/E cooldown badges reuse the generic HUD; the E selection prompt/line are drawn by
+  `HUD.draw_targeting_prompt`. F2 shows `EIRA E <phase> TARGET ON/OFF X <x> FREEZE <n>/100` plus
+  the Q/E cooldowns. F1 draws hazard radii. The `freeze` status draws a shared semi-transparent ice
+  shell (58% alpha) scaled to the target hurtbox plus small foot ice; thawing plays the three-frame
+  frozen-hit shard strip once.
+- Assets/FX: `assets/frames/eira/` (48 frames) and `assets/frames/eira/fx/` (44 FX). Snowball, Q
+  shard, staff trails, E ball/chunks/fragments, cast/impact strips and the freeze shell/foot ice
+  are separate files; nothing is baked into character frames. Staff FX and the Q charge/release
+  are anchored to the measured blue crystal of the displayed pose.
+- Implementation notes: `eira_freeze` lives on `Fighter` (reset in `reset_common`). Frozen damage
+  bonuses are captured before `take_hit` in both melee and projectile paths, and the E hazard uses
+  `apply_direct_damage`. `AttackRuntime` events, `Hazard` objects (`scene.hazards`) and the
+  per-frame FX retire path are shared systems added for this character. Roster order is Lina →
+  Nyra → Rhea → Eira; the startup default remains Lina.
+- Smoke: Phase K covers presence (15 clips/48 frames, roster order, default still Lina), LMB
+  (20 + 20, crouch dodge), RMB (20 + 20, one hit at 0.20–0.36), Q (3s cooldown, 24/44, pierce,
+  +30), E (12s/6s cooldown, raise/hold/release/recover timing, prompt, 0.08 spawn, ~1s fall,
+  multi-target, 30/54, freeze, 3s ground FX, super armor, KO end), freeze (threshold, clear,
+  no gain while frozen, equal slow, independent targets), climb and reset. Flags: `eira_present`,
+  `eira_lmb_ok`, `eira_rmb_ok`, `eira_q_ok`, `eira_e_ok`, `eira_freeze_ok`, `eira_climb_ok`,
+  `eira_reset_ok`, `eira_missing_frames == 0`, `eira_fx_missing == 0`.
+
+## Crooked Witch (2026-11-09)
+
+- F7 enemy (not playable), entry `crooked_witch`; it sits after Shadow Ninja and before the
+  training Dummy in roster order. Canonical art `Image/Enemy/crooked-witch-256.png`; the approved
+  base is `assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png`.
+  Canvas 640x640, pivot (320,628), body 230. HP 400, basic ATK 30, extra ATK 0, walk 150,
+  jump_v 700, gravity 2200, hurtbox 56×210 (standing/crouching), `stage_body_width` 100.
+- Frames: 17 clips / 58 frames — idle 4 (0.18), walk 4 (the v10 set, 0.12 each), fly_takeoff /
+  fly_loop / fly_land 2+2+2 (0.18), teleport_out / teleport_in 3+3 (0.10), hurt 2 (0.10), KO 4
+  (0.15/0.20/0.20/0.20), heal 6 (0.20/0.20/0.20/2.50/2.50/0.20), lightning_forward/up/down 4 each
+  (0.15/0.15/0.10/0.20), ice_spike 4 (0.15/0.15/0.10/0.20), potion 4 (0.15/0.15/0.15/0.20),
+  fire_rain_intro 5 (0.22/0.26/0.25/0.26/0.40), fire_rain_hold 1 (0.40). FX: 124 files under
+  `assets/frames/crooked_witch/fx/` (see ASSET_PIPELINE).
+- Scene: `stage_variants.crooked_witch` has no barriers; short platforms x=158..472 and
+  x=808..1122 at surface y=220, long ladders x=420..484 and x=796..860, spawn (965,220). The four
+  teleport points are (315,220), (965,220), (315,620) and (965,620).
+- Teleport passive (8s cooldown): triggers on taking damage or after 8s without damage. The
+  destination is a random point excluding the nearest point and the current point (falling back to
+  any non-current point). 0.30s out + 0.30s in with `invincible`, `no_hitbox`, `hidden` and
+  `ignore_separation`; it is not started during heal/fire rain/control lock, and it does not
+  interrupt them.
+- Heal (once per battle): forced when HP first drops below 50%. The Witch flies to screen center
+  (640, altitude 260) with invincibility/no hitbox/no control, opens both hands and heals 6% max HP
+  per second for 5s (24 HP per tick, capped at max HP), then flies back to the trigger position.
+  The 1.6s fly-in/fly-out segments use the fly frames, which already hold her own staff. During the
+  hands-open `heal_cast` pose the independent staff prop is drawn on the facing side only; it is not
+  drawn during the fly segments (avoids a second staff).
+- Skill 1 `witch_lightning` (2s cooldown): the slot id resolves to `witch_lightning_forward/up/down`
+  at cast. Same height (tolerance 80px) fires forward; different height fires up/down only when the
+  target is farther than 140px horizontally; a blocked line or a too-close target makes the skill
+  not release. The bolt spawns at the staff tip (48px forward, 150px up), speed 1800, range 900,
+  radius 14, does not penetrate blocks, and deals 1.2atk = 36. On hit it first resolves damage, then
+  adds 20% `vulnerable` for 3s, max 3 stacks (new layers refresh all stacks).
+- Skill 2 `witch_ice_spike` (5s cooldown): warns for 1.0s with the blue ground ring and then erupts
+  at the target's feet (`spot_offset` 0, clamped to walls/platform edges). Deals 30 + 1.5s freeze in
+  a 65px radius. The warning and spike FX are ground-anchored (visible bottom at the feet); the
+  spike is drawn in front of the target at 0.25 scale (~219px, matching the Witch's visual height).
+- Skill 3 `witch_potion` (8s cooldown): fired at t=0.30. From a platform the bottle arcs (320px/s);
+  on the ground it travels low and horizontally (420px/s). A direct hit deals 0.8atk = 24 plus
+  `witch_potion_hit` poison (3% max HP/s for 3s) and 30% slow for 3s, and leaves no zone. A miss
+  creates a 6s poison zone (radius 80) at the landing point: 2% max HP/s for 3s and 20% slow while
+  inside. Direct-hit and zone poison use independent sources. The pool FX is grounded at the
+  character's feet.
+- Skill 4 `witch_fire_rain` (15s cooldown): per updated `instruction.docx`, the cooldown starts only
+  after the whole skill ends (including the return flight), and it cannot be the first numbered
+  skill used in a battle. The Witch flies to center, is invincible/no-hitbox/no-control, and spawns
+  10 fireballs every 0.8s; each locks the target's x at spawn, falls vertically ignoring blocks at
+  900px/s, and deals 1.2atk = 36 + burn 5 HP/s for 3s. She then flies back. The summon light pillar
+  is horizontally compressed to ~33px (slightly thicker than the staff head) and the hold pose is
+  the single raised frame 04, so the hands do not bob up and down.
+- AI: the one-time heal takes priority over everything, then the teleport passive. Skill priority
+  follows the updated `instruction.docx`: **ground 1 (lightning) > 2 (ice spike) > 3 (potion) >
+  4 (fire rain); platform 3 (potion) > 1 > 2 > 4**. Fire rain additionally requires 180px minimum
+  distance and `opened_skill` (some other numbered skill was used earlier). Opening delay 0.5s,
+  decision interval 0.2s, skill gap 0.6s. Between decisions the walk state and clip are preserved,
+  so the walk cycle plays continuously instead of flickering back to idle every tick. The Witch
+  never jumps; at close range she holds and lets teleport close the gap.
+- HUD/F2: F2 shows `WITCH PHASE <phase>`, `HEAL READY/USED`, `TP <cooldown>s`, `WITCH CD L/I/P/F`,
+  `WITCH NO HITBOX/HIDDEN/INVINCIBLE` flags and `WITCH VULN <percent>`. F1 draws the four teleport
+  points, the enemy hurtbox (skipped while no-hitbox/hidden), hazard radii and active hitboxes.
+- Smoke: `crooked_witch_present`, `crooked_witch_stats_ok`, `crooked_witch_teleport_ok`,
+  `crooked_witch_heal_ok`, `crooked_witch_lightning_ok`, `crooked_witch_ice_spike_ok`,
+  `crooked_witch_potion_ok`, `crooked_witch_fire_rain_ok`, `crooked_witch_ai_ok`,
+  `crooked_witch_reset_ok`, `crooked_witch_missing_frames == 0`, `crooked_witch_fx_missing == 0`.
+
 ## Projectile / skill VFX (2026-10-24)
 
 - Visual-only pass. `q`, `veno_poison` and `veno_web` keep their damage, hitbox, duration, speed,
@@ -815,11 +984,12 @@ still checking the right-half majority and spread.
   key, spawn key, animation table keys, frame folder, canonical fallback image, and (for enemies)
   `skill_slots`, `separates` and `decides_match`.
 - `game/roster.py` builds the `AnimationPlayer` and the fighter class from that entry; the scene no
-  longer constructs Lina/Nyra/Rhea/Warrior/Veno/Dummy directly. Playable classes keep Lina's
-  `update(dt, input_state, target, scene)` signature; Lina, Nyra and Rhea are installed.
+  longer constructs Lina/Nyra/Rhea/Eira/Warrior/Veno/Crooked Witch/Dummy directly. Playable classes keep Lina's
+  `update(dt, input_state, target, scene)` signature; Lina, Nyra, Rhea and Eira are installed.
 - F7 cycles the enemy roster in roster order (Warrior → Veno-Spider → Bat → Creepy Shooter →
-  Mech-Crab → Shadow Ninja → training Dummy); the current default enemy is Creepy Shooter. `[` / `]`
-  cycle the playable roster (Lina ↔ Nyra ↔ Rhea). Switching performs a full match reset: both fighters
+  Mech-Crab → Shadow Ninja → Crooked Witch → training Dummy); the current default enemy is Creepy
+  Shooter. `[` / `]`
+  cycle the playable roster (Lina ↔ Nyra ↔ Rhea ↔ Eira). Switching performs a full match reset: both fighters
   respawn at full HP, and
   projectiles, wave effects, particles, hitstop, statuses, cooldowns, the match result and the input buffer are
   cleared. The B block toggle (barriers + platforms; ladders unaffected) is preserved; the enemy AI is forced off whenever fighters are rebuilt
@@ -837,6 +1007,6 @@ still checking the right-half majority and spread.
 ## Out of scope in the current sandbox
 
 Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
-Lina/Nyra/Rhea, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Dummy and their AI, group balancing
+Lina/Nyra/Rhea/Eira, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Mech-Crab/Shadow Ninja/Crooked Witch/Dummy and their AI, group balancing
 beyond the Veno 3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
 dummy is a debug tool, not a spec enemy.

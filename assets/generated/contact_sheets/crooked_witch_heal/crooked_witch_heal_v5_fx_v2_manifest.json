@@ -1,0 +1,2904 @@
+{
+  "status": "pending_effect_review",
+  "actor_status": "v5 group user-approved",
+  "runtime_integrated": false,
+  "step_ms": 50,
+  "complete_duration_ms": 10200,
+  "cast_duration_ms": 6200,
+  "heal_hold_ms": 5000,
+  "pulse_count": 5,
+  "fx_frames_per_cycle": 20,
+  "main_size": [
+    1200,
+    800
+  ],
+  "main_uniform_scale": 0.43,
+  "detail_size": [
+    1000,
+    760
+  ],
+  "detail_uniform_scale": 0.5,
+  "floating_prop_offset": [
+    280,
+    0
+  ],
+  "held_prop_offset": [
+    -11,
+    -2
+  ],
+  "held_prop_rotation_degrees": -4.0,
+  "prop_rotation_center": [
+    757.5,
+    1137.2
+  ],
+  "alignment": "one native canvas origin; identical scale for actor, prop and FX; translation-only actor travel",
+  "source_files": {
+    "heal0": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_00.png",
+    "heal1": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_01.png",
+    "heal2": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_01.png",
+    "heal3": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_02.png",
+    "heal4": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_03.png",
+    "heal5": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_04.png",
+    "fly0": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_00.png",
+    "fly1": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_01.png",
+    "fly2": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_02.png",
+    "fly3": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_03.png",
+    "fly4": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_04.png",
+    "fly5": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_05.png",
+    "fx0": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_00.png",
+    "fx1": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_01.png",
+    "fx2": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_02.png",
+    "fx3": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_03.png",
+    "fx4": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_04.png",
+    "fx5": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_05.png",
+    "fx6": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_06.png",
+    "fx7": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_07.png",
+    "fx8": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_08.png",
+    "fx9": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_09.png",
+    "fx10": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_10.png",
+    "fx11": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_11.png",
+    "fx12": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_12.png",
+    "fx13": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_13.png",
+    "fx14": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_14.png",
+    "fx15": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_15.png",
+    "fx16": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_16.png",
+    "fx17": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_17.png",
+    "fx18": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_18.png",
+    "fx19": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v2_19.png",
+    "prop": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_staff_prop_v1.png"
+  },
+  "source_sha256": {
+    "heal0": "c9b474c0fa02ef6a606459e9a63f77f386e0f987d3b3b05661b9e9419819ac57",
+    "heal1": "6a1b37f2ae9815f0d3e02dd7fd03085fd8906261cd4d334bd6332eecfdf3da7a",
+    "heal2": "13db171697492e4fd6303b8135084b4f7973021caf6746fd8bb24b9fa3efd8f4",
+    "heal3": "9aa1d096c274efc7bc1ed51e78d05d18af5bb608da744d02f5c1a2fb051265eb",
+    "heal4": "554f798f63b49ef9919b28a1dd49d582d81ded2aba86fb74171d9adc624accae",
+    "heal5": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "fly0": "ca6d450b5e23ff0627c260520aa3e9ea5f61542efc5525281322beed41e00254",
+    "fly1": "dd9a0b09d7daa62faecd7ed2da2481777fd48e354b8879708c6578860e37bca1",
+    "fly2": "7b166aa2665e4fc7e80f802b4570b20e255deaa40b38201ff58ab96b13ddee64",
+    "fly3": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "fly4": "f9ab55f8d338df3768a9fce5fe37e0053a37bc848d2a63dc77bd68f5f3a769ff",
+    "fly5": "663f9ed3102f14c828af8fcce3b68494167463928ba7c1f615a700a8ca4f7047",
+    "fx0": "0cea5cb8eeeb64ef1e22e68e4cef5c51c2c5cbde2dd3aa14fc235dc2f5d9597b",
+    "fx1": "e7e68ea651d1844aad9f9824d0b12e2092a319c775ce7cba6a005c87417ec822",
+    "fx2": "48dc81da22fc294b487abc3ef38cee02354b0c65982d845fc07c66312cb62814",
+    "fx3": "e05b7f602010999e832613c09cb5e4340f5829144445621684eb2b199b2af8d0",
+    "fx4": "c839f274befcfe9303fa7a3da874856417c4f3ad8625f8653c22a24eb771e0ac",
+    "fx5": "93aecbe9a5a2bbac8f95e482ec69241e7d4b52fc8cc3c69ade5ed0d15dd2f970",
+    "fx6": "811feb9996bd3d13eda4f8ef4eb64e1fc60ec2c862ed3fe8b9b82936016de98b",
+    "fx7": "f44b150c627b11d57ae054f548e4b85d2bd2365717c39b35bda44f05cbfe67f5",
+    "fx8": "f4841b60d443ca0b9b6c4ffd71c57194f745fbcdbf50cbaa55f8d48e2acf54fd",
+    "fx9": "dbb9cc5e2b88e71d3be7914201b89330a1eaccaf20b5220ecc31a1ae8f0b8d0b",
+    "fx10": "f2c8dfa477dcab5e14c28208721a8b207b7caa73db4bd332fcc10e3eb8fb00e9",
+    "fx11": "042b895ce5201d13de0810c6280255cab98c5c27c2ffe34e62e76ec2dc156f9d",
+    "fx12": "3e017f73d976a6e5fd1e1b4562a32e721cc4ec4fe789d877b5aded9488ccfd5d",
+    "fx13": "40082e555f988ebd2d36f44d9b524bfc9da7e3f2fafebefde65d440d0e946af4",
+    "fx14": "eb3e6783ca2c6ee2b17fc848d5f41ddd85f5a715b9a4e07346f2631f78a9aa50",
+    "fx15": "98e11b13e3b976b3391e0f2d640674d4c33e5bdb407b7c52077611cec808970f",
+    "fx16": "ff8bd0c98e23d5bcbf73739b36802e9ed6f53e13544098c6258b3141ad662de4",
+    "fx17": "3c696bc524ca4c2815e0c9037800fef250ca4e656a8a06fff9dc9addc5dd0e05",
+    "fx18": "1a0bacef095707e48dec693079b2c4bf1be8aa8b8ab726fad9091eefb1cff92c",
+    "fx19": "b1988c4c44721d32ed815b646b7ca19398d5323103fa7ff0dfa8fde11f794515",
+    "prop": "15a66f074c92f7ff5a9d094a4e4a8cf10950725614d7babbb6260bbbbd23b3c8"
+  },
+  "complete_preview": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_fx_v2_complete_preview.gif",
+  "cast_preview": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_fx_v2_cast_preview.gif",
+  "png_sequence": "D:\\Program Game\\Island Survival\\tmp\\crooked_witch_heal_v5_fx_v2_frames",
+  "mp4_target": "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_fx_v2_complete_preview.mp4",
+  "phases": [
+    {
+      "stage": "Ready",
+      "start_ms": 0,
+      "duration_ms": 300
+    },
+    {
+      "stage": "Take off",
+      "start_ms": 300,
+      "duration_ms": 400
+    },
+    {
+      "stage": "Fly to center",
+      "start_ms": 700,
+      "duration_ms": 1200
+    },
+    {
+      "stage": "Release staff",
+      "start_ms": 1900,
+      "duration_ms": 200
+    },
+    {
+      "stage": "Open hands",
+      "start_ms": 2100,
+      "duration_ms": 200
+    },
+    {
+      "stage": "Prepare healing",
+      "start_ms": 2300,
+      "duration_ms": 200
+    },
+    {
+      "stage": "Heal",
+      "start_ms": 2500,
+      "duration_ms": 5000
+    },
+    {
+      "stage": "Staff returns",
+      "start_ms": 7500,
+      "duration_ms": 400
+    },
+    {
+      "stage": "Regrip staff",
+      "start_ms": 7900,
+      "duration_ms": 200
+    },
+    {
+      "stage": "Fly back",
+      "start_ms": 8100,
+      "duration_ms": 1200
+    },
+    {
+      "stage": "Land",
+      "start_ms": 9300,
+      "duration_ms": 400
+    },
+    {
+      "stage": "Complete",
+      "start_ms": 9700,
+      "duration_ms": 500
+    }
+  ],
+  "timeline": [
+    {
+      "frame": 0,
+      "time_ms": 0,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 1,
+      "time_ms": 50,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 2,
+      "time_ms": 100,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 3,
+      "time_ms": 150,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 4,
+      "time_ms": 200,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 5,
+      "time_ms": 250,
+      "stage": "Ready",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 6,
+      "time_ms": 300,
+      "stage": "Take off",
+      "actor": "fly0",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 7,
+      "time_ms": 350,
+      "stage": "Take off",
+      "actor": "fly0",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 8,
+      "time_ms": 400,
+      "stage": "Take off",
+      "actor": "fly0",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 9,
+      "time_ms": 450,
+      "stage": "Take off",
+      "actor": "fly0",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 10,
+      "time_ms": 500,
+      "stage": "Take off",
+      "actor": "fly1",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 11,
+      "time_ms": 550,
+      "stage": "Take off",
+      "actor": "fly1",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 12,
+      "time_ms": 600,
+      "stage": "Take off",
+      "actor": "fly1",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 13,
+      "time_ms": 650,
+      "stage": "Take off",
+      "actor": "fly1",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 14,
+      "time_ms": 700,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        71.71102772523793,
+        205.61074119250839
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 15,
+      "time_ms": 750,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        76.81483474218633,
+        204.4496250961526
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 16,
+      "time_ms": 800,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        85.22409349774266,
+        202.53651872926355
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 17,
+      "time_ms": 850,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        96.79491924311226,
+        199.90415587219195
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 18,
+      "time_ms": 900,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        111.32933194175297,
+        196.5975769832512
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 19,
+      "time_ms": 950,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        128.5786437626905,
+        192.67335854398792
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 20,
+      "time_ms": 1000,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        148.24771419825586,
+        188.1986450198968
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 21,
+      "time_ms": 1050,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        169.99999999999997,
+        183.25
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 22,
+      "time_ms": 1100,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        193.46331352698203,
+        177.9120961726116
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 23,
+      "time_ms": 1150,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        218.23619097949586,
+        172.27626655216469
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 24,
+      "time_ms": 1200,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        243.89476155598967,
+        166.43894174601235
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 25,
+      "time_ms": 1250,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        270.0,
+        160.5
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 26,
+      "time_ms": 1300,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        296.1052384440103,
+        154.56105825398765
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 27,
+      "time_ms": 1350,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        321.76380902050414,
+        148.72373344783531
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 28,
+      "time_ms": 1400,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        346.53668647301794,
+        143.08790382738843
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 29,
+      "time_ms": 1450,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        369.99999999999994,
+        137.75
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 30,
+      "time_ms": 1500,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        391.7522858017441,
+        132.8013549801032
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 31,
+      "time_ms": 1550,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        411.4213562373095,
+        128.32664145601208
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 32,
+      "time_ms": 1600,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        428.670668058247,
+        124.40242301674881
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 33,
+      "time_ms": 1650,
+      "stage": "Fly to center",
+      "actor": "fly2",
+      "position": [
+        443.20508075688775,
+        121.09584412780804
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 34,
+      "time_ms": 1700,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        454.7759065022573,
+        118.46348127073645
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 35,
+      "time_ms": 1750,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        463.18516525781365,
+        116.5503749038474
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 36,
+      "time_ms": 1800,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        468.2889722747621,
+        115.38925880749163
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 37,
+      "time_ms": 1850,
+      "stage": "Fly to center",
+      "actor": "fly3",
+      "position": [
+        470.0,
+        115.0
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 38,
+      "time_ms": 1900,
+      "stage": "Release staff",
+      "actor": "heal0",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.25,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 39,
+      "time_ms": 1950,
+      "stage": "Release staff",
+      "actor": "heal0",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.5,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 40,
+      "time_ms": 2000,
+      "stage": "Release staff",
+      "actor": "heal0",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.75,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 41,
+      "time_ms": 2050,
+      "stage": "Release staff",
+      "actor": "heal0",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 42,
+      "time_ms": 2100,
+      "stage": "Open hands",
+      "actor": "heal1",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 43,
+      "time_ms": 2150,
+      "stage": "Open hands",
+      "actor": "heal1",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 44,
+      "time_ms": 2200,
+      "stage": "Open hands",
+      "actor": "heal1",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 45,
+      "time_ms": 2250,
+      "stage": "Open hands",
+      "actor": "heal1",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 46,
+      "time_ms": 2300,
+      "stage": "Prepare healing",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 47,
+      "time_ms": 2350,
+      "stage": "Prepare healing",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 48,
+      "time_ms": 2400,
+      "stage": "Prepare healing",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 49,
+      "time_ms": 2450,
+      "stage": "Prepare healing",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 50,
+      "time_ms": 2500,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 0,
+      "pulse": 1
+    },
+    {
+      "frame": 51,
+      "time_ms": 2550,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 1,
+      "pulse": 1
+    },
+    {
+      "frame": 52,
+      "time_ms": 2600,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 2,
+      "pulse": 1
+    },
+    {
+      "frame": 53,
+      "time_ms": 2650,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 3,
+      "pulse": 1
+    },
+    {
+      "frame": 54,
+      "time_ms": 2700,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 4,
+      "pulse": 1
+    },
+    {
+      "frame": 55,
+      "time_ms": 2750,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 5,
+      "pulse": 1
+    },
+    {
+      "frame": 56,
+      "time_ms": 2800,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 6,
+      "pulse": 1
+    },
+    {
+      "frame": 57,
+      "time_ms": 2850,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 7,
+      "pulse": 1
+    },
+    {
+      "frame": 58,
+      "time_ms": 2900,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 8,
+      "pulse": 1
+    },
+    {
+      "frame": 59,
+      "time_ms": 2950,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 9,
+      "pulse": 1
+    },
+    {
+      "frame": 60,
+      "time_ms": 3000,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 10,
+      "pulse": 1
+    },
+    {
+      "frame": 61,
+      "time_ms": 3050,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 11,
+      "pulse": 1
+    },
+    {
+      "frame": 62,
+      "time_ms": 3100,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 12,
+      "pulse": 1
+    },
+    {
+      "frame": 63,
+      "time_ms": 3150,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 13,
+      "pulse": 1
+    },
+    {
+      "frame": 64,
+      "time_ms": 3200,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 14,
+      "pulse": 1
+    },
+    {
+      "frame": 65,
+      "time_ms": 3250,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 15,
+      "pulse": 1
+    },
+    {
+      "frame": 66,
+      "time_ms": 3300,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 16,
+      "pulse": 1
+    },
+    {
+      "frame": 67,
+      "time_ms": 3350,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 17,
+      "pulse": 1
+    },
+    {
+      "frame": 68,
+      "time_ms": 3400,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 18,
+      "pulse": 1
+    },
+    {
+      "frame": 69,
+      "time_ms": 3450,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 19,
+      "pulse": 1
+    },
+    {
+      "frame": 70,
+      "time_ms": 3500,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 0,
+      "pulse": 2
+    },
+    {
+      "frame": 71,
+      "time_ms": 3550,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 1,
+      "pulse": 2
+    },
+    {
+      "frame": 72,
+      "time_ms": 3600,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 2,
+      "pulse": 2
+    },
+    {
+      "frame": 73,
+      "time_ms": 3650,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 3,
+      "pulse": 2
+    },
+    {
+      "frame": 74,
+      "time_ms": 3700,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 4,
+      "pulse": 2
+    },
+    {
+      "frame": 75,
+      "time_ms": 3750,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 5,
+      "pulse": 2
+    },
+    {
+      "frame": 76,
+      "time_ms": 3800,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 6,
+      "pulse": 2
+    },
+    {
+      "frame": 77,
+      "time_ms": 3850,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 7,
+      "pulse": 2
+    },
+    {
+      "frame": 78,
+      "time_ms": 3900,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 8,
+      "pulse": 2
+    },
+    {
+      "frame": 79,
+      "time_ms": 3950,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 9,
+      "pulse": 2
+    },
+    {
+      "frame": 80,
+      "time_ms": 4000,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 10,
+      "pulse": 2
+    },
+    {
+      "frame": 81,
+      "time_ms": 4050,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 11,
+      "pulse": 2
+    },
+    {
+      "frame": 82,
+      "time_ms": 4100,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 12,
+      "pulse": 2
+    },
+    {
+      "frame": 83,
+      "time_ms": 4150,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 13,
+      "pulse": 2
+    },
+    {
+      "frame": 84,
+      "time_ms": 4200,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 14,
+      "pulse": 2
+    },
+    {
+      "frame": 85,
+      "time_ms": 4250,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 15,
+      "pulse": 2
+    },
+    {
+      "frame": 86,
+      "time_ms": 4300,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 16,
+      "pulse": 2
+    },
+    {
+      "frame": 87,
+      "time_ms": 4350,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 17,
+      "pulse": 2
+    },
+    {
+      "frame": 88,
+      "time_ms": 4400,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 18,
+      "pulse": 2
+    },
+    {
+      "frame": 89,
+      "time_ms": 4450,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 19,
+      "pulse": 2
+    },
+    {
+      "frame": 90,
+      "time_ms": 4500,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 0,
+      "pulse": 3
+    },
+    {
+      "frame": 91,
+      "time_ms": 4550,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 1,
+      "pulse": 3
+    },
+    {
+      "frame": 92,
+      "time_ms": 4600,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 2,
+      "pulse": 3
+    },
+    {
+      "frame": 93,
+      "time_ms": 4650,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 3,
+      "pulse": 3
+    },
+    {
+      "frame": 94,
+      "time_ms": 4700,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 4,
+      "pulse": 3
+    },
+    {
+      "frame": 95,
+      "time_ms": 4750,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 5,
+      "pulse": 3
+    },
+    {
+      "frame": 96,
+      "time_ms": 4800,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 6,
+      "pulse": 3
+    },
+    {
+      "frame": 97,
+      "time_ms": 4850,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 7,
+      "pulse": 3
+    },
+    {
+      "frame": 98,
+      "time_ms": 4900,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 8,
+      "pulse": 3
+    },
+    {
+      "frame": 99,
+      "time_ms": 4950,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 9,
+      "pulse": 3
+    },
+    {
+      "frame": 100,
+      "time_ms": 5000,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 10,
+      "pulse": 3
+    },
+    {
+      "frame": 101,
+      "time_ms": 5050,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 11,
+      "pulse": 3
+    },
+    {
+      "frame": 102,
+      "time_ms": 5100,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 12,
+      "pulse": 3
+    },
+    {
+      "frame": 103,
+      "time_ms": 5150,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 13,
+      "pulse": 3
+    },
+    {
+      "frame": 104,
+      "time_ms": 5200,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 14,
+      "pulse": 3
+    },
+    {
+      "frame": 105,
+      "time_ms": 5250,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 15,
+      "pulse": 3
+    },
+    {
+      "frame": 106,
+      "time_ms": 5300,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 16,
+      "pulse": 3
+    },
+    {
+      "frame": 107,
+      "time_ms": 5350,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 17,
+      "pulse": 3
+    },
+    {
+      "frame": 108,
+      "time_ms": 5400,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 18,
+      "pulse": 3
+    },
+    {
+      "frame": 109,
+      "time_ms": 5450,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 19,
+      "pulse": 3
+    },
+    {
+      "frame": 110,
+      "time_ms": 5500,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 0,
+      "pulse": 4
+    },
+    {
+      "frame": 111,
+      "time_ms": 5550,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 1,
+      "pulse": 4
+    },
+    {
+      "frame": 112,
+      "time_ms": 5600,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 2,
+      "pulse": 4
+    },
+    {
+      "frame": 113,
+      "time_ms": 5650,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 3,
+      "pulse": 4
+    },
+    {
+      "frame": 114,
+      "time_ms": 5700,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 4,
+      "pulse": 4
+    },
+    {
+      "frame": 115,
+      "time_ms": 5750,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 5,
+      "pulse": 4
+    },
+    {
+      "frame": 116,
+      "time_ms": 5800,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 6,
+      "pulse": 4
+    },
+    {
+      "frame": 117,
+      "time_ms": 5850,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 7,
+      "pulse": 4
+    },
+    {
+      "frame": 118,
+      "time_ms": 5900,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 8,
+      "pulse": 4
+    },
+    {
+      "frame": 119,
+      "time_ms": 5950,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 9,
+      "pulse": 4
+    },
+    {
+      "frame": 120,
+      "time_ms": 6000,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 10,
+      "pulse": 4
+    },
+    {
+      "frame": 121,
+      "time_ms": 6050,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 11,
+      "pulse": 4
+    },
+    {
+      "frame": 122,
+      "time_ms": 6100,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 12,
+      "pulse": 4
+    },
+    {
+      "frame": 123,
+      "time_ms": 6150,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 13,
+      "pulse": 4
+    },
+    {
+      "frame": 124,
+      "time_ms": 6200,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 14,
+      "pulse": 4
+    },
+    {
+      "frame": 125,
+      "time_ms": 6250,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 15,
+      "pulse": 4
+    },
+    {
+      "frame": 126,
+      "time_ms": 6300,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 16,
+      "pulse": 4
+    },
+    {
+      "frame": 127,
+      "time_ms": 6350,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 17,
+      "pulse": 4
+    },
+    {
+      "frame": 128,
+      "time_ms": 6400,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 18,
+      "pulse": 4
+    },
+    {
+      "frame": 129,
+      "time_ms": 6450,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 19,
+      "pulse": 4
+    },
+    {
+      "frame": 130,
+      "time_ms": 6500,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 0,
+      "pulse": 5
+    },
+    {
+      "frame": 131,
+      "time_ms": 6550,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 1,
+      "pulse": 5
+    },
+    {
+      "frame": 132,
+      "time_ms": 6600,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 2,
+      "pulse": 5
+    },
+    {
+      "frame": 133,
+      "time_ms": 6650,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 3,
+      "pulse": 5
+    },
+    {
+      "frame": 134,
+      "time_ms": 6700,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 4,
+      "pulse": 5
+    },
+    {
+      "frame": 135,
+      "time_ms": 6750,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 5,
+      "pulse": 5
+    },
+    {
+      "frame": 136,
+      "time_ms": 6800,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 6,
+      "pulse": 5
+    },
+    {
+      "frame": 137,
+      "time_ms": 6850,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 7,
+      "pulse": 5
+    },
+    {
+      "frame": 138,
+      "time_ms": 6900,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 8,
+      "pulse": 5
+    },
+    {
+      "frame": 139,
+      "time_ms": 6950,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 9,
+      "pulse": 5
+    },
+    {
+      "frame": 140,
+      "time_ms": 7000,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 10,
+      "pulse": 5
+    },
+    {
+      "frame": 141,
+      "time_ms": 7050,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 11,
+      "pulse": 5
+    },
+    {
+      "frame": 142,
+      "time_ms": 7100,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 12,
+      "pulse": 5
+    },
+    {
+      "frame": 143,
+      "time_ms": 7150,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 13,
+      "pulse": 5
+    },
+    {
+      "frame": 144,
+      "time_ms": 7200,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 14,
+      "pulse": 5
+    },
+    {
+      "frame": 145,
+      "time_ms": 7250,
+      "stage": "Heal",
+      "actor": "heal4",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 15,
+      "pulse": 5
+    },
+    {
+      "frame": 146,
+      "time_ms": 7300,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 16,
+      "pulse": 5
+    },
+    {
+      "frame": 147,
+      "time_ms": 7350,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 17,
+      "pulse": 5
+    },
+    {
+      "frame": 148,
+      "time_ms": 7400,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 18,
+      "pulse": 5
+    },
+    {
+      "frame": 149,
+      "time_ms": 7450,
+      "stage": "Heal",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 1.0,
+      "fx": 19,
+      "pulse": 5
+    },
+    {
+      "frame": 150,
+      "time_ms": 7500,
+      "stage": "Staff returns",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.875,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 151,
+      "time_ms": 7550,
+      "stage": "Staff returns",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.75,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 152,
+      "time_ms": 7600,
+      "stage": "Staff returns",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.625,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 153,
+      "time_ms": 7650,
+      "stage": "Staff returns",
+      "actor": "heal3",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.5,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 154,
+      "time_ms": 7700,
+      "stage": "Staff returns",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.375,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 155,
+      "time_ms": 7750,
+      "stage": "Staff returns",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.25,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 156,
+      "time_ms": 7800,
+      "stage": "Staff returns",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.125,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 157,
+      "time_ms": 7850,
+      "stage": "Staff returns",
+      "actor": "heal2",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": 0.0,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 158,
+      "time_ms": 7900,
+      "stage": "Regrip staff",
+      "actor": "heal5",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 159,
+      "time_ms": 7950,
+      "stage": "Regrip staff",
+      "actor": "heal5",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 160,
+      "time_ms": 8000,
+      "stage": "Regrip staff",
+      "actor": "heal5",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 161,
+      "time_ms": 8050,
+      "stage": "Regrip staff",
+      "actor": "heal5",
+      "position": [
+        470,
+        115
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 162,
+      "time_ms": 8100,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        468.2889722747621,
+        115.38925880749163
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 163,
+      "time_ms": 8150,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        463.18516525781365,
+        116.5503749038474
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 164,
+      "time_ms": 8200,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        454.7759065022573,
+        118.46348127073645
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 165,
+      "time_ms": 8250,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        443.20508075688775,
+        121.09584412780804
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 166,
+      "time_ms": 8300,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        428.67066805824703,
+        124.4024230167488
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 167,
+      "time_ms": 8350,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        411.4213562373095,
+        128.32664145601208
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 168,
+      "time_ms": 8400,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        391.75228580174416,
+        132.8013549801032
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 169,
+      "time_ms": 8450,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        370.0,
+        137.75
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 170,
+      "time_ms": 8500,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        346.536686473018,
+        143.0879038273884
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 171,
+      "time_ms": 8550,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        321.76380902050414,
+        148.72373344783531
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 172,
+      "time_ms": 8600,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        296.1052384440103,
+        154.56105825398765
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 173,
+      "time_ms": 8650,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        270.0,
+        160.5
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 174,
+      "time_ms": 8700,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        243.89476155598973,
+        166.43894174601235
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 175,
+      "time_ms": 8750,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        218.23619097949586,
+        172.27626655216469
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 176,
+      "time_ms": 8800,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        193.46331352698206,
+        177.91209617261157
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 177,
+      "time_ms": 8850,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        170.00000000000006,
+        183.25
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 178,
+      "time_ms": 8900,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        148.2477141982559,
+        188.1986450198968
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 179,
+      "time_ms": 8950,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        128.5786437626905,
+        192.67335854398792
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 180,
+      "time_ms": 9000,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        111.32933194175303,
+        196.5975769832512
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 181,
+      "time_ms": 9050,
+      "stage": "Fly back",
+      "actor": "fly3",
+      "position": [
+        96.79491924311225,
+        199.90415587219195
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 182,
+      "time_ms": 9100,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        85.22409349774267,
+        202.53651872926355
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 183,
+      "time_ms": 9150,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        76.81483474218635,
+        204.4496250961526
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 184,
+      "time_ms": 9200,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        71.7110277252379,
+        205.61074119250839
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 185,
+      "time_ms": 9250,
+      "stage": "Fly back",
+      "actor": "fly2",
+      "position": [
+        70.0,
+        206.0
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 186,
+      "time_ms": 9300,
+      "stage": "Land",
+      "actor": "fly4",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 187,
+      "time_ms": 9350,
+      "stage": "Land",
+      "actor": "fly4",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 188,
+      "time_ms": 9400,
+      "stage": "Land",
+      "actor": "fly4",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 189,
+      "time_ms": 9450,
+      "stage": "Land",
+      "actor": "fly4",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 190,
+      "time_ms": 9500,
+      "stage": "Land",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 191,
+      "time_ms": 9550,
+      "stage": "Land",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 192,
+      "time_ms": 9600,
+      "stage": "Land",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 193,
+      "time_ms": 9650,
+      "stage": "Land",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 194,
+      "time_ms": 9700,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 195,
+      "time_ms": 9750,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 196,
+      "time_ms": 9800,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 197,
+      "time_ms": 9850,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 198,
+      "time_ms": 9900,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 199,
+      "time_ms": 9950,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 200,
+      "time_ms": 10000,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 201,
+      "time_ms": 10050,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 202,
+      "time_ms": 10100,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    },
+    {
+      "frame": 203,
+      "time_ms": 10150,
+      "stage": "Complete",
+      "actor": "fly5",
+      "position": [
+        70,
+        206
+      ],
+      "prop_float_progress": null,
+      "fx": null,
+      "pulse": null
+    }
+  ],
+  "preserved_old_sha256": {
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_staff_prop_v1.png": "15a66f074c92f7ff5a9d094a4e4a8cf10950725614d7babbb6260bbbbd23b3c8",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_staff_prop_v1_sheet.png": "d3540f73a2a6a79daf3a2d629d8179d8e5e094972ecd258fc7199ec08223e9e0",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_00.png": "7ebbb3f8408d1f791474ece7c7582bdf1e468635d5a5f5e6eafe525d7244d3c6",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_01.png": "2365119c17e2b649ebece92055b60b6c1c3e758eb32d6cda552070d3ce74134a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_02.png": "6b90dc6cee8fa3ad99d773c3cdd109bc33f76c57984c020ddea867ce01273acf",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_03.png": "ead368056cedae1c64309fcbe275d59265f1155831a6e23a0860f69e19ea5354",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_04.png": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_composite_sheet.png": "08ca3b74e59ab7288f5a37c240bea80c22a833e964a1f3fc33e3cd581bf141a0",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_manifest.json": "b355e5cb9d329aae1b1e08716f74f02460ea9085d1f499adb3a8397a57be594a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_preview.gif": "bc6a9a649c373821abd09a1c382ed14c917eb6ed9877f1554e75274dd2fe76af",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v1_sheet.png": "73feb53b99a5781ac52e9ee14b22d8a0666ce3dfd24f43e2f7c84728fd99a95a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_02.png": "9aa1d096c274efc7bc1ed51e78d05d18af5bb608da744d02f5c1a2fb051265eb",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_03.png": "554f798f63b49ef9919b28a1dd49d582d81ded2aba86fb74171d9adc624accae",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_arms_compare.png": "5340e4bb404a1d3c63ec42d248f085c566734b703d1b9393d57f364a1a54308d",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_composite_sheet.png": "7ba9aa6dae64dc0a348f9a4627ceed5463a8742d2246356a0ed082f55aab4161",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_manifest.json": "92f38b7883afe52667f63748cd2bb9eb0a3d8634e325585adea1b8f70f7db327",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_preview.gif": "0a6bb8d46618c84c783ef76a6d804c330802d05838a179d2657220465a154215",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v2_sheet.png": "50919c1a9572a9cfa4ea96e9ed9b06ed61fce4217065689faed7c84ee8f1653c",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_00.png": "c9b474c0fa02ef6a606459e9a63f77f386e0f987d3b3b05661b9e9419819ac57",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_01.png": "c00d4eac4c662656d876b35d799c63975e77cf5e51db44e216948b05f25d1777",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_composite_sheet.png": "fa385feea27d7e06c8662a79df01f9d9f583353642a1ba6f0e6a19bd64a5e091",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_manifest.json": "9daced1c573fd866c00ab282fd1e85298f2ba7d2d1ae7f61ec686a208c299a69",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_preview.gif": "8cfe1b04006dc2fd0998338165de7ae4736901b908d40ca40554984187f113aa",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_rear_hand_compare.png": "28ea85019f9da0bcef13cfaef3ad10b60c587f787d32fc587870dc8cb94358f6",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v3_sheet.png": "2484713b8e5663d4839ed76bcfcc45a19ed9aea6ab16550b211595e6757ace4e",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_01.png": "13db171697492e4fd6303b8135084b4f7973021caf6746fd8bb24b9fa3efd8f4",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_01_compare.png": "aa3a39828f3ef6ce8e1d79b5935794fac2d4921a4a922859018b8c6ca16b601a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_composite_sheet.png": "fb6b0a3bdf0552893eb76181a75c2803cf49d2ed051153e1b525572d4a7556da",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_manifest.json": "64c0a14fcba23c29e91f2b1bfb14d8975267c137f1c9c204ab5a699a582fc8a0",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_preview.gif": "72661def94183e5b9e47a38cd2f678fd507c43113694f14269ce670031368d06",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_sheet.png": "8f91825971b40cf0a128fa302b6a7c90c340d2a654eda1775576c07b14b747ad",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v4_transition.png": "3685aba5888c02bef6b5ad1f7585ef3104e9ba3f1b3e169ad86821af30e13e5f",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_01.png": "6a1b37f2ae9815f0d3e02dd7fd03085fd8906261cd4d334bd6332eecfdf3da7a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_composite_sheet.png": "6ffdb52c55cf4561feba15ca55540902301d5f145d93fe8d0baceef2f5e6078e",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_manifest.json": "7af862caf409a4f22e6bddea78cd07324cf83d16d3687a7b6bf0a4604ed5d721",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_preview.gif": "2bdf972eb7b02b3ed7bdd7babf7a5efde617c1724dfa203f9aaec3cf2d0bdd89",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_sheet.png": "5c77efe92bebf9d0aafb1161a1ecd4e7349d2e7c3c9188c9db2a4fe13352c321",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal\\crooked_witch_heal_v5_transition.png": "7123710a1d637868a86cc790b6e3ea71237ee8070b2449e36f798db20376957a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_00.png": "25d613004a5d48e324e7c66a6033749efe3115632684b2ea1a5e95419109c74f",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_01.png": "1e45ac6603c899943bb0d5c08b4672cd5c1e5c1e0fc6a5bb289977de15ba05f5",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_02.png": "7a83e1effa72d4ddf13387e0b860a5be0a9d992ad27ff23844b82d119a489fda",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_03.png": "abdc8c37d1788a74ad1ee8f39950204eeee2772da7c3dc6e8c8ca56e94121ba8",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_04.png": "34f266607da8f783615f4fa3122daee7a86c9cdfc842743ebcaf771b09e5100a",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_manifest.json": "8aaaf4ffe93a71e3065ac108e24cd32dd178e994f837ee2945eab1df5f3f46b6",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_heal_fx\\crooked_witch_heal_fx_v1_sheet.png": "af2dc1f43d072fbea392fe6b43732d895a46fd19f08e8d237e95062af0dab73b",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1.gif": "1150afc1fcf95a30532403d43ac6f8d8f83aad55a0990c79f96eddb1924555bf",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1.png": "a9a351064f0e5a8062e815f09f9ac332ff89134c5c29e1e986b91f8adca4370c",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_00.png": "ca6d450b5e23ff0627c260520aa3e9ea5f61542efc5525281322beed41e00254",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_01.png": "0d0a1c7ea2f01526f359375fbd2ac39e60fa7a6b1af3c3011a81efd06a8ac117",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_02.png": "e5bce359182f005d3eab598f0722d84a525b4ab9367892372eee5f58261a015b",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_03.png": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_04.png": "d15a03cc7a55b42e918ec5d1635b994e144a7895e9b39909aa64bdfd43d7e0b5",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_05.png": "663f9ed3102f14c828af8fcce3b68494167463928ba7c1f615a700a8ca4f7047",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_preview.mp4": "ddd0525a68e4854f1f34708ad05b9dff9ea37f478f63c223dccf2bd0a1b4b31e",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_prompts.json": "65fa159eaa83559b858a906ab0fa937f2af33a42e33566d0c6eec902925e8e1d",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_sheet.json": "1db72de22dc118feeadc139e7d921a344e3df5c9b780e327e206959740d8ba5d",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v1_sheet.png": "dc94b721064c1812d8636106d177d6549e81ac3f73410bc9a489f48cbaf961d4",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2.gif": "d6e3d1d2df0322378125db88764c6a845f21d2b36a1c43487874b9c5588db383",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2.png": "d7b7c2499c56460830523d540c98506d067056281aa9dc128f747cd2a58615dc",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_00.png": "ca6d450b5e23ff0627c260520aa3e9ea5f61542efc5525281322beed41e00254",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_01.png": "dd9a0b09d7daa62faecd7ed2da2481777fd48e354b8879708c6578860e37bca1",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_02.png": "7b166aa2665e4fc7e80f802b4570b20e255deaa40b38201ff58ab96b13ddee64",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_03.png": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_04.png": "a4be6e61042b9dceebb24ca11ae5fedaf3c735c470ab4da598093812b8ee5aa7",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_05.png": "663f9ed3102f14c828af8fcce3b68494167463928ba7c1f615a700a8ca4f7047",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_sheet.json": "3d882a81c7afe16abd364ab68507cbd7d05f439a2c7f9dc0e84f591a9d9af5f1",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v2_sheet.png": "2b59e08583b127c77203c9291f1b5e2885d91ad0f623f41fc88982e9a8b7264c",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3.gif": "9a39b23689248fe9f853e21bd3b88890f50910186d02464f560505f59dd3ef5c",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3.png": "075501dee85e8d4853cf174f0bfa60fa56b8288eda6c99ba2cdd995ba3b4b271",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_00.png": "ca6d450b5e23ff0627c260520aa3e9ea5f61542efc5525281322beed41e00254",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_01.png": "dd9a0b09d7daa62faecd7ed2da2481777fd48e354b8879708c6578860e37bca1",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_02.png": "7b166aa2665e4fc7e80f802b4570b20e255deaa40b38201ff58ab96b13ddee64",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_03.png": "1baea968331e2b5d31b763f262483acc0f5a96c1e2e113da4915976ecc401603",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_04.png": "f9ab55f8d338df3768a9fce5fe37e0053a37bc848d2a63dc77bd68f5f3a769ff",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_05.png": "663f9ed3102f14c828af8fcce3b68494167463928ba7c1f615a700a8ca4f7047",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_sheet.json": "e2d83e0065082c0cd258b93adc0300cacb64b27e296428967ce328e10425e8c0",
+    "D:\\Program Game\\Island Survival\\assets\\generated\\contact_sheets\\crooked_witch_fly\\crooked_witch_fly_v3_sheet.png": "f04e3a3bd1c85a786655b18f1a1fbaaacf76ebb0fbbcf414ae24ac8ca9cc0ae4"
+  }
+}

@@ -1,0 +1,82 @@
+{
+  "title": "Crooked Witch WALK v11 | idle-style skirt drape",
+  "columns": 2,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v11_00.png",
+        "label": "00  Right heel contact",
+        "duration": "0.24",
+        "pose_reference": "crooked_witch_walk_v10_00.png",
+        "alignment_translation_px": [
+          0,
+          -3
+        ]
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v11_01.png",
+        "label": "01  Right support / left passes",
+        "duration": "0.24",
+        "pose_reference": "crooked_witch_walk_v10_01.png",
+        "alignment_translation_px": [
+          0,
+          -1
+        ]
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v11_02.png",
+        "label": "02  Left heel contact",
+        "duration": "0.24",
+        "pose_reference": "crooked_witch_walk_v10_02.png",
+        "alignment_translation_px": [
+          0,
+          -1
+        ]
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v11_03.png",
+        "label": "03  Left support / right passes",
+        "duration": "0.24",
+        "pose_reference": "crooked_witch_walk_v10_03.png",
+        "alignment_translation_px": [
+          0,
+          -3
+        ]
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v11",
+  "status": "pending_user_review",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "visual_ground_y": 1186,
+  "frame_durations_ms": [
+    240,
+    240,
+    240,
+    240
+  ],
+  "loop": true,
+  "skirt_reference": "../crooked_witch_idle/crooked_witch_idle_v1_00.png",
+  "palette_reference": "crooked_witch_walk_v1_00.png",
+  "character_reference": "../crooked_witch_base/crooked_witch_base_v4_02.png",
+  "preview": "crooked_witch_walk_v11_preview.gif",
+  "generator": "built-in image_gen",
+  "prompt_prefix": "Precisely edit IMAGE 1, the existing right-facing Crooked Witch four-frame WALK sprite. Image 1 locks the leg pose, boot and foot locations, camera, original walk-frame-00 palette, and exact 1254x1254 RGBA placement. Image 2 is Crooked Witch IDLE 00, the reference for the DRESS DRAPE AND LEG COVERAGE ONLY, not its stance or arm pose. Image 3 is the primary approved model reference for design, character identity, face and eye, proportion and one-handed near right grip. Use the exact original plum, warm pale-gold embroidery, warm ivory-rose ruffles, lavender-silver hair, bronze staff, rich brown leather, and saturated violet crystals. The image is a close, localized redraw of the WALK front skirt only.\n\nMake the front skirt drape in front of BOTH thighs as it does in the IDLE reference: close the broad opening, continue the existing plum embroidered panels downward into an asymmetric layered drape with opaque ivory ruffles on the inside of the hem. The front layers must cover all the bare upper thighs and most of the lower thighs. Each visible leg emerges at approximately the top of its lace boot cuff, with only a small connected glimpse of skin just above the cuff, about 20–35px where visible. Leave the boots, ankles, heels and toes as legible as in IMAGE 1. Do not make a straight level short skirt, opaque curtain down over the boots, floating cutout window, or new belt, and do not let leg edges poke through the cloth. Let the cloth follow the pose and swing naturally. The length and outside contour of the long embroidered side and back train remain as in Image 1. Keep some of the ivory inner train behind the legs. The three depth planes at the leg opening are precise: first the front skirt flap covers the near RIGHT leg; then, where visible below the hem, the near RIGHT leg and its boot occlude part of the far LEFT leg in projection. The far LEFT leg is farthest, with its readable boot emerging correctly from behind. The staff is in front of all the lower layers and stays complete. Keep clean edges where skirt, boots and staff overlap, including the existing leg crossover. Never flip which limb is near.\n\nPreserve the exact same character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, foot positions and lighting as in the walking source. Right-facing three-quarter side view, full body and whole staff in frame, genuinely transparent background, no shadow, haze, colored halo, ground, text, border or scenery. No zoom, scale, stretch, mirror or crop. LOCK both boot contours and foot placements pixel-for-pixel as much as possible. Preserve their knee angles and gap above the floor, no repositioning or resculpting. Right arm is near and exactly the same one-handed wrapped grip on the staff, fingers wrap bronze haft, empty left hand stays behind. No interpenetration, fused limbs, extra feet or floating parts. No other visible changes; redraw only the skirt drape over this existing walk pose. Output exactly one full-body PNG.",
+  "frame_prompts": {
+    "00": "WALK 00. The forward boot on screen right is the NEAR RIGHT leg, right heel on baseline and toe slightly up. The FAR LEFT boot at screen left trails and touches at the toe. Lock both in place. The hem covers both thighs, with a small skin sliver at the front right boot cuff and at most a small sliver at the far boot cuff. The existing rear boot and its angled heel remain readable under the near drape.",
+    "01": "WALK 01. The NEAR RIGHT boot stays planted, flat under the hips on screen left of the lifted boot. The FAR LEFT boot is bent and visibly lifted, with its toe just to the screen right of the planted foot. Preserve this exact height, shape and depth. The right leg and boot stay visibly in front of the far left at the overlap. Drape over both thighs with the far hem tracking its higher knee. Do not let the skirt swallow the raised left boot or conceal the air gap.",
+    "02": "WALK 02. The FAR LEFT boot is the rightmost foot, heel on floor, slightly raised toe. The NEAR RIGHT boot trails to screen left, toe on floor and heel raised. Preserve Image 1’s exact positions and near right thigh in front of far left, even as the left foot extends further right. Pull the same idle-like front drape over both thighs, retaining only a thin exposed area over each cuff where it would be visible. Do not change the stride to match Idle or make the leading leg the near leg.",
+    "03": "WALK 03. The FAR LEFT boot is planted flat almost vertically below the hips to screen right of the raised boot. The NEAR RIGHT knee is bent and the lifted right shin crosses in front of the far LEFT leg, pointing back down-left toward its existing toe. Lock both boots, this overlap and the air gap exactly. Keep the front skirt above the lifted boot cuff, covering the near thigh, and cover the far thigh with a fold that stops just above its visible cuff. Do not cover up the knee bend or move the boots."
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "title": "Crooked Witch WALK v9 | open-front skirt",
+  "columns": 3,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_00.png",
+        "label": "00  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_00.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_01.png",
+        "label": "01  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_01.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_02.png",
+        "label": "02  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_02.png"
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_03.png",
+        "label": "03  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_03.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_04.png",
+        "label": "04  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_04.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v9_05.png",
+        "label": "05  /  original v8 pose",
+        "duration": "0.16",
+        "pose_reference": "crooked_witch_walk_v8_05.png"
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v9",
+  "status": "pending_user_review",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "frame_durations_ms": [
+    160,
+    160,
+    160,
+    160,
+    160,
+    160
+  ],
+  "loop": true,
+  "palette_reference": "crooked_witch_walk_v8_00.png",
+  "character_reference": "../crooked_witch_base/crooked_witch_base_v4_02.png",
+  "preview": "crooked_witch_walk_v9_preview.gif",
+  "generator": "built-in image_gen",
+  "prompt_prefix": "Precise localized edit of IMAGE 1, one existing full-body Crooked Witch WALK sprite on a 1254×1254 transparent canvas. IMAGE 1 is the actual pose and pixel placement template. The approved Crooked Witch model reference fixes character identity, eye shape, design, proportions and one-handed near RIGHT grip. Walk frame 00 fixes the exact colors and lighting: deep mulberry-plum velvet, soft warm pale gold embroidery, ivory with subtle warm mauve in the folds, silver-lilac hair, warm peach complexion, antique bronze staff, warm dark brown leather boots, and saturated violet crystals. Use the reference colors literally. Match the existing crisp detailed pixel art. Keep the head, expression, hair, torso, arms, staff, position of the whole sprite and visual scale of IMAGE 1 exactly. Match every existing visible leg pixel, boot outline, cuff, toe, heel and ground line. Do not move either foot a pixel or change the bent/straight leg angles. Never substitute another frame's pose.\n\nThe single design change is one continuous open front in the lower skirt. Preserve the waist, opaque hip coverage, asymmetric plum embroidered outer skirt, layered ivory lining, and sweeping long back and side train. Pull only the cloth hanging in FRONT of the legs outward and to the sides to expose both legs from where they emerge below the opaque upper skirt to the toes. The front opening should start at upper-to-mid thigh with pelvis completely covered, like a natural wide opening made by the existing two embroidered skirt panels. Fully reveal the visible lengths of both thighs, both lace boot cuffs, both shins and both boots, including the trailing leg. Reconstruct only the formerly cloth-hidden portions by following the exact angle and length of the existing boot and leg, connected naturally at the knee. No dangling ivory or plum panel obscures either leg below the opening; the long train and draped lining can remain behind the legs. Maintain a clear continuous outline on the near right leg where it overlaps the far left leg, using normal occlusion rather than pushing the legs apart. The staff is nearest and uninterrupted wherever it crosses the legs. The far leg may be slightly shaded, with the same material colors and thickness. Two distinct legs and two boots, no duplicated limbs, no bare pelvis, no alterations to boot height, clothing style or other details.\n\nPreserve the exact same character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, foot positions and lighting as the reference. Right-facing three-quarter side view, full body and entire weapon inside the frame, flat truly transparent background, no ground shadow, no text, no border, no scenery. Centering and framing are positioning choices only: never zoom, scale, stretch or shrink the character to fit the frame. Near arm and near leg in front; far arm and far leg behind. The RIGHT hand alone wraps fingers around the unchanged staff haft, grip and shaft length as in IMAGE 1, with the empty left hand behind on the far side. No interpenetration, no merged or extra limbs, no floating parts, no duplicated weapon. Output one full-body frame only.",
+  "frame_prompts": {
+    "00": "00, right heel strike. The near RIGHT leg reaches diagonally forward to the screen-right boot, toe lifted, heel on the existing baseline. Its existing thigh and boot stay in the same place, with shaft in front. Reveal the far LEFT trailing leg that goes back diagonally down to the existing screen-left boot, its heel lifted and toe on the floor. Keep its toe around x450; the leading toe around x890. Do not make the trailing leg straight down.",
+    "01": "01, right support. The near RIGHT support boot is flat and nearly vertical directly under the waist just left of the staff, its toe around x755 at the same baseline. The far LEFT leg remains stretched down and far back to its toe around x415, with the lifted heel and the steep downward foot angle unchanged. Reveal the hidden portion above its boot cuff, maintaining the original bent-back pose and the wide sweep of the skirt behind it.",
+    "02": "02, left heel strike. In this source, the near RIGHT thigh already peeks from the skirt and connects to the trailing boot angled down-left, toe around x545 on the baseline, heel lifted. Far LEFT leg extends diagonally forward, the rightmost boot toe around x943 is lifted above its ground-contact heel. Fully reveal both above their cuffs, near thigh partially occluding far thigh. Preserve the two boots exactly as in Image 1, including the shorter stride.",
+    "03": "03, left support. The near RIGHT trailing leg runs down-left to the boot with lifted heel and planted toe at screen-left around x510. The far LEFT boot stays forward around x910, flat on the baseline and near vertical, supporting the weight. Expose the far thigh by clearing the ivory panel over it. Preserve the exact knees and two boot angles and keep both original floor contact points.",
+    "04": "04, right leg recovering. The near RIGHT knee is bent and its boot is lifted in midair, angled back down-left, ending around x625 and at its original suspended height. This boot and leg visibly cross in front of the far LEFT supporting leg. The far LEFT boot is vertical and stays flat on the original baseline around x780. Retain their strong overlap, direction and the large air gap under the right boot, and let the hidden far thigh emerge behind the right with correct occlusion.",
+    "05": "05, forward swing. The raised screen-right boot remains raised, pointing right with sole and heel as in the source, toe around x915 and about 100 px above ground. It is the far LEFT swing leg. The near RIGHT support boot stays directly beneath the body near x650, its sole flat on the original baseline. Reveal the near support thigh above its currently mostly covered cuff. Do not lower the forward boot or move it to another position. Retain exact staff overlap and original view."
+  }
+}

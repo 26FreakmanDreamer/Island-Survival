@@ -18,11 +18,14 @@ SCREEN_W = 1280
 SCREEN_H = 720
 FIXED_DT = 1.0 / 60.0
 
-REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja", "combat")
+REQUIRED_STATS = ("lina", "warrior", "dummy", "nyra", "rhea", "eira", "crooked_witch", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja", "combat")
 REQUIRED_ATTACKS = (
     "punch_l", "punch_r", "kick_l", "kick_r", "q", "axe_slash", "dash", "axe_throw",
     "nyra_slash", "nyra_thrust", "nyra_wave", "nyra_dash",
     "rhea_slash", "rhea_throw", "rhea_poison_throw", "rhea_dash", "rhea_dash_return",
+    "eira_snowball", "eira_staff_strike", "eira_ice_shard", "eira_ice_ball",
+    "witch_lightning", "witch_lightning_forward", "witch_lightning_up",
+    "witch_lightning_down", "witch_ice_spike", "witch_potion", "witch_fire_rain",
     "veno_bite", "veno_poison", "veno_web", "bat_dive", "bat_sonic",
     "creepy_shot", "creepy_homing_shot", "creepy_roll_shot", "creepy_jump_shot",
     "mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam",
@@ -73,16 +76,30 @@ REQUIRED_SHADOW_NINJA_PHANTOM_CLIPS = (
     "phantom_pause", "phantom_shark_emerge", "phantom_shark_charge",
     "phantom_shark_recover", "revert",
 )
+REQUIRED_EIRA_CLIPS = (
+    "idle", "walk", "jump", "crouch", "climb", "hurt", "stun", "ko",
+    "snowball", "staff_strike", "ice_shard",
+    "e_raise", "e_hold", "e_release", "e_recover",
+)
+REQUIRED_CROOKED_WITCH_CLIPS = (
+    "idle", "walk", "fly_takeoff", "fly_loop", "fly_land",
+    "teleport_out", "teleport_in", "hurt", "ko", "heal",
+    "lightning_forward", "lightning_up", "lightning_down",
+    "ice_spike", "potion", "fire_rain_intro", "fire_rain_hold",
+)
 REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
-ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
-PLAYABLE_CLASSES = ("lina", "nyra", "rhea")
-ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
+ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "eira", "crooked_witch", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
+PLAYABLE_CLASSES = ("lina", "nyra", "rhea", "eira")
+ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "eira", "crooked_witch", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
 PROJECTILE_KINDS = (
     "q_wave", "axe", "sword_wave", "venom_glob", "web_bolt", "sonic_wave",
     "rhea_shuriken", "rhea_poison_shuriken",
+    "eira_snowball", "eira_ice_shard",
+    "witch_lightning_forward", "witch_lightning_up", "witch_lightning_down",
+    "witch_potion",
     "creepy_bullet", "creepy_homing_bullet", "creepy_down_bullet",
     "shadow_kunai", "shadow_phantom_bind", "shadow_phantom_flash",
 )
@@ -368,6 +385,41 @@ class JsonStore:
         ):
             if key not in shadow.get("phantom", {}):
                 raise ValueError(f"stats.json shadow_ninja.phantom missing '{key}'")
+        eira = stats.get("eira", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "freeze", "ice_ball", "e_cast",
+        ):
+            if key not in eira:
+                raise ValueError(f"stats.json eira missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in eira.get("move", {}):
+                raise ValueError(f"stats.json eira.move missing '{key}'")
+        for key in ("q", "e"):
+            if key not in eira.get("cooldowns", {}):
+                raise ValueError(f"stats.json eira.cooldowns missing '{key}'")
+        for key in ("standing", "crouching"):
+            if key not in eira.get("hurtbox", {}):
+                raise ValueError(f"stats.json eira.hurtbox missing '{key}'")
+        witch = stats.get("crooked_witch", {})
+        for key in (
+            "hp", "basic_atk", "extra_atk", "stage_body_width", "move",
+            "cooldowns", "hurtbox", "teleport", "heal", "lightning",
+            "ice_spike", "potion", "fire_rain", "ai",
+        ):
+            if key not in witch:
+                raise ValueError(f"stats.json crooked_witch missing '{key}'")
+        for key in ("walk", "jump_v", "gravity"):
+            if key not in witch.get("move", {}):
+                raise ValueError(f"stats.json crooked_witch.move missing '{key}'")
+        for key in ("lightning", "ice_spike", "potion", "fire_rain"):
+            if key not in witch.get("cooldowns", {}):
+                raise ValueError(
+                    f"stats.json crooked_witch.cooldowns missing '{key}'"
+                )
+        for key in ("standing", "crouching"):
+            if key not in witch.get("hurtbox", {}):
+                raise ValueError(f"stats.json crooked_witch.hurtbox missing '{key}'")
         dummy = stats.get("dummy", {})
         for key in ("hp", "invincible", "hurtbox", "move"):
             if key not in dummy:
@@ -533,8 +585,31 @@ class JsonStore:
                 f"shadow_ninja_phantom flash phases total {flash_total:.3f} "
                 "does not match attacks.json shadow_phantom_flash duration"
             )
+        eira_clips = animations.get("eira_clips", {})
+        for key in REQUIRED_EIRA_CLIPS:
+            if key not in eira_clips:
+                raise ValueError(f"animations.json missing eira clip '{key}'")
+        for key, clip in eira_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json eira clip '{key}' frame/duration count mismatch"
+                )
+        witch_clips = animations.get("crooked_witch_clips", {})
+        for key in REQUIRED_CROOKED_WITCH_CLIPS:
+            if key not in witch_clips:
+                raise ValueError(
+                    f"animations.json missing crooked_witch clip '{key}'"
+                )
+        for key, clip in witch_clips.items():
+            if len(clip.get("frames", [])) != len(clip.get("durations", [])):
+                raise ValueError(
+                    f"animations.json crooked_witch clip '{key}' "
+                    "frame/duration count mismatch"
+                )
         for key in (
             "nyra_frame_size", "nyra_pivot", "rhea_frame_size", "rhea_pivot",
+            "eira_frame_size", "eira_pivot",
+            "crooked_witch_frame_size", "crooked_witch_pivot",
             "veno_frame_size", "veno_pivot",
             "bat_frame_size", "bat_pivot",
             "creepy_shooter_frame_size", "creepy_shooter_pivot",
@@ -747,3 +822,19 @@ class JsonStore:
                 raise ValueError(
                     f"debug.json stage.ladders[{index}] top_y must be above bottom_y"
                 )
+        if "teleport_points" in stage:
+            points = stage["teleport_points"]
+            if not isinstance(points, list):
+                raise ValueError(
+                    "debug.json stage.teleport_points must be a list"
+                )
+            for index, point in enumerate(points):
+                if not (
+                    isinstance(point, (list, tuple))
+                    and len(point) == 2
+                    and all(is_number(item) for item in point)
+                ):
+                    raise ValueError(
+                        f"debug.json stage.teleport_points[{index}] "
+                        "must be two numbers"
+                    )

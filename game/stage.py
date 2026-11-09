@@ -57,6 +57,10 @@ class Stage:
             for key, value in stage_cfg.items()
             if key.endswith("_spawn")
         }
+        self.teleport_points = [
+            (float(point[0]), float(point[1]))
+            for point in stage_cfg.get("teleport_points", [])
+        ]
         self.player_spawn = self.spawns["player_spawn"]
         self.dummy_spawn = self.spawns["dummy_spawn"]
         self.warrior_spawn = self.spawns["warrior_spawn"]
@@ -169,6 +173,21 @@ class Stage:
         for rect in self.platforms:
             if rect.left <= x <= rect.right and abs(feet_y - rect.top) <= 1.0:
                 return float(rect.top)
+        return None
+
+    def surface_at_feet(self, x: float, feet_y: float) -> float | None:
+        """Grounded surface under a target, or None while airborne.
+
+        Used by skills that need a same-height ground/platform point (the
+        Witch's ice spike). A target standing on a platform returns that
+        platform top; a target on the arena floor returns ``ground_y``;
+        an airborne target has no legal surface.
+        """
+        platform_top = self.platform_top_at(x, feet_y)
+        if platform_top is not None:
+            return platform_top
+        if abs(feet_y - self.ground_y) <= 1.0:
+            return self.ground_y
         return None
 
     def segment_hits_blocks(

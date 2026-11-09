@@ -1,0 +1,64 @@
+{
+  "character": "nyra",
+  "animation": "walk",
+  "version": 3,
+  "canvas": [
+    384,
+    384
+  ],
+  "pivot": [
+    192,
+    372
+  ],
+  "loop": true,
+  "references": [
+    "Image/Character/nyra-steel-256.png",
+    "assets/generated/base/nyra_side_base.png",
+    "assets/frames/nyra/walk",
+    "assets/generated/contact_sheets/nyra_walk/nyra_walk_v2_sheet.png",
+    "assets/generated/contact_sheets/lina_walk/lina_walk_v1_sheet.png"
+  ],
+  "review_frames": [
+    {
+      "file": "nyra_walk_v3_00.png",
+      "duration_ms": 50,
+      "phase": "right_heel_contact"
+    },
+    {
+      "file": "nyra_walk_v3_01.png",
+      "duration_ms": 40,
+      "phase": "right_support_left_toe_off"
+    },
+    {
+      "file": "nyra_walk_v3_02.png",
+      "duration_ms": 50,
+      "phase": "right_support_left_passing"
+    },
+    {
+      "file": "nyra_walk_v3_03.png",
+      "duration_ms": 50,
+      "phase": "left_heel_contact"
+    },
+    {
+      "file": "nyra_walk_v3_04.png",
+      "duration_ms": 40,
+      "phase": "left_support_right_toe_off"
+    },
+    {
+      "file": "nyra_walk_v3_05.png",
+      "duration_ms": 50,
+      "phase": "left_support_right_passing"
+    }
+  ],
+  "preview": "nyra_walk_v3_preview.gif",
+  "contact_sheet": "nyra_walk_v3_sheet.png",
+  "reference_cycle_duration_ms": 280,
+  "generation": {
+    "tool": "ImageGen",
+    "shared_import_scale": 0.47450111,
+    "prompts": [
+      "Create an animator-ready transparent PNG sprite atlas of exactly SIX original full-body Nyra Steel walking frames. Image 1 is the authoritative Nyra pixel-art walk design and its two alternating contacts, A and B. Match image 1 exactly for costume, blue-silver sword, right-facing three-quarter camera, head/body proportions, near RIGHT arm and hand, sword grip, lighting, silhouette scale and palette. Use a 3-column by 2-row regular invisible grid with wide margins between sprites and same pelvis x, head height and ground line within each cell. Read left-to-right then top-to-bottom. Same full-body scale in every cell; all complete sword tips, head and both feet must fit in their own cell. Do not resize or mirror the character to fit. Actual transparent alpha, no text, no dividers, no background, no shadow, no colored halo, no effects. The single horizontal cool-blue-edge silver sword is held in exactly the same place one-handed by her near RIGHT gloved hand at the waist, screen-right blade and fingers wrapped around the handle just behind the guard. Far left arm is behind the torso. Sword in front of the skirt and never intersects clothing or legs. Anatomy is consistent: the near RIGHT thigh always has the silver-and-blue dangling charm and is drawn IN FRONT when overlapping the far LEFT leg; the far left thigh never has that charm. Visibly connect the charm thigh to the correct boot. Both boots point screen right. Only change the walking leg pose in each sprite. Top left: copy CONTACT A of image 1, the charm RIGHT leg reaches diagonally forward and right heel contacts, unmarked left leg extends backward. Top middle: planted RIGHT boot with charm thigh vertical under the body, far LEFT knee bends, far left boot lifts off the ground behind. Top right: RIGHT boot still planted, far LEFT knee passes forward with its left boot now close to the planted boot and slightly airborne; far knee visible just ahead of near knee. Bottom left: copy CONTACT B of image 1, the charm RIGHT leg reaches backward toward screen left, and unmarked LEFT leg reaches forward toward screen right with left heel on baseline. Bottom middle: unmarked LEFT boot is vertical and planted below pelvis, the marked near RIGHT thigh bends back and the clearly visible near right boot lifts behind; the tag is attached to the thigh leading to that RAISED boot. Bottom right: unmarked LEFT boot still planted, near RIGHT knee with charm passes forward across it, right foot swings through above ground close to planted boot. Natural measured strides, fully articulated legs, same anatomical length and boot size. Keep hair, face, chest, shoulders and sword aligned across all six frames. No merged limbs, interpenetration, detached parts or additional weapons. Image 2 is Lina, a gait-only guide: copy the same phase and leg ownership per cell, ignoring her costume, hair, arms and all graphic markings. Keep only Nyra in the output. Render the six frames in a 3\u00d72 grid even though the gait guide is a single row.",
+      "Redraw the full six-frame Nyra Steel walking atlas, precisely matching image 1. Image 1 is the exact 1536 by 1024 atlas layout, six leg poses, pixels-per-character, anatomy and art to preserve. Keep all six pose silhouettes and their placement, head height, right-facing camera, hair, outfit, skirt, color, hands, perspective, body size, foot baseline and original horizontal grip of image 1. Image 2 is the previous sprite set and is the absolute reference for the sword's length relative to body height. In image 1 the sword ended too early. For every one of the six cells, render the same sword as image 2: the pommel-to-tip horizontal span is 77 percent of the standing height. In this 512\u00d7512 cell each sprite is about 451 pixels tall and the sword should be about 346 pixels wide. The sword pommel stays at local x\u2248110 and the tip extends to local x\u2248456 in every cell. Keep the existing pommel, handle thickness, wrapped grip position, ornate guard, blade thickness, long narrow blade, cool blue inlay, silver edge, angle and taper. Preserve the full weapon and retain generous margin at the cell edges. Right hand alone wraps the same handle just behind the guard, with far left arm behind the torso. Preserve exactly the same leg artwork in all six cells, especially the blue-silver charm identifying the anatomical near right thigh on the grounded/forward leg in the top row and on the trailing/airborne leg in the bottom row. Top left right heel contact, top middle far left foot lifts behind, top right far left foot passes ahead. Bottom left left heel contact, bottom middle near right foot lifts behind, bottom right near right foot passes ahead. Right near thigh layers in front of the far thigh. Real alpha outside the full body and sword, no shadow, words, border, glow, cropped parts, scenery, merged limbs, interpenetration, floating parts or second sword. No zoom, scale, mirror, stretch, or shift of the sprites. Keep the sprites in the same invisible three-column by two-row grid."
+    ]
+  }
+}

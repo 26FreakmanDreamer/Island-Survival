@@ -10,9 +10,11 @@
 
 ## 角色动画素材
 
-- 今后新绘制角色动画时，单帧图、效果图、预览 GIF 等输出文件默认放在 `assets/generated/contact_sheets/`。本次已制作的人物素材保留现有位置，不为套用这条新规则而搬迁。除非用户另行指定，先在默认目录交付素材与预览；只有用户明确要求接入游戏时，才处理游戏运行用的帧目录。
-- 命名前先查看该目录中同一角色、同一动作的现有文件，沿用其角色名、动作名、帧号、版本号及用途后缀的写法。例如 `nyra_walk_v1.png`、`warrior_dash_v4.png`、`warrior_dash_candidates.png`。新版本使用新的版本号或清楚的用途后缀，不覆盖已有版本。
+- 新绘制角色动画时，为每个动作建立一个 `assets/generated/contact_sheets/<name>_<animation>/` 目录。将该动作的单帧图、特效、接触表、预览和清单都放在此目录，角色名和动作名沿用项目现有写法。
+- 制作前查看同动作已有版本。首版文件以 `<name>_<animation>_v1` 开头，后续依次使用 `v2`、`v3` 等。所有版本共用该动作目录，保留旧版本。按需在版本号后追加帧号或用途，例如 `eira_idle_v1_00.png`、`eira_idle_v1_sheet.png`、`eira_idle_v1_preview.gif`。
+- 既有素材保留原位置。用户指定其他交付位置时，按该次要求归档。接入游戏时另按用户授权处理运行用帧目录。
 - 角色形象来源和绘制约束遵循 `AGENTS.md`；每次生成图像前读取 `docs/IMAGE_GENERATION_RULES.md`。
+- Eira Frostveil 已确认侧身 2 和背身 1。普通动作采用 `assets/generated/base/eira_side_base.png`，攀爬采用 `assets/generated/base/eira_back_base.png`。攀爬使用已通过的 4 帧 v3，落地直接衔接待机或行走。制作参数见 [Eira Frostveil 动画方案](docs/EIRA_FROSTVEIL_ANIMATION_DESIGN.md)。
 - Crooked Witch 已确认 base 为 `assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png`；后续图像均以此为主要参考，保持该图眼形及右手近侧持杖关系。Base 各版本统一保存在 `crooked_witch_base/`，只以文件名版本号区分，不新建版本文件夹。完整动画方案见 `docs/CROOKED_WITCH_ANIMATION_DESIGN.md`。
 
 ## UI 素材

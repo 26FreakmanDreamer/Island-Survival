@@ -150,7 +150,15 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         event.get("bonus_vs_poison_source")
     ):
         damage += target.max_hp * poison_bonus_pct
+    if target.statuses.has("freeze"):
+        damage += getattr(attacker, "atk", 0.0) * float(
+            event.get("bonus_vs_frozen_atk_mult", 0.0)
+        )
+        damage += getattr(attacker, "extra_atk", 0.0) * float(
+            event.get("bonus_vs_frozen_extra_mult", 0.0)
+        )
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
+    damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
 
     knockback = float(event.get("knockback", 0.0))
     hitstun = float(attack.get("hitstun", scene.store.stats["combat"]["hitstun"]))
@@ -196,6 +204,8 @@ def resolve_projectile_hit(scene, projectile) -> None:
     if target is None or target.invincible or target.hp <= 0.0:
         return
 
+    was_frozen = target.statuses.has("freeze")
+    projectile.hit_target_was_frozen = was_frozen
     damage = projectile.damage
     max_hp_pct = float(getattr(projectile, "bonus_target_max_hp_pct", 0.0))
     if max_hp_pct > 0.0:
@@ -207,7 +217,15 @@ def resolve_projectile_hit(scene, projectile) -> None:
         getattr(projectile, "bonus_vs_poison_source", None)
     ):
         damage += target.max_hp * poison_bonus_pct
+    if was_frozen:
+        damage += getattr(projectile.owner, "atk", 0.0) * float(
+            getattr(projectile, "bonus_vs_frozen_atk_mult", 0.0)
+        )
+        damage += getattr(projectile.owner, "extra_atk", 0.0) * float(
+            getattr(projectile, "bonus_vs_frozen_extra_mult", 0.0)
+        )
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
+    damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
     if damage > 0.0:
         target.take_hit(damage, projectile.knockback, projectile.hitstun, projectile.direction)
         hit_color = getattr(projectile, "hit_color", (120, 230, 255))
@@ -224,3 +242,48 @@ def resolve_projectile_hit(scene, projectile) -> None:
         "knockback": projectile.knockback,
         "time": scene.sim_time,
     }
+
+
+def apply_direct_damage(
+    scene,
+    attacker,
+    target,
+    damage: float,
+    knockback: float = 0.0,
+    hitstun: float | None = None,
+    direction: int | None = None,
+    launch: float = 0.0,
+    hit_fx: str | None = None,
+    hitstop: float = 0.0,
+) -> float:
+    """Hazard damage: apply mitigation and vulnerability, then take_hit.
+
+    Hazards such as Eira's ice ball and the Witch's ice spike do not own a
+    projectile, so they use this helper instead of ``resolve_projectile_hit``.
+    The caller is responsible for any frozen-target bonus before calling.
+    """
+    if target is None or target.invincible or target.hp <= 0.0:
+        return 0.0
+    damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
+    damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
+    if damage <= 0.0:
+        return 0.0
+    if hitstun is None:
+        hitstun = float(scene.store.stats["combat"]["hitstun"])
+    if direction is None:
+        direction = attacker.facing if attacker is not None else 1
+    target.take_hit(damage, knockback, hitstun, direction, launch=launch)
+    scene.particles.emit_hit(target.x, target.y - 120, (180, 235, 255))
+    if hit_fx:
+        scene.spawn_hit_fx(hit_fx, attacker, target, {})
+    if hitstop > 0.0:
+        scene.hitstop = max(scene.hitstop, hitstop)
+    scene.last_hit = {
+        "attacker": getattr(attacker, "name", "Hazard"),
+        "target": getattr(target, "name", "Enemy"),
+        "damage": damage,
+        "bonus": 0.0,
+        "knockback": knockback,
+        "time": scene.sim_time,
+    }
+    return damage

@@ -1,0 +1,90 @@
+{
+  "title": "Crooked Witch WALK v12 | rear skirt lining",
+  "columns": 2,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v12_00.png",
+        "label": "00  Right heel contact",
+        "duration": "0.24",
+        "edit_reference": "crooked_witch_walk_v11_00.png",
+        "pose_reference": "crooked_witch_walk_v10_00.png",
+        "alignment_translation_px": [
+          0,
+          -2
+        ]
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v12_01.png",
+        "label": "01  Right support / left passes",
+        "duration": "0.24",
+        "edit_reference": "crooked_witch_walk_v11_01.png",
+        "pose_reference": "crooked_witch_walk_v10_01.png",
+        "alignment_translation_px": [
+          0,
+          -2
+        ]
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v12_02.png",
+        "label": "02  Left heel contact",
+        "duration": "0.24",
+        "edit_reference": "crooked_witch_walk_v11_02.png",
+        "pose_reference": "crooked_witch_walk_v10_02.png",
+        "alignment_translation_px": [
+          0,
+          -3
+        ]
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v12_03.png",
+        "label": "03  Left support / right passes",
+        "duration": "0.24",
+        "edit_reference": "crooked_witch_walk_v11_03.png",
+        "pose_reference": "crooked_witch_walk_v10_03.png",
+        "alignment_translation_px": [
+          0,
+          -1
+        ]
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v12",
+  "status": "pending_user_review",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "visual_ground_y": 1186,
+  "frame_durations_ms": [
+    240,
+    240,
+    240,
+    240
+  ],
+  "loop": true,
+  "coverage_reference": "crooked_witch_walk_v11_00.png",
+  "palette_reference": "crooked_witch_walk_v1_00.png",
+  "character_reference": "../crooked_witch_base/crooked_witch_base_v4_02.png",
+  "preview": "crooked_witch_walk_v12_preview.gif",
+  "generator": "built-in image_gen",
+  "prompt_prefix": "Precisely edit IMAGE 1, the matching Crooked Witch WALK frame v11. Preserve the exact 1254x1254 transparent canvas, original walk-frame-00 palette, character and pose, boots and floor positions, camera, and existing purple/gold design. The v10 reference shows the SAME frame and same legs with an unobstructed opening, so copy its precise leg positions, perspective and how the white train runs BEHIND the legs. The v11 frame 00 reference is for the modest degree of thigh coverage only, not its stance or its middle flap shape. Approved base v4_02 is the primary model reference for the exact character identity, eyes, anatomy, proportions, and right-hand grip. Retain the same deep plum, pale warm gold, warm ivory with mauve shadows, silver-lilac, brown leather and violet palette.\n\nThis is a local skirt-layering correction. Recut only the lower edges of the FRONT purple panels and their own small white trim so they stay over the tops of the thighs, with the slight opening level of v11 00. They should sweep sideways onto the outer skirt, leaving a clean asymmetrical open window for BOTH legs. Reveal a small readable strip of lower thigh just ABOVE each lace boot cuff wherever visible, roughly 35–60px, not the upper thighs or pelvis. No purple panel or front ivory ruffle hanging DOWN INTO THE SPACE BETWEEN THE LEGS. The front panel ends higher at the center, above the top edges of the visible legs. Remove the low central scalloped tongue/tail that appears to hang in front of or between the boots. From the boot cuffs down, the only fabric in the gap is a continuous soft white ivory rear underskirt, BEHIND BOTH LEGS, with the knees, shins and boots visibly IN FRONT of it. Give the rear cloth long smooth shaded folds, as in v10, without an isolated white ribbon floating in front or between the legs. Rear fabric remains attached to the long outer train and ends as a natural ruffled hem above the floor, never becoming the canvas background. Keep the established length and outline of the long side and back train. Only an ordinary narrow skirt overlap near the very top of each leg. Boots, cuff, knees, shin curves, heels and toes are in exactly the same positions as in the pose reference. The near RIGHT leg still occludes the far LEFT leg where the existing pose overlaps.\n\nPreserve the exact character identity, body height, head size, shoulder width, limb proportions, weapon size, camera distance, ground line and lighting as in IMAGE 1. Maintain the fixed right-facing three-quarter side view, full body and whole staff inside the frame, clean true transparent background outside the silhouette, no ground shadow, haze, text or scenery. No resizing, stretching, mirroring or cropping. The same near RIGHT hand wraps around the same staff at the same location, empty left hand behind at the far hip, unbroken shaft in front of both legs and the skirt. No interpenetration, merged limbs, floating pieces or extra objects. No other changes to the sprite. Output one 1254x1254 RGBA image.",
+  "frame_prompts": {
+    "00": "Frame 00, right heel contact. Image 2 is v10 00 for the original unobstructed boot pose and rear folds. Image 3 is the approved base. Preserve Image 1's amount of overall coverage; tuck the one plum and white front tongue out of the leg opening at center. Add the missing ivory REAR underskirt visibly BEHIND the forward right boot in the LOWER-RIGHT corner of the dress: show a small broad white ruffled panel past the outer/right contour of the boot's lower shin and ankle, from about x810 to x895 and down close to y1155–1175. The white fabric must be connected to the rest of the rear train and sit behind the boot, so its boundary stops cleanly at the brown boot outline and reappears to the right. Preserve the boot's toe and heel on top of the fabric, with the toe still at the same screen-right position and the heel at its original floor contact. The left boot stays at screen-left, heel raised, toe grounded. No new front fabric covering either boot.",
+    "01": "Frame 01, right support with left passing. Image 2 is v10 01 for exact original leg/boot positions. Image 3 is v11 00 for degree of coverage only. Image 4 is the approved base. Raise the front ivory scallops slightly away from both boot cuffs so the right knee and lifted left knee read cleanly with a small area of skin above each cuff. The planted near right boot and lifted far left boot are exactly as shown, near right clearly in front when they overlap. Stop the front skirt before the space between the legs. Where there is visible cloth in the gap, use the continuous ivory REAR panel receding behind both boots. Leave the full tip and heel of the raised left boot legible and at the exact original height.",
+    "02": "Frame 02, far left heel contact. Image 2 is v10 02 for the original clear rear folds and exact limb pose. Image 3 is v11 00 for degree of coverage only. Image 4 is approved base. Remove the hanging foreground ivory scalloped column that descends into the middle of the stride in Image 1. Lift the central front hem to expose a short segment of BOTH lower thighs and show the boots unobstructed, retaining cloth over the upper thighs. Between the two leg contours, show only the single long ivory rear petticoat flowing BEHIND both legs, with no in-front embroidered panel or a white flap dropping into the gap. The near RIGHT trailing boot angles down-left to screen-left, heel up, toe grounded. The far LEFT boot angles forward to screen-right, toe up and heel grounded, and its thigh is behind the near RIGHT thigh. Both shoes remain exactly in position.",
+    "03": "Frame 03, left support with right passing. Image 2 is v10 03 for exact knee overlap and boot pose. Image 3 is v11 00 for degree of coverage only. Image 4 is the approved base. Raise and pull back the central front ruffles a little to reveal the original lace cuff and a short piece of knee/lower thigh above the lifted near RIGHT boot. Keep the far LEFT support leg emerging behind it, with its cuff and boot outline as in Image 2. The original bent right boot overlaps in front of the straight left, unbroken right contour, same sole gap and toe position. No front ivory fold or embroidered flap between the legs. Any visible cloth seen in the gap or behind the lifted boot is the same rear white skirt below and behind both, following the original V10 folds. Maintain the small upper thigh covering from the v11 coverage reference, with room to see both legs clearly."
+  },
+  "retry_prompts": {
+    "00": "Precisely edit Image 1, the actual Crooked Witch walk sprite. Image 2 is v11_00 ONLY to gauge the modest amount of leg shown. Do not copy its stance or its dangling front flap. Image 3 is the primary approved character model for identity, eye, proportions and right-handed staff grip. Keep the same pixel-art style, palette and lighting from Image 1 and all areas except the small upper skirt hem adjustment. The lower gap between the two legs is filled ONLY by continuous warm-white rear skirt lining behind both. No front skirt ruffles, pale or purple, in that gap. No change to shoes, stance, viewpoint, body, camera or size. 1254x1254 RGBA, full-body right-facing 3/4, clean genuinely transparent exterior, no haze or shadow, no text or border. Preserve the exact character identity, body height, head size, shoulder width, limb proportions, weapon size, lighting and foot positions. Never mirror, resize, zoom or crop. Near right arm alone wraps around the same foreground staff; the far left hand remains behind, empty. Near right leg remains in front of far left wherever they overlap. No interpenetration, merged or extra limbs, floating parts, duplicated weapon. The entire unbroken staff stays in front. Output a single full-length sprite.\n\nWALK 00, near right heel strike. Keep the rear lining already visible on the screen-right side of the right boot, and ensure its lowest ivory fold is clearly BEHIND the ankle, not laying over its instep or lacing. The brown leather's continuous outer outline cleanly occludes the ivory edge and the ivory panel extends a little beyond the boot's screen-right shin edge, connected to the outer train. Keep the original heel contact and both boots in exactly the same place. Lower the two upper front skirt edges around 30–45px over the upper thighs, with a slightly arched hem just above the cuffs. The remaining warm peach sliver on the near leading right leg should be small, about 40–60px above the cuff; the far trailing left leg may show even less. Do not extend any embroidered or front white tongue down into the space between the legs.",
+    "02": "Precisely edit Image 1, the actual Crooked Witch walk sprite. Image 2 is v11_00 ONLY to gauge the modest amount of leg shown. Do not copy its stance or its dangling front flap. Image 3 is the primary approved character model for identity, eye, proportions and right-handed staff grip. Keep the same pixel-art style, palette and lighting from Image 1 and all areas except the small upper skirt hem adjustment. The lower gap between the two legs is filled ONLY by continuous warm-white rear skirt lining behind both. No front skirt ruffles, pale or purple, in that gap. No change to shoes, stance, viewpoint, body, camera or size. 1254x1254 RGBA, full-body right-facing 3/4, clean genuinely transparent exterior, no haze or shadow, no text or border. Preserve the exact character identity, body height, head size, shoulder width, limb proportions, weapon size, lighting and foot positions. Never mirror, resize, zoom or crop. Near right arm alone wraps around the same foreground staff; the far left hand remains behind, empty. Near right leg remains in front of far left wherever they overlap. No interpenetration, merged or extra limbs, floating parts, duplicated weapon. The entire unbroken staff stays in front. Output a single full-length sprite.\n\nWALK 02, far left heel strike. The thighs are currently too exposed in Image 1. Extend the top purple embroidered flap a little further down over the two upper thighs with a subtle ivory edge, roughly 70–85px lower, so only a brief 45–60px sliver of each lower thigh remains at the cuff, similar to Image 2. Keep the central arc high and end the front drape above the cuff line, no descending panel in the gap. Every fold between legs is the existing white rear petticoat behind both. Keep the same near RIGHT trailing thigh on screen-left in front of the far LEFT advancing thigh. Right boot trails, toe touching, far left boot on the screen-right remains leading, heel touching and toe up. Both boot shapes and positions stay identical to Image 1."
+  }
+}

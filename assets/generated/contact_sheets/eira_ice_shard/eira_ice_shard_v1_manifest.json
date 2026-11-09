@@ -1,0 +1,148 @@
+{
+  "character": "Eira Frostveil",
+  "animation": "ice_shard",
+  "version": 1,
+  "purpose": "art review",
+  "direction": "right",
+  "reference": "assets/generated/base/eira_side_base.png",
+  "character_art": "ChatGPT ImageGen",
+  "canvas_px": [
+    627,
+    627
+  ],
+  "pivot_px": [
+    323,
+    574
+  ],
+  "duration_ms": 560,
+  "frames": [
+    {
+      "file": "eira_ice_shard_v1_00.png",
+      "pose": "draw back",
+      "start_ms": 0,
+      "duration_ms": 120
+    },
+    {
+      "file": "eira_ice_shard_v1_01.png",
+      "pose": "lift and charge",
+      "start_ms": 120,
+      "duration_ms": 100
+    },
+    {
+      "file": "eira_ice_shard_v1_02.png",
+      "pose": "release",
+      "start_ms": 220,
+      "duration_ms": 80
+    },
+    {
+      "file": "eira_ice_shard_v1_03.png",
+      "pose": "follow through",
+      "start_ms": 300,
+      "duration_ms": 80
+    },
+    {
+      "file": "eira_ice_shard_v1_04.png",
+      "pose": "recover",
+      "start_ms": 380,
+      "duration_ms": 180
+    }
+  ],
+  "release": {
+    "frame": 2,
+    "time_ms": 220,
+    "crystal_px": [
+      448,
+      209
+    ],
+    "lane": "high",
+    "direction": "horizontal"
+  },
+  "effects": {
+    "charge": {
+      "start_ms": 120,
+      "crystal_px": [
+        375,
+        150
+      ],
+      "files": [
+        "eira_ice_shard_v1_fx_charge_00.png",
+        "eira_ice_shard_v1_fx_charge_01.png",
+        "eira_ice_shard_v1_fx_charge_02.png"
+      ],
+      "pivot_px": [
+        84,
+        112
+      ],
+      "frame_durations_ms": [
+        30,
+        30,
+        40
+      ]
+    },
+    "release": {
+      "start_ms": 220,
+      "files": [
+        "eira_ice_shard_v1_fx_release_00.png",
+        "eira_ice_shard_v1_fx_release_01.png"
+      ],
+      "pivot_px": [
+        92,
+        68
+      ],
+      "frame_durations_ms": [
+        30,
+        30
+      ]
+    },
+    "projectile": {
+      "file": "eira_ice_shard_v1_fx_projectile.png",
+      "pivot_px": [
+        170,
+        56
+      ],
+      "tip_px": [
+        242,
+        56
+      ]
+    },
+    "hit": {
+      "files": [
+        "eira_ice_shard_v1_fx_hit_00.png",
+        "eira_ice_shard_v1_fx_hit_01.png",
+        "eira_ice_shard_v1_fx_hit_02.png",
+        "eira_ice_shard_v1_fx_hit_03.png"
+      ],
+      "pivot_px": [
+        108,
+        96
+      ],
+      "frame_durations_ms": [
+        40,
+        50,
+        60,
+        70
+      ]
+    },
+    "frozen_hit": {
+      "files": [
+        "eira_ice_shard_v1_fx_frozen_hit_00.png",
+        "eira_ice_shard_v1_fx_frozen_hit_01.png",
+        "eira_ice_shard_v1_fx_frozen_hit_02.png",
+        "eira_ice_shard_v1_fx_frozen_hit_03.png"
+      ],
+      "pivot_px": [
+        120,
+        116
+      ],
+      "frame_durations_ms": [
+        40,
+        50,
+        60,
+        70
+      ]
+    }
+  },
+  "contact_sheet": "eira_ice_shard_v1_sheet.png",
+  "effects_sheet": "eira_ice_shard_v1_fx_sheet.png",
+  "preview": "eira_ice_shard_v1_preview.gif"
+}

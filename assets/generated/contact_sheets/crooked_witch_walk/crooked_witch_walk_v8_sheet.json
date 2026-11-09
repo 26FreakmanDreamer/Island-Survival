@@ -1,0 +1,67 @@
+{
+  "title": "Crooked Witch WALK v8 | reordered loop",
+  "columns": 3,
+  "cell": 627,
+  "pivot": [
+    314,
+    593
+  ],
+  "rows": [
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_00.png",
+        "label": "00  (source v1_00)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v1_00.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_01.png",
+        "label": "01  (source v1_01)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v1_01.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_02.png",
+        "label": "02  (source v7_03)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v7_03.png"
+      }
+    ],
+    [
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_03.png",
+        "label": "03  (source v4_04)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v4_04.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_04.png",
+        "label": "04  (source v4_05)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v4_05.png"
+      },
+      {
+        "path": "assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v8_05.png",
+        "label": "05  (source v1_02)",
+        "duration": "0.16",
+        "source": "crooked_witch_walk_v1_02.png"
+      }
+    ]
+  ],
+  "action": "crooked_witch_walk",
+  "version": "v8",
+  "source_canvas": [
+    1254,
+    1254
+  ],
+  "frame_durations_ms": [
+    160,
+    160,
+    160,
+    160,
+    160,
+    160
+  ],
+  "loop": true,
+  "preview": "crooked_witch_walk_v8_preview.gif"
+}

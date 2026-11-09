@@ -58,6 +58,13 @@
   shadow_phantom_bind 5, phantom_vanish 5, phantom_appear 5, phantom_flash_attack 3,
   phantom_pause 3, shark emerge/charge/recover 3+3+3, revert 6; plus 25 FX frames
   (trail 3, tentacle 4, bind front/back 6+6, orb 3, shark 3).
+- Eira (48): idle 4, walk 6, jump 2, crouch 1, climb 4, hurt 2, stun 1, KO 4, snowball 4,
+  staff_strike 5, ice_shard 5, e_raise 3, e_hold 2, e_release 3, e_recover 2; plus 44 FX frames
+  and the freeze shell/foot ice. Runtime body 209 on 384×384/pivot (192,372).
+- Crooked Witch (58): idle 4, walk 4 (v10, 0.12s each), fly_takeoff/loop/land 2+2+2,
+  teleport_out/in 3+3, hurt 2, KO 4, heal 6, lightning_forward/up/down 4 each, ice_spike 4,
+  potion 4, fire_rain_intro 5, fire_rain_hold 1; plus 124 FX files. Runtime body 230 on
+  640×640/pivot (320,628).
 - Lina: 256x256 RGBA, feet-center pivot (128,244), body about 210px. Warrior: 384x384 RGBA, pivot
   (192,372), body about 230px. Bat: 384x384 source / 192x192 runtime, pivot (115,143), body about
   150px. Creepy Shooter: 384x384 RGBA, pivot (192,372), body 214 (roll imported at 0.9x).
@@ -157,26 +164,37 @@ single upper crescent blade; the lower side is a blunt counterweight.
 ## Climb frames (2026-10-28)
 
 - Approved runtime clips: `assets/frames/lina/climb/climb_00.png` and `climb_01.png`,
-  `assets/frames/lina/flame/climb/...`, `assets/frames/nyra/climb/...` and
-  `assets/frames/rhea/climb/...`.
-- All playable characters use a direct back view, two frames: frame 0 has the character-left hand
-  high and right leg high; frame 1 has the right hand high and left leg high. Each frame is 0.20s.
-  The clip loops while moving (up 0→1→0, down 1→0→1) and holds its current frame when stopped;
-  climbing frames are never horizontally flipped.
+  `assets/frames/lina/flame/climb/...`, `assets/frames/nyra/climb/...`,
+  `assets/frames/rhea/climb/...` and `assets/frames/eira/climb/...` (four frames, 0.12s each).
+- All playable characters use a direct back view. Lina, Nyra and Rhea use two frames: frame 0 has
+  the character-left hand high and right leg high; frame 1 has the right hand high and left leg
+  high, 0.20s each, looping up 0→1→0 / down 1→0→1. Eira uses the approved four-frame v3 clip
+  (0.12s each, 0.48s loop) with the same back-view hand/leg alternation. Clips hold their current
+  frame when stopped; climbing frames are never horizontally flipped.
 - Lina normal uses the 256×256 canvas/pivot (128,244); Lina flame uses the same canvas with
-  `flame/climb` and `flame_offsets` 0; Nyra and Rhea use the 384×384 canvas/pivot (192,372).
+  `flame/climb` and `flame_offsets` 0; Nyra, Rhea and Eira use the 384×384 canvas/pivot (192,372).
   Nyra's approved back base is `assets/generated/base/nyra_back_base.png`; the single long sword
   stays sheathed diagonally on her back (hilt above her right shoulder, tip toward lower left),
   hands free. Rhea's approved back base is `assets/generated/base/rhea_back_base.png`; both hands
   are free and the two four-blade shuriken stay stowed on the gold-striped rear band.
-- Runtime draw scale is character-specific: Lina 1.2×, Nyra 1.1× and Rhea 1.1×, anchored at the
-  feet pivot; this is visual only, not a hitbox change. The current Nyra frame 00 is 1.02× the
+- Runtime draw scale is character-specific: Lina 1.2×, Nyra 1.1×, Rhea 1.1× and Eira 1.15×,
+  anchored at the feet pivot; this is visual only, not a hitbox change. The current Nyra frame 00 is 1.02× the
   frame 01 staging scale to match the torso/silhouette; both frames were aligned by body-center +
   feet bottom rather than the generic support-foot pivot, because the support leg alternates.
   Rhea's two climb frames are imported at body height 214 and aligned to the back base's gold band
   center; they are not re-normalized per frame at runtime.
 - The approved frames are not to be regenerated or re-imported without an explicit request; enemy
   climb art is not part of this set.
+
+## Walk updates (2026-11-09)
+
+- Lina normal walk: approved `lina_walk_v1` from `assets/generated/contact_sheets/lina_walk/`
+  (6 frames, 80ms each, 256×256, pivot [128,244]); installed as
+  `assets/frames/lina/walk/walk_00..05.png`. The flame-form walk set is unchanged.
+- Nyra walk: approved `nyra_walk_v3` from `assets/generated/contact_sheets/nyra_walk/`
+  (6 frames, 80ms each, 384×384, pivot [192,372], body 214); installed as
+  `assets/frames/nyra/walk/walk_00..05.png`, replacing the earlier 2-frame 0.14s walk. Nyra's
+  frame inventory rises from 31 to 35.
 
 ## Nyra Steel (2026-10-22)
 
@@ -187,8 +205,10 @@ single upper crescent blade; the lower side is a blunt counterweight.
   split skirt/coattails, dark thigh-high stockings with upper-thigh bands, fingerless gloves, black
   boots with blue details, one long narrow silver sword with a cool-blue edge in the RIGHT hand.
   No eyepatch. Do not mirror or duplicate the sword.
-- Frame inventory (31 minimal): idle 2, walk 2, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6 (Q),
-  nyra_thrust 5, nyra_wave 5 (LMB), nyra_dash 3, climb 2. The base's sword is held horizontally for
+- Frame inventory (35): idle 2, walk 6, jump 2, crouch 1, hurt 1, KO 2, nyra_slash 6 (Q),
+  nyra_thrust 5, nyra_wave 5 (LMB), nyra_dash 3, climb 2. The walk is the approved
+  `nyra_walk_v3` six-frame set (`assets/generated/contact_sheets/nyra_walk/`), installed as
+  `assets/frames/nyra/walk/walk_00..05.png` at 0.08s per frame (0.48s cycle). The base's sword is held horizontally for
   clean `--body-height` calibration. The 1-frame crouch is imported with `--body-height 173`, producing
   a ~170px visible body (midway between the original 212px crouch and the 128px deep crouch); the
   crouching hurtbox stays 56×130 and other clips use 214. The 6-frame slash (Q) follows: initial
@@ -481,6 +501,90 @@ py tools/import_frames.py --action <clip> --src <raw> --out assets/generated/sta
   `assets/generated/contact_sheets/shadow_ninja_phantom_*`, `shadow_ninja_transform/` and
   `shadow_ninja_phantom_flash/`. Smoke: `shadow_ninja_phantom_missing_frames == 0`,
   `shadow_ninja_phantom_fx_missing == 0`, `main.py --smoke-test` exit 0.
+
+## Eira Frostveil (2026-11-08)
+
+- Approved bases: `assets/generated/base/eira_side_base.png` (side 2) for normal actions and
+  `assets/generated/base/eira_back_base.png` (back 1) for climb. Canonical art
+  `Image/Character/eira-frostveil-256.png`. Runtime canvas 384×384, pivot (192,372), body 209
+  (idle 209, snowball ~212, climb ~211); hurtbox 56×210 standing / 56×130 crouching,
+  `stage_body_width` 100; climb draw scale 1.15×. Only right-facing frames are stored; the runtime
+  mirrors for left.
+- **Per-group body calibration is mandatory.** The approved attack frames are not on one source
+  scale, so each group has its own `--body-height` parameter; a single base silently shrinks the
+  skill frames without a FIT. All groups land on a 209px body:
+
+  | Group | Clips | Base | `--body-height` |
+  |---|---|---|---|
+  | A | idle, walk, jump, hurt, stun, ko, staff_strike | `eira_side_base.png` | 253.9 |
+  | B | climb | `eira_back_base.png` | 236.3 |
+  | C | snowball | `eira_snowball_v1_00.png` | 249.7 |
+  | D | ice_shard | `eira_ice_shard_v1_00.png` | 244.6 |
+  | E | e_raise, e_hold, e_release, e_recover | `eira_e_raise_v1_00.png` | 239.0 |
+
+  Common flags: `--canvas 384 --pivot-x 192 --pivot-y 372 --anchor feet`. Run `--dry-run` per
+  group and reject any FIT/MISSING result; do not scale the body to fit the staff.
+- Frame inventory (48, 15 clips): idle 4 (0.20s), walk 6 (0.12), jump 2 (0.20), crouch 1 (0.50),
+  climb 4 (0.12), hurt 2 (0.10), stun 1 (0.50), KO 4 (0.15/0.20/0.25/0.30), snowball 4
+  (0.10/0.10/0.08/0.16), staff_strike 5 (0.10/0.10/0.08/0.08/0.18), ice_shard 5
+  (0.12/0.10/0.08/0.08/0.18), e_raise 3 (0.12/0.14/0.14), e_hold 2 (0.18), e_release 3
+  (0.08/0.10/0.12), e_recover 2 (0.12/0.18).
+- FX inventory (44 in `assets/frames/eira/fx/`; none baked into character frames):
+  - snowball: `eira_snowball_v1_fx_projectile.png` (256×128, ball+trail; drawn at 0.26× with
+    `draw_front`), `_fx_release.png` (192×192, 0.5×, above the ball), `_fx_impact_00..03`.
+  - staff strike: `eira_staff_strike_v2_fx_02.png` and `_03.png`, normalized to the 384×384
+    character canvas/pivot (192,372); frame-bound, not lifetime-bound.
+  - ice shard: `_fx_projectile.png` (0.40×), `_fx_charge_00..02` (3, anchored to the frame-1 blue
+    crystal with content pivot (84,103), 0.4×), `_fx_release_00..01` (2), `_fx_hit_00..03` (4),
+    `_fx_frozen_hit_00..03` (4).
+  - ice ball: `eira_e_release_v4_fx_ball.png` (438px ball reference), `_v1_fx_fall_trail.png`,
+    `_v1_fx_charge_00..02` (3), `_v1_fx_ground_00..03` (4), `_v2_fx_chunk_00..03` (4),
+    `_v1_fx_fragment_00..02` (3), `_v1_fx_hit_00..02` (3), `_v1_fx_frozen_hit_00..02` (3).
+- Freeze status FX (new art, approved as SHELL A + FOOT A): `assets/frames/status/fx/
+  eira_freeze_shell.png` (generic ice shell scaled to the target hurtbox, drawn at 58% alpha) and
+  `eira_freeze_foot_ice.png` (small foot crystals during freeze). Thaw reuses the three-frame
+  `eira_e_release_v1_fx_frozen_hit` strip once.
+- Approval / verification: 12 action sets approved before install; the user reviewed the in-game
+  previews for body height, snowball size, E break, trail, RMB trails, Q crystal FX and the LMB
+  spawn point. Smoke: `eira_missing_frames == 0`, `eira_fx_missing == 0`, `main.py --smoke-test`
+  exit 0.
+
+## Crooked Witch (2026-11-09)
+
+- Approved base: `assets/generated/contact_sheets/crooked_witch_base/crooked_witch_base_v4_02.png`;
+  canonical source `Image/Enemy/crooked-witch-256.png`. Runtime canvas 640×640, pivot (320,628),
+  body 230; hurtbox 56×210, `stage_body_width` 100. The base's visible feet line is y=1186 on the
+  1254 source canvas (the dress extends below it); the runtime import uses the base bbox bottom
+  (1230) so all frames share the same feet alignment.
+- Frame inventory (58, 17 clips): idle 4 (0.18s), walk 4 (v10, 0.12s each), fly_takeoff /
+  fly_loop / fly_land 2+2+2 (0.18), teleport_out / teleport_in 3+3 (0.10), hurt 2 (0.10), KO 4,
+  heal 6 (0.20/0.20/0.20/2.50/2.50/0.20), lightning_forward/up/down 4 each
+  (0.15/0.15/0.10/0.20), ice_spike 4, potion 4, fire_rain_intro 5
+  (0.22/0.26/0.25/0.26/0.40), fire_rain_hold 1 (0.40). Runtime folders:
+  `assets/frames/crooked_witch/{idle,walk,fly,teleport_out,teleport_in,hurt,ko,heal,
+  lightning_forward,lightning_up,lightning_down,ice_spike,potion,fire_rain}/`.
+- Walk v10: approved `crooked_witch_walk_v10_00..03.png` (4 frames; source 1254×1254, visual
+  ground y=1186, sheet pivot (314,593) at cell 627). It was normalized with the same base scale as
+  the other Witch frames (230/1195) and installed as `walk_00..03.png`; the runtime timing is
+  0.12s per frame (0.48s cycle) per the confirmed request, superseding the sheet's 0.24s preview
+  timing. The four frames share a stable hat center and feet line; the AI keeps the walk state
+  between decisions, so the cycle plays continuously.
+- FX inventory (124, `assets/frames/crooked_witch/fx/`): fire impact 4, fire-rain v7 pulse 45,
+  fireball 1, heal v2 20 + `crooked_witch_heal_staff_prop_v1.png` (used only during the hands-open
+  heal_cast, mirrored with facing), ice spike 7, ice warning 5, lightning v2 forward/up/down 6
+  each, poison pool 4, potion break 4, potion projectile 3, teleport in/out 6+6. The ice spike is
+  drawn at 0.25 scale (grounded, front layer); the fire-rain light pillar is horizontally
+  compressed (`x_scale` 0.36 from frame 30) to ~33px; the poison pool and warning ring are
+  ground-anchored.
+- Import pattern: use the approved base for scale and `--anchor feet` for normal clips; for the
+  walk, keep the source canvas alignment (the frames are pre-aligned to each other) and map the
+  visual feet line to the runtime feet row. Do not re-import the existing 58 approved frames
+  without an explicit request.
+- Verification: the user reviewed the in-game teleport/heal/lightning/ice/potion/fire-rain
+  previews, the walk v10 four-frame cycle, the heal staff placement, the ice-spike size/grounding,
+  the poison-pool grounding and the narrowed fire pillar. Smoke:
+  `crooked_witch_missing_frames == 0`, `crooked_witch_fx_missing == 0`, `main.py --smoke-test`
+  exit 0.
 
 ## Projectile / skill VFX (2026-10-24)
 

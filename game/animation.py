@@ -176,14 +176,13 @@ class AnimationPlayer:
             # the background (unlike a filled hurtbox rectangle).
             image = surface.copy()
             image.fill((*tint, 255), special_flags=pygame.BLEND_RGBA_MULT)
-        # The flame sprites were generated with slightly different horizontal
-        # framing per frame. Apply the baked alignment offset so the body stays
-        # at the same world position as the normal form; mirror it when flipped.
-        offset = 0
-        if self.variant == "flame":
-            offset = self.frame_offsets.get(self.current_frame_path(), 0)
-            if facing < 0:
-                offset = -offset
+        # Some sprites were staged with a horizontal offset inside the canvas
+        # (Lina's flame framing, Eira's wide KO last frame). Apply the baked
+        # alignment offset so the feet stay at the fighter's world position;
+        # mirror it when flipped. Paths without an entry use 0.
+        offset = self.frame_offsets.get(self.current_frame_path(), 0)
+        if facing < 0:
+            offset = -offset
         pivot_x, pivot_y = self.pivot
         # Optional uniform draw scale for the climb art; the pivot (feet)
         # stays the anchor so the body grows upward.

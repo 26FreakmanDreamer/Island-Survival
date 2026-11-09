@@ -36,6 +36,10 @@ class Fighter:
     # None uses the hurtbox height; tall enemies can raise the bar clear of
     # their artwork.
     health_bar_lift: float | None = None
+    # Scene-level combat flags. ``no_hitbox`` removes the fighter from
+    # ``targets_for``; ``hidden`` also suppresses drawing (Witch teleport).
+    no_hitbox = False
+    hidden = False
 
     def __init__(
         self,
@@ -105,6 +109,8 @@ class Fighter:
         self.shadow_marks = 0
         self.shadow_mark_burst_time = 0.0
         self.shadow_mark_burst_damage = 0.0
+        # Eira's freeze value is tracked per target and cleared on reset.
+        self.eira_freeze = 0.0
         self.statuses = StatusSet()
         self.attack_runtime = None
         self.attack_id = None
@@ -527,6 +533,7 @@ class Fighter:
         self.shadow_marks = 0
         self.shadow_mark_burst_time = 0.0
         self.shadow_mark_burst_damage = 0.0
+        self.eira_freeze = 0.0
         self.on_ground = True
         self.statuses.clear()
         self.attack_runtime = None
@@ -596,7 +603,10 @@ class Fighter:
         surface: pygame.Surface,
         tint: tuple[int, int, int] | None = None,
     ) -> None:
-        if self.anim is not None and not getattr(self, "phantom_hidden", False):
+        if self.anim is not None and not (
+            getattr(self, "phantom_hidden", False)
+            or getattr(self, "hidden", False)
+        ):
             flame = bool(getattr(self, "flame_time", 0.0) > 0.0)
             # In flame form, only dedicated flame art may be drawn. A normal
             # variant (e.g. an interrupted transform) draws its normal frames
@@ -616,7 +626,7 @@ class Fighter:
                 self.anim.draw(
                     surface, self.x, self.y, self.facing, tint=tint, scale=scale
                 )
-        if self.flash > 0.0:
+        if self.flash > 0.0 and not getattr(self, "hidden", False):
             pygame.draw.rect(surface, (255, 255, 255), self.hurtbox(), 2)
         if self.show_health_bar:
             self.draw_health_bar(surface)

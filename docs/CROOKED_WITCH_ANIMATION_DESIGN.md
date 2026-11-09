@@ -12,7 +12,7 @@
 
 2026-11-05：用户确认闪电的向前、向上、向下三组人物动作，并允许将本轮结果写入本文档。当前素材分别为 `crooked_witch_lightning_v2`、`crooked_witch_lightning_up_v1`、`crooked_witch_lightning_down_v5`；下射 01 帧随后按用户意见调整了袖口遮挡、向下握杖姿势、法杖直线轮廓和紫色衣料亮度。三组仅制作人物帧、接触表和预览，闪电特效仍按独立特效处理，素材尚未接入游戏。
 
-2026-11-05：用户确认治疗动作的 `crooked_witch_heal_v4_01.png` 单帧姿势，并授权写入本文档。新增过渡帧仍待审批，治疗动作整组尚未通过，素材未接入游戏。
+2026-11-05：用户确认治疗动作的 `crooked_witch_heal_v4_01.png` 单帧姿势，并授权写入本文档。该次仅确认单帧，新增过渡与整组审批随后由 2026-11-06 的 v5 确认记录接续；素材未接入游戏。
 
 2026-11-05：用户确认 `crooked_witch_fly_v3`，授权写入本文档。01、02 帧的远侧左手改为被裙摆完全遮挡；04 帧的远侧左手改为自然垂在身侧，并参照 05 帧进一步收近身体。其他帧沿用上一版，素材尚未接入游戏。
 
@@ -23,6 +23,10 @@
 2026-11-06：用户确认火雨的像素施法特效和完整预览，并授权写入本文档。当前施法特效采用 `crooked_witch_fire_rain_v7_pulse`：白色倒三角光区内三道浅黄色光束旋转、淡入蓄亮，达到峰值后光区消失；随后长而粗的黄色光柱用 0.4s 淡入，顶部为长轴水平的椭圆，光柱连接杖顶并固定保持。完整预览串联飞入、正面举杖、施法、10 颗火球、落地爆开和返回原位；人物仍采用 fire_rain v6 与 fly v3，火球及落地效果沿用各自 v1。素材和演出已确认，尚未接入游戏。
 
 2026-11-06：用户确认闪电特效 `crooked_witch_lightning_fx_v2`，并授权写入本文档。向前、向上、向下三组均在原特效前新增 3 张生成的过渡帧，每帧 0.06s，共 0.18s，表现杖尖起电、电弧聚集和压缩放电；以形态变化引入，不做淡入或交叉渐变。原 v1 的杖尖闪光、完整闪电和末尾消散原样保留，接在新增帧后。素材与预览已确认，尚未接入游戏。
+
+2026-11-06：用户确认治疗人物动作 v5 整组通过，随后确认 `crooked_witch_heal_fx_v2` 和完整治疗预览，并明确授权写入本文档。v5 保留新增的张手过渡，独立悬浮法杖随松杖、归位和重新握杖衔接；治疗光环在绿色逐渐加深、浓度增强的同时从腰部上升至头颈，末尾在该高度消散，每秒一轮、共 5 轮。完整预览串联飞到中央、治疗 5s、浮杖回手、飞回原位与落地，共 10.2s；人物素材、特效和演出均已确认，尚未接入游戏。
+
+2026-11-09：Witch 已接入游戏并作为 F7 敌人验收。运行时画布 640×640、pivot (320,628)、体高 230；17 clips / 58 帧 + 124 个 FX。走路改用 `crooked_witch_walk_v10` 四帧，每帧 0.12s，并修正 AI 在两次决策之间误回 idle 的问题，行走现在连续播放。治疗举手施法段单独显示随朝向镜像的悬浮法杖；冰锥/预警、毒池贴地，冰锥缩至 Witch 身高；火雨最后光柱压窄到约 33px，holding 姿势固定为 04 帧。技能 4 改为技能结束后进入冷却且不能作为战斗首个技能；AI 优先级按更新后的 instruction.docx：地面 1>2>3>4，platform 3>1>2>4。详细数值见 [设计决策](DESIGN_DECISIONS.md#crooked-witch-2026-11-09)，素材与接入见 [素材管线](ASSET_PIPELINE.md#crooked-witch-2026-11-09)。
 
 ## 来源与绘制基准
 
@@ -47,6 +51,7 @@
 | `crooked_witch_idle_v1` | 4 帧，0.72s 循环 | 右手竖持法杖、左手轻抬；胸肩轻微呼吸，发梢、帽坠和裙摆延迟摆动，双脚站稳。 |
 | `crooked_witch_walk_v2` | 沿用已通过的 v1 六张动作帧；每帧 0.16s，0.96s 循环 | 用户已确认动作通过，并要求放慢。v2 只调整播放节奏，保留 v1 原始图片和预览；新预览与节奏记录放在同一 `crooked_witch_walk/` 文件夹。00 右脚前触地；01 重心移至右脚、左脚蹬地；02 左脚经过支撑腿、身体轻抬；03 左脚前触地；04 重心移至左脚、右脚蹬地；05 右脚经过支撑腿、接 00。右手稳定握杖，杖略前倾、杖尾离地；左手小幅平衡，裙摆随步伐开合，头发和帽坠滞后摆动。 |
 | `crooked_witch_walk_v3` | 已通过；6 帧，每帧 0.16s，0.96s 循环 | 保留 v1 的 00–04，以 `crooked_witch_walk_v3_05.png` 替换 05；右脚经过支撑腿时，法杖保持在人物前景，右手握姿与相邻帧连续。接触表和预览分别为 `crooked_witch_walk_v3.png`、`crooked_witch_walk_v3_preview.mp4`，旧版保留。 |
+| `crooked_witch_walk_v10` | 已通过并接入；4 帧，每帧 0.12s，0.48s 循环 | 00 右脚前触地；01 右脚支撑、左脚经过；02 左脚前触地；03 左脚支撑、右脚经过。运行时按 640 画布/pivot (320,628) 归一化，四帧帽心与脚底线一致；AI 连续行走时不再回 idle。源文件保存在 `assets/generated/contact_sheets/crooked_witch_walk/crooked_witch_walk_v10_00..03.png`。 |
 | `crooked_witch_fly_v1` | 已通过；6 帧，预览每帧 0.18s；仅 02/03 飞行段循环 | 00 屈膝收杖；01 脚跟离地；02/03 双脚后收、袍摆后飘，循环飞行；04 回程伸腿；05 触地收势。到屏幕中央直接接悬浮施法，04/05 仅用于返回落地。全六帧预览为 1.08s，不能作为普通飞行循环。 |
 | `crooked_witch_fly_v3` | 当前已通过人物素材；6 帧，每帧 0.18s；仅 02/03 飞行段循环 | 保留 v2 的 00、01、02、03、05 帧；04 帧远侧左手在裙侧自然下垂，位置比 v2 更靠近身体，参照 05 帧衔接。v2 的 01、02 帧已将远侧左手完全藏在裙摆后，不再从身后露出；其余动作和法杖握姿保持原方案。04/05 仅用于返回落地，六帧预览不作为普通飞行循环。 |
 | `crooked_witch_teleport_out_v1` | 人物动作已通过；3 帧，每帧 0.10s，共 0.30s | 法杖收至身前 → 左手在远侧向锁骨附近收拢、肩部内收 → 袍摆合拢。人物保持完整、不缩小，消失交由独立紫色特效处理。02 灰紫背景雾版本标记 rejected，采用重生成的干净透明人物帧。 |
@@ -60,8 +65,9 @@
 
 | 名称 | 帧数与节奏 | 动作及事件 |
 | --- | --- | --- |
-| `crooked_witch_heal_v1` | 5 帧，维持段 5s | 飞到中央后，00 右手松杖、法杖悬浮在侧前方；01 双臂向两侧张开、掌心朝上；02/03 张臂呼吸循环，绿色粒子每秒脉冲，共 5 次；04 收臂，右手握回原位置，再飞回。法杖悬浮是满足双手张开的表现设计。 |
-| `crooked_witch_heal_v4_01` | 单帧姿势已通过；整组待审批 | 作为原 01 帧的修订姿势：画面右端的远侧左手向外伸出、掌心朝上，参照维持帧的同侧手势但伸展幅度较小；近侧右手放在身侧偏后。双臂各自连接对应肩部，不交叉。人物帧不含法杖，法杖作为独立道具悬浮。原 01 的“双臂同时张开”描述不再适用于这张已通过的单帧。 |
+| `crooked_witch_heal_v1` | 历史方案；5 帧，维持段 5s | 飞到中央后松杖、张臂治疗，再握杖返回；原帧保留，其中 04 握杖帧由 v5 沿用。当前整组与新增过渡以 v5 为准，法杖作为独立悬浮道具处理。 |
+| `crooked_witch_heal_v4_01` | 已通过的单帧；当前作为 v5 的逻辑 02 帧沿用 | 画面右端的远侧左手向外伸出、掌心朝上，参照维持帧的同侧手势但伸展幅度较小；近侧右手放在身侧偏后。双臂各自连接对应肩部，不交叉。人物帧不含法杖，法杖作为独立道具悬浮。 |
+| `crooked_witch_heal_v5` | 当前人物整组已通过；6 帧，逻辑 00–05，治疗维持 5s | 00 松杖，01 为新增张手过渡，02 沿用已通过的 v4_01，03/04 张臂维持、交替呼吸，05 重新握杖。悬浮法杖独立合成；维持期间叠加 heal_fx v2，每秒一轮、共 5 轮。完整演出前后沿用 fly v3，人物原始帧、配色和比例未因特效修改而改变。 |
 | `crooked_witch_lightning_v1` | 4 帧，0.60s | 00 转肩收杖 0.15s；01 抬肘蓄能 0.15s；02 向前指杖 0.10s，进入此帧发射闪电；03 收杖 0.20s。 |
 | `crooked_witch_lightning_v2` | 当前人物素材；4 帧，0.15/0.15/0.10/0.20s，共 0.60s | 00、01、03 沿用 v1；02 保持向前指杖动作，将连续杖身放在近侧右袖外侧，袖子被杖身遮挡，右手手指从前方包握杖身。进入 02 时从实际杖尖发射闪电；人物帧不含闪电特效。 |
 | `crooked_witch_lightning_up_v1` | 当前人物素材；4 帧，0.15/0.15/0.10/0.20s，共 0.60s | 00、01、03 与向前闪电共用姿势；02 近侧右手和完整法杖一起斜上指向目标，进入此帧释放，身体比例与脚底基线不变。 |
@@ -80,7 +86,8 @@
 | 名称 | 表现 |
 | --- | --- |
 | `crooked_witch_teleport_fx_v1` | 已通过。独立透明紫金法环与碎光，消失和出现各 6 帧、每帧 0.10s。法环与人物帧分层；预览中的人物淡入淡出仅为合成演示。`crooked_witch_teleport_fx_v1_sheet.png` 为审批接触表，`crooked_witch_teleport_fx_v1_preview.gif` 为动态预览。暂不接入游戏。 |
-| `crooked_witch_heal_fx_v1` | 绿色粒子向上环绕，每秒恢复脉冲。 |
+| `crooked_witch_heal_fx_v1` | 历史版本保留；5 张绿色粒子与光环帧，作为 v2 的原始素材。 |
+| `crooked_witch_heal_fx_v2` | 当前已通过；20 张独立透明帧，每帧 0.05s，共 1s 一轮，治疗期间重复 5 轮。光环从腰部上升至头颈，绿色同步由浅绿加深为浓绿色、浓度增强；粒子最高限制在头颈区域，不飘过帽顶。每轮最后 0.10s 在头颈高度消散，再从腰部开始下一轮。人物、悬浮法杖与特效分层。 |
 | `crooked_witch_lightning_fx_v1` | 历史版本保留；杖尖闪光、完整闪电和消散三帧，作为 v2 的 03–05 帧原样沿用。 |
 | `crooked_witch_lightning_fx_v2` | 当前已通过；向前、向上、向下各 6 张独立透明帧。00–02 为新生成的杖尖起电、电弧聚集、压缩放电，各 0.06s；03–05 沿用 v1 的闪光、完整闪电、消散，分别为 0.08/0.10/0.10s。单次特效共 0.46s，新增引入段共 0.18s；逐帧直接显示，无淡入或交叉渐变，保留末尾消散。特效从实际杖尖发出，与人物分层。 |
 | `crooked_witch_ice_warning_v1` | 已通过；独立透明蓝色预警圈 5 帧、每帧 0.20s，共 1s；在人物 02 释放帧出现，末帧增强亮度，满 1s 后接冰锥。 |
@@ -91,6 +98,25 @@
 | `crooked_witch_fire_rain_v7_pulse` | 已通过；独立像素特效。倒三角光区上宽下尖，尖端接在杖顶，白光表示区域，内部三道浅黄色光束围绕法杖竖轴轮转；可见图案每 0.48s 循环一次，保持此前加速 3 倍的节奏。00–23 每帧 0.04s，共 0.96s 淡入蓄亮；24 为 0.04s 亮度峰值，之后倒三角光区与三道旋转光束一起消失。25–44 每帧 0.02s，共 0.4s 淡入一根长而粗的竖直黄色光柱，顶部为长轴水平的椭圆；44 作为持续保持帧，位置与形状固定，底部连接杖顶，不向上飞离。召唤火球期间持续显示光柱，收杖时结束。 |
 | `crooked_witch_fireball_v1` | 当前已确认完整预览采用的独立火球素材。每次生成时取目标当前 x，随后保持该 x 竖直下落、尾焰上拖，穿过平台继续下落；不追踪目标后续横向移动。 |
 | `crooked_witch_fire_impact_v1` | 当前已确认完整预览采用的独立落地效果。命中或到地面后爆开，火星消散；四帧节奏为 0.08/0.10/0.12/0.14s。 |
+
+## 治疗完整预览（已确认）
+
+当前演出采用 fly v3、治疗人物 v5、独立悬浮法杖 v1 和 heal_fx v2。完整 MP4 与 GIF 均为 10.2s、1200×800、20fps；施法特写 GIF 为 6.2s、1000×760、20fps。人物、法杖和特效在同一预览内使用相同缩放比例，飞行只平移人物，不逐帧调整身体大小。下表记录本次已确认的预览时序，不将总片长作为技能冷却或新增数值规格。
+
+| 预览时间 | 演出 |
+| --- | --- |
+| 0.00–0.30s | 展示起始站立状态。 |
+| 0.30–0.70s | fly 00/01 起飞。 |
+| 0.70–1.90s | 只循环 fly 02/03，飞到中央施法位置。 |
+| 1.90–2.50s | 治疗 v5 逻辑 00→01→02，每帧 0.20s：松杖、经过新增过渡、张手准备治疗；独立法杖移至侧前方悬浮。 |
+| 2.50–7.50s | v5 逻辑 03/04 张臂维持，治疗 5s；heal_fx v2 完整播放 5 轮，每轮由腰部上升至头颈并加深、消散。 |
+| 7.50–7.90s | 结束治疗特效，悬浮法杖回到持杖位置。 |
+| 7.90–8.10s | v5 逻辑 05 重新握杖；该人物帧与 fly v3 的 03 帧相同，接回程飞行。 |
+| 8.10–9.30s | 只循环 fly 02/03，飞回原位。 |
+| 9.30–9.70s | fly 04/05 落地收势。 |
+| 9.70–10.20s | 展示返回完成状态。 |
+
+阶段说明、计数、进度条和片头片尾停顿仅用于审阅；5s 治疗段与每秒一轮、共 5 轮的特效节奏分别保留。所有原人物帧和旧版特效未覆盖，尚未接入游戏或改动恢复数值。
 
 ## 火雨完整预览（已确认）
 
@@ -127,6 +153,9 @@
 - 动作主名遵循 `name_action_v1`；单帧附帧号、预览附用途后缀；后续版本递增，不覆盖旧版。
 - 闪电三组人物素材分别保存在 `assets/generated/contact_sheets/crooked_witch_lightning/`、`crooked_witch_lightning_up/`、`crooked_witch_lightning_down/`。当前版本为 v2、v1、v5；每组保留 4 张透明人物帧、`*_sheet.png` 接触表和 `*_preview.gif` 预览。工作画布为 1536×1254，仅平移对齐脚部，未缩放人物或法杖；1254×1254 原始生成帧以 `*_source.png` 保留。旧版及未采用的重生图保留作对照，运行用画布和 pivot 仍待接入时确定。
 - 飞行动作当前版本为 `assets/generated/contact_sheets/crooked_witch_fly/crooked_witch_fly_v3`，同目录保留 6 张 1254×1254 透明人物帧、`crooked_witch_fly_v3.png` 全尺寸帧表、`crooked_witch_fly_v3_sheet.png` 审批接触表、`crooked_witch_fly_v3.gif` 动态预览和 `crooked_witch_fly_v3_sheet.json` 帧记录。v3 仅重绘 04 帧；00–03、05 与 v2 逐字节相同，v1、v2 保留作对照。
+- 治疗人物素材保存在 `assets/generated/contact_sheets/crooked_witch_heal/`。当前已通过 v5 的逻辑 00–05 依次引用 `crooked_witch_heal_v3_00.png`、`crooked_witch_heal_v5_01.png`、`crooked_witch_heal_v4_01.png`、`crooked_witch_heal_v2_02.png`、`crooked_witch_heal_v2_03.png`、`crooked_witch_heal_v1_04.png`，均为 1254×1254 透明 PNG；未重绘的帧沿用已有文件，不另造同名 v5 副本。人物接触表为 `crooked_witch_heal_v5_sheet.png`，独立悬浮法杖为 `crooked_witch_heal_staff_prop_v1.png`；v1–v4 及原 v5 预览保留作修订记录。
+- 当前治疗特效保存在 `assets/generated/contact_sheets/crooked_witch_heal_fx/`，采用 `crooked_witch_heal_fx_v2_00.png` 至 `_19.png`，共 20 张 1254×1254 透明 PNG。光环中心从原画布 `(647,718.5)` 上移至 `(647,370.5)`，总上移 348px；粒子上沿限制在原画布 y=280 的头颈区域，并以柔和边缘消散。上述坐标仅用于当前素材合成，不代表已确定运行用画布与 pivot。审批材料为 [v2 特效帧表](../assets/generated/contact_sheets/crooked_witch_heal_fx/crooked_witch_heal_fx_v2_sheet.png)、[人物合成近景](../assets/generated/contact_sheets/crooked_witch_heal_fx/crooked_witch_heal_fx_v2_preview.gif) 和 [纯特效预览](../assets/generated/contact_sheets/crooked_witch_heal_fx/crooked_witch_heal_fx_v2_fx_only_preview.gif)，帧序与位移记录保存在 `crooked_witch_heal_fx_v2_manifest.json`；旧 v1 保留。
+- 当前已确认的治疗完整演出：[MP4](../assets/generated/contact_sheets/crooked_witch_heal/crooked_witch_heal_v5_fx_v2_complete_preview.mp4)、[GIF](../assets/generated/contact_sheets/crooked_witch_heal/crooked_witch_heal_v5_fx_v2_complete_preview.gif)、[关键帧对照](../assets/generated/contact_sheets/crooked_witch_heal/crooked_witch_heal_v5_fx_v2_complete_storyboard.png)。同目录另有 [施法特写](../assets/generated/contact_sheets/crooked_witch_heal/crooked_witch_heal_v5_fx_v2_cast_preview.gif) 和 `crooked_witch_heal_v5_fx_v2_manifest.json` 时序记录。人物、浮杖、特效和完整预览均已确认；此次仅记录素材与演出，尚未接入游戏。
 - 闪电特效保存在 `assets/generated/contact_sheets/crooked_witch_lightning_fx/`，当前采用 `crooked_witch_lightning_fx_v2_{forward/up/down}_00.png` 至 `_05.png`，共 18 张 1400×1400 透明 PNG；共用特效连接点 `(300,700)`，三个方向分别为 0°、向上 35°、向下 35°。连接点仅用于当前素材合成对齐，不代表已确定运行用画布与 pivot。审批接触表为 [v2 帧表](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_sheet.png)，新增过渡与原闪光的对照为 [杖尖特写](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_intro_sheet.png)，动态预览为 [正常速度](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_preview.gif) 和 [3 倍时长慢速](../assets/generated/contact_sheets/crooked_witch_lightning_fx/crooked_witch_lightning_fx_v2_slow_preview.gif)。正常预览在特效前后另有 0.30/0.40s 的人物静止停顿，仅用于审阅，不计入 0.46s 特效时长。同目录保留 3 张 `crooked_witch_lightning_fx_v2_intro_00_source.png` 至 `_02_source.png` 原始生成帧、`crooked_witch_lightning_fx_v2_prompts.json` 生成记录和 `crooked_witch_lightning_fx_v2_sheet.json` 帧序记录；v1 全部原文件保留，v2 的 03–05 与相应 v1 的 00–02 逐字节相同。此次只确认素材演出，不修改人物动作节奏、技能逻辑或数值，尚未接入游戏。
 - 冰锥人物帧、预警圈和冰锥特效分别保存在 `assets/generated/contact_sheets/crooked_witch_ice_spike/`、`crooked_witch_ice_warning/`、`crooked_witch_ice_spike_fx/`；各目录的 `*_sheet.png` 是审批接触表，`crooked_witch_ice_spike_v1_preview.gif` 展示施法、1s 预警和冰锥破地碎裂的合成顺序。
 - 药瓶人物动作保存在 `assets/generated/contact_sheets/crooked_witch_potion/`，当前采用 `crooked_witch_potion_v2_00.png` 至 `_03.png`；`crooked_witch_potion_v2_sheet.png` 和 `crooked_witch_potion_v2_preview.gif` 分别是审批接触表与动态预览。药瓶飞行、碎裂、毒区的透明单帧和各自 `*_sheet.png`、`*_preview.gif` 分别保存在 `crooked_witch_potion_projectile/`、`crooked_witch_potion_break/`、`crooked_witch_poison_pool/`。同目录保留 v1 人物帧及三种命中分支的演示预览，分支预览中的人物颜色为旧版，仅用于说明事件顺序；当前人物配色以 v2 为准。演示中的平台线、地面线和目标占位轮廓不是游戏素材，全部素材尚未接入游戏。

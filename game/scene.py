@@ -8,7 +8,7 @@ import random
 import pygame
 
 from .combat import attack_damage
-from .config import FIXED_DT
+from .config import ASSETS_DIR, FIXED_DT, SCREEN_W
 from .debug import DebugOverlay, DebugPanel
 from .fighter import Fighter, FighterState
 from .fx import (
@@ -20,6 +20,7 @@ from .fx import (
     Q_WAVE_DRAW_OFFSET_Y,
     RingBurstFx,
     SilkCastFx,
+    SpriteStripFx,
     WebImpactFx,
 )
 from .hud import HUD
@@ -31,6 +32,8 @@ from .projectile import (
     CreepyBullet,
     CreepyDownBullet,
     CreepyHomingBullet,
+    EiraIceShardProjectile,
+    EiraSnowballProjectile,
     QWave,
     ShadowBindProjectile,
     ShadowFlashProjectile,
@@ -38,6 +41,8 @@ from .projectile import (
     ShurikenProjectile,
     SonicWave,
     SwordWave,
+    WitchLightningProjectile,
+    WitchPotionProjectile,
 )
 from .roster import create_fighter
 from .stage import Stage
@@ -74,6 +79,28 @@ SKILL_KEYS = {
     pygame.K_z: 3,
 }
 
+_FREEZE_SHELL_CACHE: dict[tuple[str, float], pygame.Surface | None] = {}
+_FREEZE_FOOT_CACHE: dict[tuple[str, float], pygame.Surface | None] = {}
+
+
+def _freeze_asset(name: str, cache: dict) -> pygame.Surface | None:
+    path = ASSETS_DIR / "frames" / "status" / "fx" / name
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    key = (str(path), mtime)
+    if key in cache:
+        cached = cache[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        cache[key] = None
+        return None
+    cache[key] = image
+    return image.copy()
+
 
 class ArenaScene:
     def __init__(self, store) -> None:
@@ -91,6 +118,10 @@ class ArenaScene:
         self.last_hit: dict | None = None
         self.debug_hitboxes: list[pygame.Rect] = []
         self.projectiles: list = []
+        # Persistent skill hazards (ice ball, ice spike warning, poison zone).
+        self.hazards: list = []
+        self.mouse_x = SCREEN_W * 0.5
+        self._freeze_seen: set[int] = set()
         self.slash_effects: list[SlashEffect] = []
         self.fx_effects: list[FxEffect] = []
         self.status_demo_index = 0
@@ -244,6 +275,8 @@ class ArenaScene:
         self._pick_primary()
         self.stage.blocks_enabled = blocks_enabled
         self.projectiles = []
+        self.hazards = []
+        self._freeze_seen.clear()
         self.slash_effects = []
         self.fx_effects = []
         self.particles = ParticleSystem()
@@ -371,10 +404,19 @@ class ArenaScene:
             return [
                 enemy
                 for enemy in self.enemies
-                if enemy.hp > 0.0 and not getattr(enemy, "phantom_form", False)
+                if enemy.hp > 0.0
+                and not getattr(enemy, "phantom_form", False)
+                and not getattr(enemy, "no_hitbox", False)
+                and not getattr(enemy, "hidden", False)
             ]
         if attacker in self.enemies:
-            return [self.player] if self.player.hp > 0.0 else []
+            if (
+                self.player.hp > 0.0
+                and not getattr(self.player, "no_hitbox", False)
+                and not getattr(self.player, "hidden", False)
+            ):
+                return [self.player]
+            return []
         return []
 
     def reload_data(self) -> bool:
@@ -398,6 +440,8 @@ class ArenaScene:
         self._resolve_stage_overlaps()
         self._sync_enemy_stats_from_player()
         self.projectiles = []
+        self.hazards = []
+        self._freeze_seen.clear()
         self.slash_effects = []
         self.fx_effects = []
         self.particles = ParticleSystem()
@@ -436,6 +480,10 @@ class ArenaScene:
         for projectile in self.projectiles:
             projectile.update(dt, self)
         self.projectiles = [projectile for projectile in self.projectiles if projectile.alive]
+        for hazard in self.hazards:
+            hazard.update(dt, self)
+        self.hazards = [hazard for hazard in self.hazards if hazard.alive]
+        self._update_freeze_fx()
         self._check_match_end()
         self.particles.update(dt)
 
@@ -450,6 +498,33 @@ class ArenaScene:
             for enemy in self.enemies:
                 if enemy.statuses.has("poison") and enemy.hp > 0.0:
                     self.particles.emit_poison(enemy.x, enemy.y)
+
+    def _update_freeze_fx(self) -> None:
+        """Spawn the thaw shatter when a fighter leaves the freeze state."""
+        frozen: set[int] = set()
+        for fighter in [self.player, *self.enemies]:
+            if fighter.hp <= 0.0:
+                continue
+            is_frozen = fighter.statuses.has("freeze")
+            if is_frozen:
+                frozen.add(id(fighter))
+            if id(fighter) in self._freeze_seen and not is_frozen:
+                self._spawn_thaw_fx(fighter)
+        self._freeze_seen = frozen
+
+    def _spawn_thaw_fx(self, fighter) -> None:
+        fx_dir = ASSETS_DIR / "frames" / "eira" / "fx"
+        frames = [
+            fx_dir / f"eira_e_release_v1_fx_frozen_hit_{index:02d}.png"
+            for index in range(3)
+        ]
+        self.fx_effects.append(
+            SpriteStripFx(
+                frames, [0.05, 0.07, 0.10], fighter.x,
+                fighter.y - fighter.hurtbox_dims[1] * 0.5,
+                scale=0.55, kind="eira_thaw",
+            )
+        )
 
     def _can_stand(self, fighter, x: float) -> bool:
         half = fighter.stage_half_width
@@ -489,6 +564,8 @@ class ArenaScene:
                 continue
             if getattr(enemy, "ignore_separation", False):
                 continue
+            if getattr(enemy, "no_hitbox", False) or getattr(enemy, "hidden", False):
+                continue
             player_body = self.stage.body_rect(self.player)
             enemy_body = self.stage.body_rect(enemy)
             if not player_body.colliderect(enemy_body):
@@ -522,11 +599,15 @@ class ArenaScene:
         for index, first in enumerate(self.enemies):
             if first.hp <= 0.0 or getattr(first, "ignore_separation", False):
                 continue
+            if getattr(first, "no_hitbox", False) or getattr(first, "hidden", False):
+                continue
             first_body = self.stage.body_rect(first)
             for second in self.enemies[index + 1:]:
                 if second.hp <= 0.0 or getattr(
                     second, "ignore_separation", False
                 ):
+                    continue
+                if getattr(second, "no_hitbox", False) or getattr(second, "hidden", False):
                     continue
                 if not first_body.colliderect(self.stage.body_rect(second)):
                     continue
@@ -667,6 +748,60 @@ class ArenaScene:
                 x + ux * 6.0, y + uy * 6.0, (160, 95, 220), 4,
                 speed=120.0, life=(0.10, 0.18),
             )
+        elif visual_kind == "eira_snowball":
+            self.fx_effects.append(
+                SpriteStripFx(
+                    [ASSETS_DIR / "frames" / "eira" / "fx"
+                     / "eira_snowball_v1_fx_release.png"],
+                    [0.06], x, y, scale=0.5, kind="eira_snowball_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (220, 245, 255), 4,
+                speed=130.0, life=(0.08, 0.16),
+            )
+        elif visual_kind == "eira_ice_shard":
+            self.fx_effects.append(
+                SpriteStripFx(
+                    [
+                        ASSETS_DIR / "frames" / "eira" / "fx"
+                        / f"eira_ice_shard_v1_fx_release_{index:02d}.png"
+                        for index in range(2)
+                    ],
+                    [0.03, 0.03], x, y, scale=0.55, kind="eira_ice_shard_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (180, 235, 255), 4,
+                speed=140.0, life=(0.08, 0.16),
+            )
+        elif visual_kind in (
+            "witch_lightning_forward",
+            "witch_lightning_up",
+            "witch_lightning_down",
+        ):
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (185, 120, 255), life=0.14,
+                    start_radius=6.0, end_radius=30.0, width=2,
+                    sparks=4, spark_color=(240, 220, 255),
+                    kind="witch_lightning_cast",
+                )
+            )
+            self.particles.emit_burst(
+                x + ux * 8.0, y + uy * 8.0, (210, 165, 255), 5,
+                speed=150.0, life=(0.08, 0.18),
+            )
+        elif visual_kind == "witch_potion":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (90, 200, 100), life=0.14,
+                    start_radius=5.0, end_radius=24.0, width=2,
+                    sparks=3, spark_color=(210, 255, 180),
+                    kind="witch_potion_cast",
+                )
+            )
+            self.particles.emit_mist(x, y, color=(70, 175, 85), count=4)
         elif visual_kind == "shadow_kunai":
             self.fx_effects.append(
                 RingBurstFx(
@@ -828,6 +963,85 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (160, 95, 220), 5, speed=150.0
             )
+        elif visual_kind == "eira_snowball":
+            self.fx_effects.append(
+                SpriteStripFx(
+                    [
+                        ASSETS_DIR / "frames" / "eira" / "fx"
+                        / f"eira_snowball_v1_fx_impact_{index:02d}.png"
+                        for index in range(4)
+                    ],
+                    [0.04, 0.05, 0.06, 0.07], x, y,
+                    scale=0.5, kind="eira_snowball_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (220, 245, 255), 8, speed=180.0)
+        elif visual_kind == "eira_ice_shard":
+            was_frozen = bool(getattr(projectile, "hit_target_was_frozen", False))
+            prefix = (
+                "eira_ice_shard_v1_fx_frozen_hit"
+                if was_frozen
+                else "eira_ice_shard_v1_fx_hit"
+            )
+            self.fx_effects.append(
+                SpriteStripFx(
+                    [
+                        ASSETS_DIR / "frames" / "eira" / "fx"
+                        / f"{prefix}_{index:02d}.png"
+                        for index in range(4)
+                    ],
+                    [0.04, 0.05, 0.06, 0.07], x, y,
+                    scale=0.55, kind="eira_ice_shard_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (180, 235, 255), 7, speed=170.0)
+        elif visual_kind in (
+            "witch_lightning_forward",
+            "witch_lightning_up",
+            "witch_lightning_down",
+        ):
+            variant = visual_kind.rsplit("_", 1)[1]
+            frames = [
+                ASSETS_DIR / "frames" / "crooked_witch" / "fx"
+                / f"crooked_witch_lightning_fx_v2_{variant}_{index:02d}.png"
+                for index in range(6)
+            ]
+            self.fx_effects.append(
+                SpriteStripFx(
+                    frames, [0.06] * 6, x, y,
+                    scale=0.35, kind="witch_lightning_impact_fx",
+                )
+            )
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (185, 120, 255), life=0.18,
+                    start_radius=8.0, end_radius=40.0, width=3,
+                    sparks=6, spark_color=(240, 220, 255),
+                    kind="witch_lightning_impact",
+                )
+            )
+            self.particles.emit_burst(x, y, (205, 150, 255), 8, speed=190.0)
+        elif visual_kind == "witch_potion":
+            self.fx_effects.append(PoisonSplashFx(x, y, kind="witch_potion_impact"))
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (80, 195, 95), life=0.20,
+                    start_radius=6.0, end_radius=32.0, width=2,
+                    sparks=4, spark_color=(210, 255, 180),
+                    kind="witch_potion_impact_ring",
+                )
+            )
+            self.particles.emit_burst(x, y, (90, 200, 110), 8, speed=170.0)
+        elif visual_kind == "witch_fireball":
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (255, 140, 60), life=0.18,
+                    start_radius=8.0, end_radius=38.0, width=3,
+                    sparks=5, spark_color=(255, 225, 150),
+                    kind="witch_fireball_hit",
+                )
+            )
+            self.particles.emit_embers(x, y, 4)
         elif visual_kind == "shadow_kunai":
             self.fx_effects.append(
                 RingBurstFx(
@@ -989,6 +1203,20 @@ class ArenaScene:
             self.particles.emit_burst(
                 x, y, (180, 100, 255), 10, speed=220.0,
                 life=(0.10, 0.24), gravity=240.0,
+            )
+        elif kind == "eira_staff_hit":
+            y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
+            self.fx_effects.append(
+                RingBurstFx(
+                    x, y, (170, 230, 255), life=0.14,
+                    start_radius=6.0, end_radius=28.0, width=2,
+                    sparks=4, spark_color=(235, 250, 255),
+                    kind="eira_staff_hit",
+                )
+            )
+            self.particles.emit_burst(
+                x, y, (205, 240, 255), 5, speed=150.0,
+                life=(0.08, 0.18), gravity=120.0,
             )
         elif kind == "mech_laser_hit":
             y = float(target.y) - float(target.hurtbox_dims[1]) * 0.5
@@ -1163,6 +1391,106 @@ class ArenaScene:
                 ),
                 bonus_vs_poison_source=event.get("bonus_vs_poison_source"),
                 penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+        elif projectile_kind in ("eira_snowball", "eira_ice_shard"):
+            projectile_class = (
+                EiraSnowballProjectile
+                if projectile_kind == "eira_snowball"
+                else EiraIceShardProjectile
+            )
+            spawn_y = lane_y
+            if event.get("origin_height") is not None:
+                spawn_y = attacker.y - float(event["origin_height"])
+            projectile = projectile_class(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 30.0)),
+                y=spawn_y,
+                direction=direction,
+                speed=float(event.get("speed", 900.0)),
+                max_range=float(event.get("range", 900.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(event.get("hitbox_radius", event.get("radius", 14.0))),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+                pierces_targets=bool(
+                    event.get(
+                        "pierces_targets",
+                        projectile_kind == "eira_ice_shard",
+                    )
+                ),
+                freeze_gain=float(event.get("freeze_gain", 0.0)),
+                bonus_vs_frozen_atk_mult=float(
+                    event.get("bonus_vs_frozen_atk_mult", 0.0)
+                ),
+                bonus_vs_frozen_extra_mult=float(
+                    event.get("bonus_vs_frozen_extra_mult", 0.0)
+                ),
+            )
+        elif projectile_kind in (
+            "witch_lightning_forward",
+            "witch_lightning_up",
+            "witch_lightning_down",
+        ):
+            variant = projectile_kind.rsplit("_", 1)[1]
+            speed = float(event.get("speed", 1800.0))
+            angle = math.radians(
+                {"forward": 0.0, "up": 35.0, "down": -35.0}[variant]
+            )
+            vx = direction * speed * math.cos(angle)
+            vy = -speed * math.sin(angle)
+            projectile = WitchLightningProjectile(
+                variant=variant,
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 40.0)),
+                y=attacker.y - float(event.get("origin_height", 150.0)),
+                vx=vx,
+                vy=vy,
+                max_range=float(event.get("range", 900.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(event.get("hitbox_radius", event.get("radius", 14.0))),
+                penetrates_blocks=bool(event.get("penetrates_blocks", False)),
+            )
+        elif projectile_kind == "witch_potion":
+            on_platform = (
+                self.stage.platform_top_at(attacker.x, attacker.y) is not None
+            )
+            mode = "platform" if on_platform else "ground"
+            potion_cfg = self.store.stats["crooked_witch"]["potion"]
+            projectile = WitchPotionProjectile(
+                owner=attacker,
+                target=target,
+                x=attacker.x + direction * float(event.get("origin_forward", 40.0)),
+                y=attacker.y
+                - float(event.get("origin_height", 160.0 if on_platform else 60.0)),
+                direction=direction,
+                mode=mode,
+                speed=float(event.get("speed", 320.0 if on_platform else 420.0)),
+                max_range=float(event.get("range", 700.0)),
+                damage=damage,
+                knockback=float(event.get("knockback", 0.0)),
+                hitstun=float(
+                    attack.get("hitstun", self.store.stats["combat"]["hitstun"])
+                ),
+                hitstop=float(
+                    attack.get("hitstop", self.store.stats["combat"]["hitstop"])
+                ),
+                radius=float(event.get("hitbox_radius", event.get("radius", 12.0))),
+                zone_config=dict(potion_cfg),
             )
         elif projectile_kind == "shadow_kunai":
             projectile = ShadowKunaiProjectile(
@@ -1384,11 +1712,13 @@ class ArenaScene:
     def _cycle_status_demo(self) -> None:
         statuses = [
             "burn", "poison", "stun", "freeze", "slow",
-            "super_armor", "damage_reduction",
+            "super_armor", "damage_reduction", "vulnerable",
         ]
         kind = statuses[self.status_demo_index % len(statuses)]
         self.status_demo_index += 1
-        value = {"slow": 0.5, "damage_reduction": 0.2}.get(kind, 0.0)
+        value = {
+            "slow": 0.5, "damage_reduction": 0.2, "vulnerable": 0.2,
+        }.get(kind, 0.0)
         dps = 0.0
         if kind == "burn":
             dps = float(
@@ -1503,6 +1833,71 @@ class ArenaScene:
                 y = head_y + math.sin(angle) * 6.0
                 pygame.draw.circle(surface, (255, 224, 90), (round(x), round(y)), 4)
                 pygame.draw.circle(surface, (255, 250, 210), (round(x), round(y)), 2)
+        if fighter.statuses.has("freeze"):
+            self._draw_freeze_shell(surface, fighter)
+
+    def _draw_freeze_shell(self, surface: pygame.Surface, fighter) -> None:
+        width, height = fighter.hurtbox_dims
+        shell = _freeze_asset("eira_freeze_shell.png", _FREEZE_SHELL_CACHE)
+        if shell is not None:
+            target_w = max(1, round(width * 1.65))
+            target_h = max(1, round(height * 1.10))
+            shell = pygame.transform.smoothscale(shell, (target_w, target_h))
+            # The approved shell art is drawn at 58% opacity so the frozen
+            # body stays readable underneath.
+            shell.fill(
+                (255, 255, 255, 150), special_flags=pygame.BLEND_RGBA_MULT
+            )
+            surface.blit(
+                shell,
+                (
+                    round(fighter.x - target_w * 0.5),
+                    round(fighter.y - target_h + 8.0),
+                ),
+            )
+        else:
+            pad = 8
+            layer = pygame.Surface(
+                (round(width) + pad * 2, round(height) + pad * 2),
+                pygame.SRCALPHA,
+            )
+            rect = layer.get_rect()
+            pygame.draw.ellipse(layer, (130, 205, 255, 58), rect)
+            pygame.draw.ellipse(layer, (210, 245, 255, 150), rect, 2)
+            surface.blit(
+                layer,
+                (
+                    round(fighter.x - rect.width * 0.5),
+                    round(fighter.y + 8.0 - rect.height),
+                ),
+            )
+        foot = _freeze_asset("eira_freeze_foot_ice.png", _FREEZE_FOOT_CACHE)
+        if foot is not None:
+            foot_w = max(1, round(width * 1.8))
+            foot_h = max(
+                1, round(foot.get_height() * foot_w / max(1, foot.get_width()))
+            )
+            foot = pygame.transform.smoothscale(foot, (foot_w, foot_h))
+            foot.fill(
+                (255, 255, 255, 220), special_flags=pygame.BLEND_RGBA_MULT
+            )
+            surface.blit(
+                foot,
+                foot.get_rect(midbottom=(round(fighter.x), round(fighter.y + 4))),
+            )
+        else:
+            for index in range(3):
+                angle = self.sim_time * 2.5 + index * (math.tau / 3.0)
+                fx = fighter.x + math.cos(angle) * width * 0.35
+                fy = fighter.y - abs(math.sin(angle)) * 7.0
+                pygame.draw.polygon(
+                    surface, (205, 242, 255),
+                    [
+                        (round(fx), round(fy - 9)),
+                        (round(fx - 3), round(fy)),
+                        (round(fx + 3), round(fy)),
+                    ],
+                )
 
     def _draw_mark_fx(self, surface: pygame.Surface) -> None:
         # Marks are stored per target, so each enemy shows its own stack.
@@ -1586,15 +1981,25 @@ class ArenaScene:
         self.stage.draw(surface)
         self._draw_knock_up_effects(surface)
         for effect in self.fx_effects:
-            if getattr(effect, "behind", False):
+            if effect.alive and getattr(effect, "behind", False):
                 effect.draw(surface)
+        for hazard in self.hazards:
+            if getattr(hazard, "behind", False):
+                hazard.draw(surface)
         for enemy in self.enemies:
             enemy.draw(surface, tint=self._poison_tint(enemy))
             self._draw_status_fx(surface, enemy)
         for projectile in self.projectiles:
-            projectile.draw(surface)
+            if not getattr(projectile, "draw_front", False):
+                projectile.draw(surface)
         self.particles.draw(surface)
         self.player.draw(surface, tint=self._poison_tint(self.player))
+        for hazard in self.hazards:
+            if not getattr(hazard, "behind", False):
+                hazard.draw(surface)
+        for projectile in self.projectiles:
+            if getattr(projectile, "draw_front", False):
+                projectile.draw(surface)
         for enemy in self.enemies:
             draw_lock = getattr(enemy, "draw_lock_marker", None)
             if draw_lock is not None:
@@ -1602,12 +2007,13 @@ class ArenaScene:
         for effect in self.slash_effects:
             effect.draw(surface)
         for effect in self.fx_effects:
-            if not getattr(effect, "behind", False):
+            if effect.alive and not getattr(effect, "behind", False):
                 effect.draw(surface)
         self._draw_status_fx(surface, self.player)
         self._draw_mark_fx(surface)
         self._draw_shadow_mark_fx(surface)
         self.hud.draw(surface, self)
+        self.hud.draw_targeting_prompt(surface, self)
         if self.show_overlay:
             self.overlay.draw(surface, self)
         if self.show_panel:

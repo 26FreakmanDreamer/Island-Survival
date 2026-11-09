@@ -1,0 +1,342 @@
+{
+  "version": "v2",
+  "status": "pending_user_review",
+  "runtime_integrated": false,
+  "actor_version": "heal v5 group approved by user; original character frames unchanged",
+  "canvas": [
+    1254,
+    1254
+  ],
+  "frame_duration_ms": 50,
+  "cycle_duration_s": 1.0,
+  "cycle_repeats": 5,
+  "frames": [
+    "crooked_witch_heal_fx_v2_00.png",
+    "crooked_witch_heal_fx_v2_01.png",
+    "crooked_witch_heal_fx_v2_02.png",
+    "crooked_witch_heal_fx_v2_03.png",
+    "crooked_witch_heal_fx_v2_04.png",
+    "crooked_witch_heal_fx_v2_05.png",
+    "crooked_witch_heal_fx_v2_06.png",
+    "crooked_witch_heal_fx_v2_07.png",
+    "crooked_witch_heal_fx_v2_08.png",
+    "crooked_witch_heal_fx_v2_09.png",
+    "crooked_witch_heal_fx_v2_10.png",
+    "crooked_witch_heal_fx_v2_11.png",
+    "crooked_witch_heal_fx_v2_12.png",
+    "crooked_witch_heal_fx_v2_13.png",
+    "crooked_witch_heal_fx_v2_14.png",
+    "crooked_witch_heal_fx_v2_15.png",
+    "crooked_witch_heal_fx_v2_16.png",
+    "crooked_witch_heal_fx_v2_17.png",
+    "crooked_witch_heal_fx_v2_18.png",
+    "crooked_witch_heal_fx_v2_19.png"
+  ],
+  "ring_center_x_px": 647,
+  "ring_center_y_start_px": 718.5,
+  "ring_center_y_peak_px": 370.5,
+  "ascent_px": 348,
+  "particle_head_neck_ceiling_y_px": 280,
+  "particle_ceiling_soft_edge_px": 28,
+  "actor_canvas_offset": [
+    0,
+    0
+  ],
+  "color": "existing pale green deepens toward emerald while opacity/density increases; pale spark cores retained",
+  "ending": "last 100ms dissipates at head/neck height before next pulse restarts",
+  "processing": "existing v1 sprites animated by translation, color/density curves, and a head-neck particle ceiling; no actor redraw",
+  "sheet": "crooked_witch_heal_fx_v2_sheet.png",
+  "preview": "crooked_witch_heal_fx_v2_preview.gif",
+  "fx_only_preview": "crooked_witch_heal_fx_v2_fx_only_preview.gif",
+  "per_frame": [
+    {
+      "frame": "crooked_witch_heal_fx_v2_00.png",
+      "source_frame": 0,
+      "offset_y_px": 0,
+      "ring_center_y_px": 718.5,
+      "deepening_progress": 0.0,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        268,
+        387,
+        1006,
+        872
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_01.png",
+      "source_frame": 0,
+      "offset_y_px": -3,
+      "ring_center_y_px": 715.5,
+      "deepening_progress": 0.0588,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        268,
+        384,
+        1006,
+        869
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_02.png",
+      "source_frame": 0,
+      "offset_y_px": -13,
+      "ring_center_y_px": 705.5,
+      "deepening_progress": 0.1176,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        268,
+        374,
+        1006,
+        859
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_03.png",
+      "source_frame": 0,
+      "offset_y_px": -29,
+      "ring_center_y_px": 689.5,
+      "deepening_progress": 0.1765,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        268,
+        358,
+        1006,
+        843
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_04.png",
+      "source_frame": 1,
+      "offset_y_px": -49,
+      "ring_center_y_px": 669.5,
+      "deepening_progress": 0.2353,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        276,
+        345,
+        996,
+        913
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_05.png",
+      "source_frame": 1,
+      "offset_y_px": -73,
+      "ring_center_y_px": 645.5,
+      "deepening_progress": 0.2941,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        276,
+        321,
+        996,
+        889
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_06.png",
+      "source_frame": 1,
+      "offset_y_px": -99,
+      "ring_center_y_px": 619.5,
+      "deepening_progress": 0.3529,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        276,
+        295,
+        996,
+        863
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_07.png",
+      "source_frame": 2,
+      "offset_y_px": -128,
+      "ring_center_y_px": 590.5,
+      "deepening_progress": 0.4118,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        266,
+        281,
+        1009,
+        835
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_08.png",
+      "source_frame": 2,
+      "offset_y_px": -159,
+      "ring_center_y_px": 559.5,
+      "deepening_progress": 0.4706,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        266,
+        286,
+        1009,
+        804
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_09.png",
+      "source_frame": 2,
+      "offset_y_px": -189,
+      "ring_center_y_px": 529.5,
+      "deepening_progress": 0.5294,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        266,
+        281,
+        1009,
+        774
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_10.png",
+      "source_frame": 2,
+      "offset_y_px": -220,
+      "ring_center_y_px": 498.5,
+      "deepening_progress": 0.5882,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        266,
+        301,
+        1009,
+        743
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_11.png",
+      "source_frame": 3,
+      "offset_y_px": -249,
+      "ring_center_y_px": 469.5,
+      "deepening_progress": 0.6471,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        274,
+        281,
+        1005,
+        693
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_12.png",
+      "source_frame": 3,
+      "offset_y_px": -275,
+      "ring_center_y_px": 443.5,
+      "deepening_progress": 0.7059,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        274,
+        282,
+        1005,
+        667
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_13.png",
+      "source_frame": 3,
+      "offset_y_px": -299,
+      "ring_center_y_px": 419.5,
+      "deepening_progress": 0.7647,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        274,
+        281,
+        1005,
+        643
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_14.png",
+      "source_frame": 4,
+      "offset_y_px": -319,
+      "ring_center_y_px": 399.5,
+      "deepening_progress": 0.8235,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        307,
+        311,
+        1006,
+        646
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_15.png",
+      "source_frame": 4,
+      "offset_y_px": -335,
+      "ring_center_y_px": 383.5,
+      "deepening_progress": 0.8824,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        307,
+        295,
+        1006,
+        630
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_16.png",
+      "source_frame": 4,
+      "offset_y_px": -345,
+      "ring_center_y_px": 373.5,
+      "deepening_progress": 0.9412,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        307,
+        285,
+        1006,
+        620
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_17.png",
+      "source_frame": 4,
+      "offset_y_px": -348,
+      "ring_center_y_px": 370.5,
+      "deepening_progress": 1.0,
+      "end_dissipation": 1.0,
+      "visible_alpha_bbox": [
+        307,
+        282,
+        1006,
+        617
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_18.png",
+      "source_frame": 4,
+      "offset_y_px": -348,
+      "ring_center_y_px": 370.5,
+      "deepening_progress": 1.0,
+      "end_dissipation": 0.65,
+      "visible_alpha_bbox": [
+        307,
+        282,
+        1006,
+        617
+      ]
+    },
+    {
+      "frame": "crooked_witch_heal_fx_v2_19.png",
+      "source_frame": 4,
+      "offset_y_px": -348,
+      "ring_center_y_px": 370.5,
+      "deepening_progress": 1.0,
+      "end_dissipation": 0.25,
+      "visible_alpha_bbox": [
+        307,
+        282,
+        1006,
+        617
+      ]
+    }
+  ],
+  "preserved_original_sha256": {
+    "crooked_witch_heal_fx_v1_00.png": "25d613004a5d48e324e7c66a6033749efe3115632684b2ea1a5e95419109c74f",
+    "crooked_witch_heal_fx_v1_01.png": "1e45ac6603c899943bb0d5c08b4672cd5c1e5c1e0fc6a5bb289977de15ba05f5",
+    "crooked_witch_heal_fx_v1_02.png": "7a83e1effa72d4ddf13387e0b860a5be0a9d992ad27ff23844b82d119a489fda",
+    "crooked_witch_heal_fx_v1_03.png": "abdc8c37d1788a74ad1ee8f39950204eeee2772da7c3dc6e8c8ca56e94121ba8",
+    "crooked_witch_heal_fx_v1_04.png": "34f266607da8f783615f4fa3122daee7a86c9cdfc842743ebcaf771b09e5100a",
+    "crooked_witch_heal_fx_v1_manifest.json": "8aaaf4ffe93a71e3065ac108e24cd32dd178e994f837ee2945eab1df5f3f46b6",
+    "crooked_witch_heal_fx_v1_sheet.png": "af2dc1f43d072fbea392fe6b43732d895a46fd19f08e8d237e95062af0dab73b"
+  }
+}

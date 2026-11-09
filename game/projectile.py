@@ -11,6 +11,7 @@ from .config import ASSETS_DIR, AXE_SPRITE_PATH
 from .fx import (
     LINA_Q_SPECS,
     Q_WAVE_DRAW_OFFSET_Y,
+    SpriteStripFx,
     strip_frame,
     web_sprite,
 )
@@ -589,6 +590,10 @@ class ShurikenProjectile:
         bonus_vs_poison_source: str | None = None,
         penetrates_blocks: bool = False,
         pierces_targets: bool = False,
+        freeze_gain: float = 0.0,
+        bonus_vs_frozen_atk_mult: float = 0.0,
+        bonus_vs_frozen_extra_mult: float = 0.0,
+        close_range_in_front_only: bool = False,
     ) -> None:
         self.owner = owner
         self.target = target
@@ -617,6 +622,11 @@ class ShurikenProjectile:
         self.bonus_vs_poison_source = bonus_vs_poison_source
         self.penetrates_blocks = bool(penetrates_blocks)
         self.pierces_targets = bool(pierces_targets)
+        self.freeze_gain = float(freeze_gain)
+        self.bonus_vs_frozen_atk_mult = float(bonus_vs_frozen_atk_mult)
+        self.bonus_vs_frozen_extra_mult = float(bonus_vs_frozen_extra_mult)
+        self.close_range_in_front_only = bool(close_range_in_front_only)
+        self.hit_target_was_frozen = False
         self.hit_target_ids: set[int] = set()
         if kind == "rhea_poison_shuriken":
             self.hit_color = (120, 230, 130)
@@ -645,6 +655,10 @@ class ShurikenProjectile:
                 continue
             if id(target) in self.hit_target_ids:
                 continue
+            if self.close_range_in_front_only:
+                relative = (target.x - self.owner.x) * self.direction
+                if relative < -8.0:
+                    continue
             if owner_box.colliderect(target.hurtbox()):
                 self.hit = True
                 self.target = target
@@ -1767,3 +1781,423 @@ class CreepyDownBullet:
         angle = -math.degrees(math.atan2(self.uy, self.ux))
         rotated = pygame.transform.rotate(frame, angle)
         surface.blit(rotated, rotated.get_rect(center=(round(self.x), round(self.y))))
+
+
+# --- Eira / Crooked Witch projectiles ---------------------------------------
+
+EIRA_FX_DIR = ASSETS_DIR / "frames" / "eira" / "fx"
+WITCH_FX_DIR = ASSETS_DIR / "frames" / "crooked_witch" / "fx"
+
+_FX_IMAGE_CACHE: dict[tuple[str, float, float], pygame.Surface | None] = {}
+
+
+def _fx_image(path, scale: float = 1.0) -> pygame.Surface | None:
+    """Load and cache one approved FX image at a fixed scale."""
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    key = (str(path), mtime, round(scale, 4))
+    if key in _FX_IMAGE_CACHE:
+        cached = _FX_IMAGE_CACHE[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _FX_IMAGE_CACHE[key] = None
+        return None
+    if abs(scale - 1.0) > 1e-6:
+        image = pygame.transform.smoothscale(
+            image,
+            (
+                max(1, round(image.get_width() * scale)),
+                max(1, round(image.get_height() * scale)),
+            ),
+        )
+    _FX_IMAGE_CACHE[key] = image
+    return image.copy()
+
+
+def _blit_anchored(
+    surface: pygame.Surface,
+    image: pygame.Surface,
+    x: float,
+    y: float,
+    pivot: tuple[float, float],
+    direction: int,
+) -> None:
+    """Blit an FX image with its pivot at (x, y), flipping when needed."""
+    if direction < 0:
+        image = pygame.transform.flip(image, True, False)
+        pivot_x = image.get_width() - pivot[0]
+    else:
+        pivot_x = pivot[0]
+    surface.blit(
+        image,
+        (round(x - pivot_x), round(y - pivot[1])),
+    )
+
+
+class EiraSnowballProjectile(ShurikenProjectile):
+    """Eira's high-lane snowball: single target, disappears on hit."""
+
+    # The snowball forms on top of the staff head, so it must be drawn after
+    # the player; the release sparkle stays above it in the FX layer.
+    draw_front = True
+
+    def __init__(self, **kwargs) -> None:
+        kwargs["kind"] = "eira_snowball"
+        kwargs.setdefault("pierces_targets", False)
+        kwargs.setdefault("penetrates_blocks", False)
+        super().__init__(**kwargs)
+        self.visual_kind = "eira_snowball"
+        self.close_range_in_front_only = True
+        self.hit_color = (210, 245, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        # Ball core is ~23 px at this scale, matching the staff crystal and
+        # the 11.2 px hit radius; the whole sprite is staff-head sized.
+        scale = 0.26
+        image = _fx_image(EIRA_FX_DIR / "eira_snowball_v1_fx_projectile.png", scale)
+        if image is not None:
+            _blit_anchored(
+                surface, image, self.x, self.y,
+                (184.0 * scale, 64.0 * scale), self.direction,
+            )
+            return
+        pygame.draw.circle(
+            surface, (220, 245, 255), (round(self.x), round(self.y)), 14
+        )
+        pygame.draw.circle(
+            surface, (150, 220, 255), (round(self.x), round(self.y)), 10
+        )
+
+
+class EiraIceShardProjectile(ShurikenProjectile):
+    """Eira's piercing triangular ice shard."""
+
+    def __init__(self, **kwargs) -> None:
+        kwargs["kind"] = "eira_ice_shard"
+        kwargs.setdefault("pierces_targets", True)
+        kwargs.setdefault("penetrates_blocks", False)
+        super().__init__(**kwargs)
+        self.visual_kind = "eira_ice_shard"
+        self.close_range_in_front_only = True
+        self.hit_color = (160, 225, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        scale = 0.40
+        image = _fx_image(EIRA_FX_DIR / "eira_ice_shard_v1_fx_projectile.png", scale)
+        if image is not None:
+            _blit_anchored(
+                surface, image, self.x, self.y,
+                (170.0 * scale, 56.0 * scale), self.direction,
+            )
+            return
+        points = [
+            (round(self.x + self.direction * 18), round(self.y)),
+            (round(self.x - self.direction * 10), round(self.y - 8)),
+            (round(self.x - self.direction * 10), round(self.y + 8)),
+        ]
+        pygame.draw.polygon(surface, (170, 230, 255), points)
+
+
+class WitchLightningProjectile(AimedProjectile):
+    """Crooked Witch's straight lightning bolt in one of three directions."""
+
+    def __init__(self, *, variant: str, **kwargs) -> None:
+        kwargs["kind"] = f"witch_lightning_{variant}"
+        super().__init__(**kwargs)
+        self.variant = variant
+        self.visual_kind = f"witch_lightning_{variant}"
+        self.hit_color = (210, 170, 255)
+
+    def draw(self, surface: pygame.Surface) -> None:
+        # The approved strip is a compact cast/impact burst; the travelling
+        # bolt itself is drawn as a jagged purple line so it reads at speed.
+        length = 110.0
+        steps = 7
+        points: list[tuple[int, int]] = []
+        for index in range(steps + 1):
+            t = index / steps
+            bx = self.x - self.ux * length * (1.0 - t)
+            by = self.y - self.uy * length * (1.0 - t)
+            offset = (
+                math.sin(self.age * 45.0 + index * 2.3)
+                * 6.0
+                * math.sin(math.pi * t)
+            )
+            points.append(
+                (round(bx - self.uy * offset), round(by + self.ux * offset))
+            )
+        pygame.draw.lines(surface, (100, 45, 190), False, points, 7)
+        pygame.draw.lines(surface, (220, 180, 255), False, points, 3)
+        pygame.draw.lines(surface, (250, 240, 255), False, points, 1)
+        pygame.draw.circle(
+            surface, (235, 210, 255), (round(self.x), round(self.y)), 6
+        )
+        pygame.draw.circle(
+            surface, (120, 60, 220), (round(self.x), round(self.y)), 10, 2
+        )
+        frame = int(self.age / 0.06) % 6
+        image = _fx_image(
+            WITCH_FX_DIR
+            / f"crooked_witch_lightning_fx_v2_{self.variant}_{frame:02d}.png",
+            0.25,
+        )
+        if image is not None:
+            angle = -math.degrees(math.atan2(self.uy, self.ux))
+            rotated = pygame.transform.rotate(image, angle)
+            surface.blit(
+                rotated, rotated.get_rect(center=(round(self.x), round(self.y)))
+            )
+
+
+class WitchPotionProjectile:
+    """Crooked Witch's potion bottle.
+
+    Platform mode arcs under gravity; ground mode travels low and flat. A
+    direct hit deals damage and leaves no zone; a miss breaks on the surface
+    and creates a poison zone.
+    """
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        direction: int,
+        *,
+        mode: str = "ground",
+        speed: float = 420.0,
+        max_range: float = 700.0,
+        damage: float = 0.0,
+        knockback: float = 0.0,
+        hitstun: float = 0.2,
+        hitstop: float = 0.04,
+        radius: float = 12.0,
+        gravity: float = 1800.0,
+        zone_config: dict | None = None,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.direction = 1 if direction >= 0 else -1
+        self.mode = mode
+        self.speed = float(speed)
+        self.max_range = float(max_range)
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.radius = float(radius)
+        self.gravity = float(gravity) if mode == "platform" else 0.0
+        self.vx = self.direction * self.speed
+        self.vy = -60.0 if mode == "platform" else 0.0
+        self.traveled = 0.0
+        self.age = 0.0
+        self.alive = True
+        self.hit = False
+        self.hit_target_was_frozen = False
+        self.flame_bonus = 0.0
+        self.kind = "witch_potion"
+        self.visual_kind = "witch_potion"
+        self.hit_color = (110, 215, 110)
+        self.zone_config = dict(zone_config or {})
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def _break_fx(self, scene, x: float, y: float) -> None:
+        frames = [
+            WITCH_FX_DIR / f"crooked_witch_potion_break_v1_{index:02d}.png"
+            for index in range(4)
+        ]
+        scene.fx_effects.append(
+            SpriteStripFx(
+                frames, [0.08, 0.10, 0.12, 0.14], x, y,
+                scale=0.12, kind="witch_potion_break",
+            )
+        )
+
+    def _land(self, scene, surface_y: float) -> None:
+        self._break_fx(scene, self.x, surface_y - 12.0)
+        from .hazards import PoisonZone
+
+        scene.hazards.append(PoisonZone(self.x, surface_y, self.zone_config))
+        self.alive = False
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        previous_y = self.y
+        self.x += self.vx * dt
+        self.traveled += abs(self.vx) * dt
+        if self.mode == "platform":
+            self.vy += self.gravity * dt
+            self.y += self.vy * dt
+        self.rect.center = (round(self.x), round(self.y))
+
+        for target in scene.targets_for(self.owner):
+            if target.hp <= 0.0 or target.invincible:
+                continue
+            if self.rect.colliderect(target.hurtbox()):
+                self.hit = True
+                self.target = target
+                resolve_projectile_hit(scene, self)
+                self._break_fx(scene, target.x, self.y)
+                self.alive = False
+                return
+
+        low, high = scene.stage.walls
+        if self.x < low or self.x > high:
+            self.x = max(low, min(high, self.x))
+            self._land(scene, scene.stage.ground_y)
+            return
+
+        if self.mode == "platform":
+            if self.vy >= 0.0 and scene.stage.blocks_enabled:
+                for block in scene.stage.blocks:
+                    if (
+                        previous_y <= block.top <= self.y
+                        and block.left <= self.x <= block.right
+                    ):
+                        self.y = float(block.top)
+                        self._land(scene, float(block.top))
+                        return
+            if self.y >= scene.stage.ground_y:
+                self.y = scene.stage.ground_y
+                self._land(scene, scene.stage.ground_y)
+                return
+        else:
+            if scene.stage.blocks_enabled:
+                for block in scene.stage.blocks:
+                    if self.rect.colliderect(block):
+                        self._land(scene, scene.stage.ground_y)
+                        return
+            if self.traveled >= self.max_range:
+                self._land(scene, scene.stage.ground_y)
+                return
+
+    def draw(self, surface: pygame.Surface) -> None:
+        frame = [0, 1, 2, 1][int(self.age / 0.12) % 4]
+        image = _fx_image(
+            WITCH_FX_DIR
+            / f"crooked_witch_potion_projectile_v1_{frame:02d}.png",
+            0.07,
+        )
+        if image is not None:
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+        pygame.draw.circle(
+            surface, (95, 185, 95), (round(self.x), round(self.y)), 10
+        )
+        pygame.draw.circle(
+            surface, (190, 245, 170), (round(self.x - 3), round(self.y - 4)), 3
+        )
+
+
+class WitchFireball:
+    """A fireball falling straight down from the target's locked x."""
+
+    def __init__(
+        self,
+        owner,
+        target,
+        x: float,
+        y: float,
+        *,
+        fall_speed: float = 900.0,
+        damage: float = 0.0,
+        knockback: float = 0.0,
+        hitstun: float = 0.2,
+        hitstop: float = 0.04,
+        radius: float = 16.0,
+    ) -> None:
+        self.owner = owner
+        self.target = target
+        self.x = float(x)
+        self.y = float(y)
+        self.direction = 1 if target is not None and target.x >= x else -1
+        self.fall_speed = float(fall_speed)
+        self.damage = float(damage)
+        self.knockback = float(knockback)
+        self.hitstun = float(hitstun)
+        self.hitstop = float(hitstop)
+        self.radius = float(radius)
+        self.age = 0.0
+        self.alive = True
+        self.hit = False
+        self.hit_target_was_frozen = False
+        self.flame_bonus = 0.0
+        self.kind = "witch_fireball"
+        self.visual_kind = "witch_fireball"
+        self.hit_color = (255, 160, 60)
+        self.rect = pygame.Rect(0, 0, round(radius * 2), round(radius * 2))
+        self.rect.center = (round(self.x), round(self.y))
+
+    def _impact(self, scene, x: float, y: float) -> None:
+        frames = [
+            WITCH_FX_DIR / f"crooked_witch_fire_impact_v1_{index:02d}.png"
+            for index in range(4)
+        ]
+        scene.fx_effects.append(
+            SpriteStripFx(
+                frames, [0.08, 0.10, 0.12, 0.14], x, y,
+                scale=0.35, kind="witch_fire_impact",
+            )
+        )
+        scene.particles.emit_embers(x, y, 4)
+
+    def update(self, dt: float, scene) -> None:
+        if not self.alive:
+            return
+        self.age += dt
+        self.y += self.fall_speed * dt
+        self.rect.center = (round(self.x), round(self.y))
+
+        if self.y >= scene.stage.ground_y:
+            self._impact(scene, self.x, scene.stage.ground_y)
+            self.alive = False
+            return
+
+        for target in scene.targets_for(self.owner):
+            if target.hp <= 0.0 or target.invincible:
+                continue
+            if self.rect.colliderect(target.hurtbox()):
+                self.hit = True
+                self.target = target
+                resolve_projectile_hit(scene, self)
+                self._impact(scene, target.x, self.y)
+                self.alive = False
+                return
+
+    def draw(self, surface: pygame.Surface) -> None:
+        image = _fx_image(
+            WITCH_FX_DIR / "crooked_witch_fireball_v1_00.png", 0.25
+        )
+        if image is not None:
+            trail = pygame.Surface((24, 64), pygame.SRCALPHA)
+            for index in range(4):
+                alpha = max(20, 120 - index * 28)
+                pygame.draw.circle(
+                    trail, (255, 150, 50, alpha),
+                    (12, 18 + index * 12), max(2, 7 - index),
+                )
+            surface.blit(trail, (round(self.x - 12), round(self.y - 18)))
+            surface.blit(
+                image,
+                image.get_rect(center=(round(self.x), round(self.y))),
+            )
+            return
+        pygame.draw.circle(
+            surface, (255, 140, 50), (round(self.x), round(self.y)), 14
+        )
+        pygame.draw.circle(
+            surface, (255, 225, 140), (round(self.x), round(self.y)), 8
+        )

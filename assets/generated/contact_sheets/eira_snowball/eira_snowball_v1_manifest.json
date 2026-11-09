@@ -1,0 +1,91 @@
+{
+  "character": "Eira Frostveil",
+  "animation": "snowball",
+  "version": 1,
+  "purpose": "art review",
+  "direction": "right",
+  "reference": "assets/generated/base/eira_side_base.png",
+  "character_art": "ChatGPT ImageGen",
+  "canvas_px": [
+    627,
+    627
+  ],
+  "pivot_px": [
+    323,
+    574
+  ],
+  "duration_ms": 440,
+  "frames": [
+    {
+      "file": "eira_snowball_v1_00.png",
+      "pose": "draw back",
+      "start_ms": 0,
+      "duration_ms": 100
+    },
+    {
+      "file": "eira_snowball_v1_01.png",
+      "pose": "short arc",
+      "start_ms": 100,
+      "duration_ms": 100
+    },
+    {
+      "file": "eira_snowball_v1_02.png",
+      "pose": "release",
+      "start_ms": 200,
+      "duration_ms": 80
+    },
+    {
+      "file": "eira_snowball_v1_03.png",
+      "pose": "recover",
+      "start_ms": 280,
+      "duration_ms": 160
+    }
+  ],
+  "release": {
+    "frame": 2,
+    "time_ms": 200,
+    "crystal_px": [
+      508,
+      142
+    ],
+    "lane": "high",
+    "direction": "horizontal"
+  },
+  "effects": {
+    "release": {
+      "file": "eira_snowball_v1_fx_release.png",
+      "pivot_px": [
+        96,
+        96
+      ],
+      "duration_ms": 60
+    },
+    "projectile": {
+      "file": "eira_snowball_v1_fx_projectile.png",
+      "pivot_px": [
+        184,
+        64
+      ]
+    },
+    "impact": {
+      "files": [
+        "eira_snowball_v1_fx_impact_00.png",
+        "eira_snowball_v1_fx_impact_01.png",
+        "eira_snowball_v1_fx_impact_02.png",
+        "eira_snowball_v1_fx_impact_03.png"
+      ],
+      "pivot_px": [
+        128,
+        128
+      ],
+      "frame_durations_ms": [
+        40,
+        50,
+        60,
+        70
+      ]
+    }
+  },
+  "contact_sheet": "eira_snowball_v1_sheet.png",
+  "preview": "eira_snowball_v1_preview.gif"
+}

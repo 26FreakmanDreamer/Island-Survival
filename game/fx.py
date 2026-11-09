@@ -692,3 +692,126 @@ class PhantomBindFrontFx(PhantomBindWrapFx):
 class PhantomBindBackFx(PhantomBindWrapFx):
     side = "back"
     behind = True
+
+
+_SPRITE_STRIP_CACHE: dict[tuple, pygame.Surface | None] = {}
+
+
+def _sprite_strip_frame(
+    path: str | Path, scale: float, x_scale: float = 1.0
+) -> pygame.Surface | None:
+    path = Path(path)
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    key = (str(path), mtime, round(scale, 4), round(x_scale, 4))
+    if key in _SPRITE_STRIP_CACHE:
+        cached = _SPRITE_STRIP_CACHE[key]
+        return cached.copy() if cached is not None else None
+    try:
+        image = pygame.image.load(str(path)).convert_alpha()
+    except (OSError, pygame.error):
+        _SPRITE_STRIP_CACHE[key] = None
+        return None
+    if abs(scale - 1.0) > 1e-6 or abs(x_scale - 1.0) > 1e-6:
+        image = pygame.transform.smoothscale(
+            image,
+            (
+                max(1, round(image.get_width() * scale * x_scale)),
+                max(1, round(image.get_height() * scale)),
+            ),
+        )
+    _SPRITE_STRIP_CACHE[key] = image
+    return image.copy()
+
+
+class SpriteStripFx(FxEffect):
+    """One approved frame sequence drawn at a fixed anchor.
+
+    Used for the Eira/Witch FX that are separate from the character frames
+    (snowball impact, ice shards, lightning, potion break, fire impact).
+    """
+
+    kind = "sprite_strip"
+
+    def __init__(
+        self,
+        frames,
+        durations,
+        x: float,
+        y: float,
+        *,
+        pivot: tuple[float, float] | None = None,
+        scale: float = 1.0,
+        x_scale: float = 1.0,
+        x_scale_from: int = 0,
+        flip: bool = False,
+        behind: bool = False,
+        loop: bool = False,
+        kind: str | None = None,
+    ) -> None:
+        durations = [float(value) for value in durations]
+        total = sum(durations)
+        if total <= 0.0:
+            durations = [0.1]
+            total = 0.1
+        super().__init__(total, kind)
+        self.frames = [str(path) for path in frames]
+        self.durations = durations
+        self.x = float(x)
+        self.y = float(y)
+        self.pivot = pivot
+        self.scale = float(scale)
+        self.x_scale = float(x_scale)
+        self.x_scale_from = max(0, int(x_scale_from))
+        self.flip = bool(flip)
+        self.behind = bool(behind)
+        self.loop = bool(loop)
+        self._frame_x_scales = [
+            self.x_scale if index >= self.x_scale_from else 1.0
+            for index in range(len(self.frames))
+        ]
+        self._images = [
+            _sprite_strip_frame(path, self.scale, x_scale)
+            for path, x_scale in zip(self.frames, self._frame_x_scales)
+        ]
+
+    def update(self, dt: float) -> None:
+        self.age += dt
+        if self.loop:
+            if self.age >= self.life:
+                self.age %= self.life
+        elif self.age >= self.life:
+            self.alive = False
+
+    def _frame_index(self) -> int:
+        elapsed = 0.0
+        for index, duration in enumerate(self.durations):
+            elapsed += duration
+            if self.age < elapsed:
+                return index
+        return len(self.durations) - 1
+
+    def draw(self, surface: pygame.Surface) -> None:
+        index = self._frame_index()
+        if not 0 <= index < len(self._images):
+            return
+        image = self._images[index]
+        if image is None:
+            return
+        if self.flip:
+            image = pygame.transform.flip(image, True, False)
+        if self.pivot is None:
+            pivot_x = image.get_width() * 0.5
+            pivot_y = image.get_height() * 0.5
+        else:
+            frame_x_scale = self._frame_x_scales[index]
+            pivot_x = float(self.pivot[0]) * self.scale * frame_x_scale
+            pivot_y = float(self.pivot[1]) * self.scale
+        if self.flip and self.pivot is not None:
+            pivot_x = image.get_width() - pivot_x
+        surface.blit(
+            image,
+            (round(self.x - pivot_x), round(self.y - pivot_y)),
+        )

@@ -91,7 +91,14 @@ class HUD:
                 e_ready = False
                 e_color = (235, 180, 70)
             elif e_phase is not None:
-                e_label = "E ACTIVE"
+                if getattr(player, "e_targeting", False):
+                    e_label = "E CHOOSE"
+                elif isinstance(e_phase, str) and e_phase in (
+                    "raise", "hold", "release", "recover",
+                ):
+                    e_label = "E CAST"
+                else:
+                    e_label = "E ACTIVE"
                 e_ready = False
                 e_color = (235, 180, 70)
             elif player.e_cd > 0.0:
@@ -141,6 +148,27 @@ class HUD:
             surface.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, 18))
 
         self.draw_result(surface, scene)
+
+    def draw_targeting_prompt(self, surface: pygame.Surface, scene) -> None:
+        """Eira's E area-selection hint and the vertical mouse guide."""
+        player = scene.player
+        if not getattr(player, "e_targeting", False):
+            return
+        text = self.text.render(
+            "Click the left mouse to choose an area.", True, (235, 248, 255)
+        )
+        surface.blit(text, (SCREEN_W // 2 - text.get_width() // 2, 22))
+        low, high = scene.stage.walls
+        mouse_x = max(
+            low, min(high, float(getattr(scene, "mouse_x", SCREEN_W * 0.5)))
+        )
+        pygame.draw.line(
+            surface,
+            (150, 220, 255),
+            (round(mouse_x), 50),
+            (round(mouse_x), round(scene.stage.ground_y)),
+            2,
+        )
 
     def draw_result(self, surface: pygame.Surface, scene) -> None:
         if scene.match_over is None:

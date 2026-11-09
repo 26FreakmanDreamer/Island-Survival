@@ -1046,7 +1046,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         return ticks
 
     rhea_roster_order_ok = (
-        list(scene.store.roster.get("characters", {})) == ["lina", "nyra", "rhea"]
+        list(scene.store.roster.get("characters", {}))
+        == ["lina", "nyra", "rhea", "eira"]
     )
     rhea, rhea_enemy = _rhea_setup("dummy", 500.0)
     rhea_present = (
@@ -2645,7 +2646,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.set_enemy("warrior")
     character_noop_ok = not scene.set_character("lina")
     scene.handle_debug_key(pygame.K_LEFTBRACKET)
-    previous_character_ok = scene.character_id == "rhea"
+    previous_character_ok = scene.character_id == "eira"
     rhea_switch_ai_off_ok = (
         hasattr(scene.enemy, "ai_enabled") and not scene.enemy.ai_enabled
     )
@@ -2670,6 +2671,8 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     f7_mech_crab_ok = scene.enemy_id == "mech_crab"
     scene.handle_debug_key(pygame.K_F7)
     f7_shadow_ninja_ok = scene.enemy_id == "shadow_ninja"
+    scene.handle_debug_key(pygame.K_F7)
+    f7_crooked_witch_ok = scene.enemy_id == "crooked_witch"
     scene.handle_debug_key(pygame.K_F7)
     f7_dummy_ok = scene.enemy_id == "dummy"
     b_before = scene.stage.blocks_enabled
@@ -2718,6 +2721,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and f7_creepy_ok
         and f7_mech_crab_ok
         and f7_shadow_ninja_ok
+        and f7_crooked_witch_ok
         and f7_dummy_ok
         and b_key_ok
         and lock_switch_off_ok
@@ -3517,7 +3521,7 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and mech.hp == 400.0
         and mech.basic_atk == 30.0
         and mech.atk == 30.0
-        and mech.hurtbox_dims == (160.0, 150.0)
+        and mech.hurtbox_dims == (200.0, 230.0)
         and mech.stage_half_width == 85.0
         and mech.skill_slots
         == ["mech_laser", "mech_charge", "mech_claw_slam", "mech_leap_slam"]
@@ -4650,6 +4654,675 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
                 shadow_ninja_phantom_fx_missing += 1
     scene.reset()
 
+    # --- Phase J: Crooked Witch (F7 enemy) ---
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("crooked_witch")
+    scene.reset()
+    witch = scene.enemy
+    witch_player = scene.player
+
+    def _place_witch(
+        wx: float = 900.0,
+        wy: float = 620.0,
+        px: float = 300.0,
+        py: float = 620.0,
+    ) -> None:
+        for fighter, x, y, facing in (
+            (witch, wx, wy, 1 if px >= wx else -1),
+            (witch_player, px, py, 1 if wx >= px else -1),
+        ):
+            fighter.x = float(x)
+            fighter.y = float(y)
+            fighter.facing = facing
+            fighter.vx = 0.0
+            fighter.vy = 0.0
+            fighter.kb_vx = 0.0
+            fighter.kb_time = 0.0
+            fighter.hitstun = 0.0
+            fighter.hp = fighter.max_hp
+            fighter.state = FighterState.IDLE
+            fighter.on_ground = True
+            fighter.invincible = False
+            fighter.statuses.clear()
+        witch.phase = "normal"
+        witch.phase_time = 0.0
+        witch.teleport_cd = 0.0
+        witch.damage_timer = 0.0
+        witch.teleport_pending = False
+        witch.heal_used = False
+        witch.heal_pending = False
+        witch.attack_runtime = None
+        witch.attack_id = None
+        witch.no_hitbox = False
+        witch.hidden = False
+        witch.invincible = False
+        witch.ignore_separation = False
+        witch.ai_enabled = False
+        scene.hazards = []
+        scene.projectiles = []
+        scene.hitstop = 0.0
+        scene.match_over = None
+        scene.sim_time = 0.0
+
+    def _witch_ticks(count: int) -> None:
+        for _ in range(count):
+            scene.tick(FIXED_DT)
+
+    crooked_witch_present = (
+        witch.name == "Crooked Witch"
+        and witch.max_hp == 400.0
+        and witch.basic_atk == 30.0
+        and witch.atk == 30.0
+        and witch.hurtbox_dims == (56.0, 210.0)
+        and witch.skill_slots
+        == ["witch_lightning", "witch_ice_spike", "witch_potion", "witch_fire_rain"]
+        and scene.enemy_spec.get("stage_variant") == "crooked_witch"
+        and len(scene.stage.platforms) == 2
+        and len(scene.stage.ladders) == 2
+        and len(scene.stage.barriers) == 0
+        and scene.stage.spawn("crooked_witch_spawn") == (965.0, 220.0)
+        and len(scene.stage.teleport_points) == 4
+    )
+    crooked_witch_stats_ok = (
+        abs(witch.walk_speed - 150.0) < 1e-6
+        and abs(witch.lightning_cd_max - 2.0) < 1e-6
+        and abs(witch.ice_cd_max - 5.0) < 1e-6
+        and abs(witch.potion_cd_max - 8.0) < 1e-6
+        and abs(witch.fire_cd_max - 15.0) < 1e-6
+        and not hasattr(witch, "energy")
+        and len(scene.store.animations["crooked_witch_clips"]) == 17
+    )
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    points = list(scene.stage.teleport_points)
+    nearest_index = min(
+        range(len(points)),
+        key=lambda index: (points[index][0] - witch.x) ** 2
+        + (points[index][1] - witch.y) ** 2,
+    )
+    teleport_choice = witch._pick_teleport_point(scene)
+    teleport_excludes_nearest = (
+        teleport_choice is not None
+        and teleport_choice != points[nearest_index]
+        and teleport_choice != (witch.x, witch.y)
+    )
+    witch.take_hit(5.0, 0.0, 0.2, -1)
+    _witch_ticks(2)
+    teleport_started = witch.phase in ("teleport_out", "teleport_in")
+    teleport_flags = (
+        witch.invincible and witch.no_hitbox and witch.hidden
+    )
+    _witch_ticks(40)
+    teleport_finished = (
+        witch.phase == "normal"
+        and not witch.invincible
+        and not witch.no_hitbox
+        and not witch.hidden
+        and witch.teleport_cd > 0.0
+    )
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.damage_timer = 8.0
+    _witch_ticks(2)
+    teleport_auto = witch.phase in ("teleport_out", "teleport_in")
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.hp = 199.0
+    witch.teleport_cd = 99.0
+    _witch_ticks(5)
+    heal_started = witch.phase.startswith("heal") and witch.heal_used
+    heal_flags = (
+        witch.invincible and witch.no_hitbox and witch.ignore_separation
+    )
+    _witch_ticks(600)
+    heal_finished = (
+        witch.phase == "normal"
+        and abs(witch.hp - 319.0) < 1e-6
+        and abs(witch.x - 900.0) < 2.0
+        and abs(witch.y - 620.0) < 2.0
+    )
+    witch.hp = 100.0
+    _witch_ticks(5)
+    heal_once = not witch.phase.startswith("heal")
+    crooked_witch_teleport_ok = (
+        teleport_excludes_nearest
+        and teleport_started
+        and teleport_flags
+        and teleport_finished
+        and teleport_auto
+    )
+    crooked_witch_heal_ok = (
+        heal_started
+        and heal_flags
+        and heal_finished
+        and heal_once
+    )
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    lightning_started = witch.force_attack(scene, witch_player, "witch_lightning")
+    lightning_forward = witch.attack_id == "witch_lightning_forward"
+    _witch_ticks(80)
+    lightning_damage = abs(witch_player.hp - 64.0) < 1e-6
+    lightning_vulnerable = (
+        abs(witch_player.statuses.vulnerable_amount() - 0.20) < 1e-6
+    )
+    _place_witch(900.0, 620.0, 700.0, 320.0)
+    lightning_up = witch._choose_lightning_attack(scene, witch_player)
+    _place_witch(900.0, 220.0, 400.0, 620.0)
+    lightning_down = witch._choose_lightning_attack(scene, witch_player)
+    _place_witch(900.0, 620.0, 950.0, 320.0)
+    lightning_close = witch._choose_lightning_attack(scene, witch_player) is None
+    _place_witch(315.0, 620.0, 470.0, 220.0)
+    lightning_blocked = witch._choose_lightning_attack(scene, witch_player) is None
+
+    class _FakeLightning:
+        def __init__(self, target) -> None:
+            self.target = target
+            self.kind = "witch_lightning_forward"
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    for _ in range(4):
+        witch.on_projectile_hit(_FakeLightning(witch_player))
+    vulnerability_stacks = (
+        abs(witch_player.statuses.vulnerable_amount() - 0.60) < 1e-6
+    )
+    crooked_witch_lightning_ok = (
+        lightning_started
+        and lightning_forward
+        and lightning_damage
+        and lightning_vulnerable
+        and lightning_up == "witch_lightning_up"
+        and lightning_down == "witch_lightning_down"
+        and lightning_close
+        and lightning_blocked
+        and vulnerability_stacks
+    )
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    ice_started = witch.force_attack(scene, witch_player, "witch_ice_spike")
+    _witch_ticks(120)
+    ice_hit = (
+        abs(witch_player.hp - 70.0) < 1e-6
+        and witch_player.statuses.has("freeze")
+    )
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.force_attack(scene, witch_player, "witch_ice_spike")
+    witch_player.x = 500.0
+    _witch_ticks(120)
+    ice_dodged = abs(witch_player.hp - 100.0) < 1e-6
+    _place_witch(900.0, 620.0, 300.0, 400.0)
+    ice_no_surface = witch._find_ice_spot(scene, witch_player) is None
+    crooked_witch_ice_spike_ok = (
+        ice_started and ice_hit and ice_dodged and ice_no_surface
+    )
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    potion_started = witch.force_attack(scene, witch_player, "witch_potion")
+    _witch_ticks(150)
+    potion_direct = (
+        witch_player.hp < 100.0
+        and witch_player.statuses.has_poison_source("witch_potion_hit")
+        and abs(witch_player.statuses.slow_factor() - 0.7) < 1e-6
+        and not scene.hazards
+    )
+    _place_witch(900.0, 220.0, 300.0, 620.0)
+    witch.force_attack(scene, witch_player, "witch_potion")
+    _witch_ticks(200)
+    potion_zone = any(
+        hasattr(hazard, "poison_pct") for hazard in scene.hazards
+    )
+    crooked_witch_potion_ok = potion_started and potion_direct and potion_zone
+
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.teleport_cd = 999.0
+    fire_started = witch.force_attack(scene, witch_player, "witch_fire_rain")
+    _witch_ticks(5)
+    fire_flags = (
+        witch.invincible
+        and witch.no_hitbox
+        and witch.ignore_separation
+        and witch.phase in ("fire_in", "fire_cast")
+        and witch.fire_cd == 0.0
+    )
+    for _ in range(900):
+        scene.tick(FIXED_DT)
+        if witch.phase == "normal":
+            break
+    fire_finished = (
+        witch.phase == "normal"
+        and witch.fire_spawned == 10
+        and abs(witch.x - 900.0) < 2.0
+        and abs(witch.fire_cd - 15.0) < 1e-6
+    )
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.force_attack(scene, witch_player, "witch_fire_rain")
+    _witch_ticks(260)
+    fireball = next(
+        (
+            projectile
+            for projectile in scene.projectiles
+            if getattr(projectile, "kind", "") == "witch_fireball"
+        ),
+        None,
+    )
+    locked_x = None if fireball is None else fireball.x
+    if fireball is not None:
+        witch_player.x += 160.0
+        _witch_ticks(1)
+        fire_x_locked = abs(fireball.x - locked_x) < 1e-6
+    else:
+        fire_x_locked = False
+    crooked_witch_fire_rain_ok = (
+        fire_started and fire_flags and fire_finished and fire_x_locked
+    )
+
+    _place_witch(900.0, 220.0, 300.0, 620.0)
+    witch.ai_enabled = True
+    witch.fire_cd = 0.0
+    witch.lightning_cd = 99.0
+    witch.ice_cd = 99.0
+    witch.potion_cd = 99.0
+    witch.opened_skill = True
+    witch.skill_gap = 0.0
+    witch.decision_cd = 0.0
+    witch.opening_cd = 0.0
+    witch._think(scene, witch_player)
+    ai_fire = witch.phase == "fire_in"
+    _place_witch(900.0, 220.0, 300.0, 620.0)
+    witch.ai_enabled = True
+    witch.fire_cd = 0.0
+    witch.lightning_cd = 99.0
+    witch.ice_cd = 99.0
+    witch.potion_cd = 99.0
+    witch.opened_skill = False
+    witch.skill_gap = 0.0
+    witch.decision_cd = 0.0
+    witch.opening_cd = 0.0
+    witch._think(scene, witch_player)
+    ai_fire_first_blocked = (
+        witch.phase == "normal" and witch.attack_id is None
+    )
+    _place_witch(900.0, 220.0, 300.0, 620.0)
+    witch.ai_enabled = True
+    witch.fire_cd = 99.0
+    witch.lightning_cd = 99.0
+    witch.ice_cd = 99.0
+    witch.potion_cd = 0.0
+    witch.skill_gap = 0.0
+    witch.decision_cd = 0.0
+    witch.opening_cd = 0.0
+    witch._think(scene, witch_player)
+    ai_potion = witch.attack_id == "witch_potion"
+    _place_witch(900.0, 620.0, 300.0, 620.0)
+    witch.ai_enabled = True
+    witch.fire_cd = 99.0
+    witch.potion_cd = 99.0
+    witch.ice_cd = 99.0
+    witch.lightning_cd = 0.0
+    witch.skill_gap = 0.0
+    witch.decision_cd = 0.0
+    witch.opening_cd = 0.0
+    witch._think(scene, witch_player)
+    ai_lightning = witch.attack_id in (
+        "witch_lightning_forward", "witch_lightning_up", "witch_lightning_down",
+    )
+    witch.ai_enabled = False
+    scene.handle_debug_key(pygame.K_F8)
+    ai_toggle = witch.ai_enabled
+    scene.handle_debug_key(pygame.K_F8)
+    crooked_witch_ai_ok = (
+        ai_fire and ai_fire_first_blocked and ai_potion and ai_lightning
+        and ai_toggle and not witch.ai_enabled
+    )
+
+    scene.reset()
+    crooked_witch_reset_ok = (
+        witch.phase == "normal"
+        and witch.lightning_cd == 0.0
+        and witch.ice_cd == 0.0
+        and witch.potion_cd == 0.0
+        and witch.fire_cd == 0.0
+        and not witch.heal_used
+        and not witch.no_hitbox
+        and not witch.hidden
+        and not witch.invincible
+        and witch.hp == witch.max_hp
+        and not scene.hazards
+        and not scene.projectiles
+    )
+    crooked_witch_missing_frames = len(witch.anim.missing_paths())
+    crooked_witch_fx_dir = ASSETS_DIR / "frames" / "crooked_witch" / "fx"
+    crooked_witch_fx_missing = 0
+    for prefix, count in (
+        ("crooked_witch_teleport_fx_v1_out_", 6),
+        ("crooked_witch_teleport_fx_v1_in_", 6),
+        ("crooked_witch_heal_fx_v2_", 20),
+        ("crooked_witch_lightning_fx_v2_forward_", 6),
+        ("crooked_witch_lightning_fx_v2_up_", 6),
+        ("crooked_witch_lightning_fx_v2_down_", 6),
+        ("crooked_witch_ice_warning_v1_", 5),
+        ("crooked_witch_ice_spike_fx_v1_", 7),
+        ("crooked_witch_potion_projectile_v1_", 3),
+        ("crooked_witch_potion_break_v1_", 4),
+        ("crooked_witch_poison_pool_v1_", 4),
+        ("crooked_witch_fire_rain_v7_pulse_", 45),
+        ("crooked_witch_fire_impact_v1_", 4),
+    ):
+        for index in range(count):
+            if not (crooked_witch_fx_dir / f"{prefix}{index:02d}.png").exists():
+                crooked_witch_fx_missing += 1
+    if not (crooked_witch_fx_dir / "crooked_witch_fireball_v1_00.png").exists():
+        crooked_witch_fx_missing += 1
+    if not (
+        crooked_witch_fx_dir / "crooked_witch_heal_staff_prop_v1.png"
+    ).exists():
+        crooked_witch_fx_missing += 1
+
+    # --- Phase K: Eira Frostveil (playable) ---
+    scene.enemy_count_override = 1
+    scene.set_character("eira")
+    scene.set_enemy("dummy")
+    scene.reset()
+    eira = scene.player
+    eira_dummy = scene.enemy
+
+    def _place_eira(
+        px: float = 300.0,
+        ex: float = 700.0,
+        py: float = 620.0,
+        ey: float = 620.0,
+    ) -> None:
+        for fighter, x, y, facing in (
+            (eira, px, py, 1 if ex >= px else -1),
+            (eira_dummy, ex, ey, 1 if px >= ex else -1),
+        ):
+            fighter.x = float(x)
+            fighter.y = float(y)
+            fighter.facing = facing
+            fighter.vx = 0.0
+            fighter.vy = 0.0
+            fighter.kb_vx = 0.0
+            fighter.kb_time = 0.0
+            fighter.hitstun = 0.0
+            fighter.hp = fighter.max_hp
+            fighter.state = FighterState.IDLE
+            fighter.on_ground = True
+            fighter.invincible = False
+            fighter.statuses.clear()
+            fighter.eira_freeze = 0.0
+        eira.q_cd = 0.0
+        eira.e_cd = 0.0
+        eira.attack_runtime = None
+        eira.attack_id = None
+        eira._clear_e_state()
+        eira._clear_e_armor()
+        eira_dummy.ai_enabled = False
+        scene.hazards = []
+        scene.projectiles = []
+        scene.hitstop = 0.0
+        scene.match_over = None
+        scene.sim_time = 0.0
+
+    def _eira_ticks(count: int) -> None:
+        for _ in range(count):
+            scene.tick(FIXED_DT)
+
+    eira_frame_count = sum(
+        len(clip.get("frames", []))
+        for clip in scene.store.animations["eira_clips"].values()
+    )
+    eira_present = (
+        eira.name == "Eira Frostveil"
+        and eira.max_hp == 100.0
+        and eira.basic_atk == 20.0
+        and eira.extra_atk == 0.0
+        and abs(eira.walk_speed - 260.0) < 1e-6
+        and abs(eira.jump_v - 760.0) < 1e-6
+        and eira.hurtbox_dims == (56.0, 210.0)
+        and abs(eira.q_cd_max - 3.0) < 1e-6
+        and abs(eira.e_cd_max - 12.0) < 1e-6
+        and len(scene.store.animations["eira_clips"]) == 15
+        and eira_frame_count == 48
+        and list(scene.store.roster["characters"])[-1] == "eira"
+        and scene.store.debug["roster"]["default_character"] == "lina"
+    )
+
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("punch")
+    _eira_ticks(40)
+    lmb_hit = (
+        abs(eira_dummy.hp - 980.0) < 1e-6
+        and abs(eira_dummy.eira_freeze - 20.0) < 1e-6
+        and not scene.projectiles
+    )
+    _place_eira(300.0, 700.0)
+    eira_dummy.hurtbox_config = {
+        "standing": [56, 210], "crouching": [56, 130],
+    }
+    eira_dummy.state = FighterState.CROUCH
+    scene.input.buffer.press("punch")
+    _eira_ticks(40)
+    lmb_crouch_dodge = abs(eira_dummy.hp - 1000.0) < 1e-6
+    eira_dummy.hurtbox_config = {"standing": [70, 190], "crouching": [70, 190]}
+    eira_lmb_ok = lmb_hit and lmb_crouch_dodge
+
+    _place_eira(300.0, 380.0)
+    scene.input.buffer.press("kick")
+    _eira_ticks(40)
+    eira_rmb_ok = (
+        abs(eira_dummy.hp - 980.0) < 1e-6
+        and abs(eira_dummy.eira_freeze - 20.0) < 1e-6
+    )
+
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("q")
+    _eira_ticks(40)
+    q_hit = (
+        abs(eira_dummy.hp - 976.0) < 1e-6
+        and abs(eira_dummy.eira_freeze - 30.0) < 1e-6
+        and eira.q_cd > 0.0
+    )
+    _place_eira(300.0, 700.0)
+    eira_dummy.statuses.add("freeze", 2.0)
+    scene.input.buffer.press("q")
+    _eira_ticks(40)
+    q_frozen = (
+        abs(eira_dummy.hp - 956.0) < 1e-6
+        and abs(eira_dummy.eira_freeze) < 1e-6
+    )
+    scene.enemy_count_override = 2
+    scene._rebuild_fighters()
+    eira = scene.player
+    eira_dummy = scene.enemies[0]
+    _place_eira(300.0, 700.0)
+    scene.enemies[1].x = 900.0
+    scene.enemies[1].y = 620.0
+    scene.enemies[1].on_ground = True
+    scene.input.buffer.press("q")
+    _eira_ticks(50)
+    q_pierce = (
+        abs(scene.enemies[0].hp - 976.0) < 1e-6
+        and abs(scene.enemies[1].hp - 976.0) < 1e-6
+    )
+    scene.enemy_count_override = 1
+    scene._rebuild_fighters()
+    eira = scene.player
+    eira_dummy = scene.enemy
+    eira_q_ok = q_hit and q_frozen and q_pierce
+
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(30)
+    e_hold_ok = (
+        eira.e_phase == "hold"
+        and eira.e_targeting
+        and eira.e_cd > 10.0
+    )
+    scene.mouse_x = 700.0
+    scene.input.buffer.press("punch")
+    _eira_ticks(10)
+    e_spawned = len(scene.hazards) == 1
+    _eira_ticks(80)
+    e_hit = (
+        abs(eira_dummy.hp - 970.0) < 1e-6
+        and abs(eira_dummy.eira_freeze - 50.0) < 1e-6
+        and eira.e_phase is None
+    )
+    _place_eira(300.0, 700.0)
+    eira_dummy.statuses.add("freeze", 5.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(30)
+    scene.mouse_x = 700.0
+    scene.input.buffer.press("punch")
+    _eira_ticks(100)
+    e_frozen = (
+        abs(eira_dummy.hp - 946.0) < 1e-6
+        and abs(eira_dummy.eira_freeze) < 1e-6
+    )
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(30)
+    scene.input.buffer.press("kick")
+    _eira_ticks(5)
+    e_cancel = (
+        eira.e_phase == "recover" and 5.5 <= eira.e_cd <= 6.0
+    )
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(30)
+    _eira_ticks(480)
+    e_timeout = eira.e_phase in (None, "recover") and 5.0 <= eira.e_cd <= 6.0
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(5)
+    hp_before_armor = eira.hp
+    eira.take_hit(10.0, 50.0, 0.2, -1)
+    e_armor = (
+        abs(eira.hp - (hp_before_armor - 10.0)) < 1e-6
+        and eira.e_phase is not None
+        and eira.state == FighterState.ATTACK
+    )
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(5)
+    eira.hp = 5.0
+    eira.take_hit(999.0, 0.0, 0.2, -1)
+    e_ko = eira.e_phase is None and eira.state == FighterState.KO
+    eira_e_ok = (
+        e_hold_ok and e_spawned and e_hit and e_frozen
+        and e_cancel and e_timeout and e_armor and e_ko
+    )
+
+    _place_eira(300.0, 700.0)
+    for _ in range(5):
+        eira.apply_freeze(eira_dummy, 20.0)
+    freeze_threshold = (
+        eira_dummy.statuses.has("freeze")
+        and abs(eira_dummy.eira_freeze) < 1e-6
+    )
+    eira.apply_freeze(eira_dummy, 20.0)
+    freeze_no_accum = abs(eira_dummy.eira_freeze) < 1e-6
+    eira_dummy.statuses.remove("freeze")
+    eira.apply_freeze(eira_dummy, 20.0)
+    freeze_resumes = abs(eira_dummy.eira_freeze - 20.0) < 1e-6
+    _place_eira(300.0, 700.0)
+    eira.apply_freeze(eira_dummy, 30.0)
+    freeze_slow = abs(eira_dummy.statuses.slow_factor() - 0.7) < 1e-6
+    _place_eira(300.0, 700.0)
+    eira.apply_freeze(eira_dummy, 20.0)
+    eira.apply_freeze(eira_dummy, 50.0)
+    eira.apply_freeze(eira_dummy, 30.0)
+    freeze_strongest = abs(eira_dummy.statuses.slow_factor() - 0.5) < 1e-6
+    scene.enemy_count_override = 2
+    scene._rebuild_fighters()
+    eira = scene.player
+    _place_eira(300.0, 700.0)
+    eira.apply_freeze(scene.enemies[0], 50.0)
+    freeze_independent = (
+        abs(scene.enemies[0].eira_freeze - 50.0) < 1e-6
+        and abs(scene.enemies[1].eira_freeze) < 1e-6
+    )
+    scene.enemy_count_override = 1
+    scene._rebuild_fighters()
+    eira = scene.player
+    eira_dummy = scene.enemy
+    scene.reset()
+    freeze_reset = all(
+        abs(enemy.eira_freeze) < 1e-6 for enemy in scene.enemies
+    )
+    eira_freeze_ok = (
+        freeze_threshold and freeze_no_accum and freeze_resumes
+        and freeze_slow and freeze_strongest and freeze_independent
+        and freeze_reset
+    )
+
+    _place_eira(300.0, 700.0)
+    ladder = scene.stage.ladders[0]
+    eira.x = float(ladder.rect.centerx)
+    eira.y = float(ladder.bottom_y - 12.0)
+    eira.on_ground = True
+    scene.input.held.add("climb_up")
+    _eira_ticks(10)
+    climb_started = (
+        eira.climbing and eira.anim.clip_name == "climb"
+    )
+    eira.take_hit(5.0, 0.0, 0.2, -1)
+    _eira_ticks(2)
+    climb_interrupted = not eira.climbing
+    scene.input.held.discard("climb_up")
+    eira_climb_ok = climb_started and climb_interrupted
+
+    _place_eira(300.0, 700.0)
+    scene.input.buffer.press("e")
+    _eira_ticks(10)
+    scene.mouse_x = 700.0
+    scene.input.buffer.press("punch")
+    _eira_ticks(10)
+    scene.reset()
+    eira_reset_ok = (
+        eira.e_phase is None
+        and not eira.e_targeting
+        and eira.q_cd == 0.0
+        and eira.e_cd == 0.0
+        and eira.anim.clip_name == "idle"
+        and not scene.hazards
+    )
+    eira_missing_frames = len(eira.anim.missing_paths())
+    eira_fx_dir = ASSETS_DIR / "frames" / "eira" / "fx"
+    eira_fx_missing = 0
+    for prefix, count in (
+        ("eira_snowball_v1_fx_impact_", 4),
+        ("eira_ice_shard_v1_fx_charge_", 3),
+        ("eira_ice_shard_v1_fx_release_", 2),
+        ("eira_ice_shard_v1_fx_hit_", 4),
+        ("eira_ice_shard_v1_fx_frozen_hit_", 4),
+        ("eira_e_release_v1_fx_charge_", 3),
+        ("eira_e_release_v1_fx_hit_", 3),
+        ("eira_e_release_v1_fx_frozen_hit_", 3),
+        ("eira_e_release_v1_fx_ground_", 4),
+        ("eira_e_release_v1_fx_fragment_", 3),
+        ("eira_e_release_v2_fx_chunk_", 4),
+    ):
+        for index in range(count):
+            if not (eira_fx_dir / f"{prefix}{index:02d}.png").exists():
+                eira_fx_missing += 1
+    for index in (2, 3):
+        if not (
+            eira_fx_dir / f"eira_staff_strike_v2_fx_{index:02d}.png"
+        ).exists():
+            eira_fx_missing += 1
+    for name in (
+        "eira_snowball_v1_fx_release.png",
+        "eira_snowball_v1_fx_projectile.png",
+        "eira_ice_shard_v1_fx_projectile.png",
+        "eira_e_release_v1_fx_fall_trail.png",
+        "eira_e_release_v4_fx_ball.png",
+    ):
+        if not (eira_fx_dir / name).exists():
+            eira_fx_missing += 1
+
+    scene.enemy_count_override = 1
+    scene.reset()
+
     print(
         "SMOKE "
         f"ticks={smoke_ticks} "
@@ -4817,6 +5490,28 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"shadow_ninja_phantom_reset_ok={shadow_ninja_phantom_reset_ok} "
         f"shadow_ninja_phantom_missing_frames={shadow_ninja_phantom_missing_frames} "
         f"shadow_ninja_phantom_fx_missing={shadow_ninja_phantom_fx_missing} "
+        f"crooked_witch_present={crooked_witch_present} "
+        f"crooked_witch_stats_ok={crooked_witch_stats_ok} "
+        f"crooked_witch_teleport_ok={crooked_witch_teleport_ok} "
+        f"crooked_witch_heal_ok={crooked_witch_heal_ok} "
+        f"crooked_witch_lightning_ok={crooked_witch_lightning_ok} "
+        f"crooked_witch_ice_spike_ok={crooked_witch_ice_spike_ok} "
+        f"crooked_witch_potion_ok={crooked_witch_potion_ok} "
+        f"crooked_witch_fire_rain_ok={crooked_witch_fire_rain_ok} "
+        f"crooked_witch_ai_ok={crooked_witch_ai_ok} "
+        f"crooked_witch_reset_ok={crooked_witch_reset_ok} "
+        f"crooked_witch_missing_frames={crooked_witch_missing_frames} "
+        f"crooked_witch_fx_missing={crooked_witch_fx_missing} "
+        f"eira_present={eira_present} "
+        f"eira_lmb_ok={eira_lmb_ok} "
+        f"eira_rmb_ok={eira_rmb_ok} "
+        f"eira_q_ok={eira_q_ok} "
+        f"eira_e_ok={eira_e_ok} "
+        f"eira_freeze_ok={eira_freeze_ok} "
+        f"eira_climb_ok={eira_climb_ok} "
+        f"eira_reset_ok={eira_reset_ok} "
+        f"eira_missing_frames={eira_missing_frames} "
+        f"eira_fx_missing={eira_fx_missing} "
         f"warrior_present={warrior_present} warrior_hp={warrior_hp:.1f} "
         f"warrior_hurt_ok={warrior_hurt_ok} super_armor_ok={super_armor_ok} "
         f"armor_interrupt_ok={armor_interrupt_ok} "
@@ -5047,6 +5742,28 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and shadow_ninja_phantom_reset_ok
         and shadow_ninja_phantom_missing_frames == 0
         and shadow_ninja_phantom_fx_missing == 0
+        and crooked_witch_present
+        and crooked_witch_stats_ok
+        and crooked_witch_teleport_ok
+        and crooked_witch_heal_ok
+        and crooked_witch_lightning_ok
+        and crooked_witch_ice_spike_ok
+        and crooked_witch_potion_ok
+        and crooked_witch_fire_rain_ok
+        and crooked_witch_ai_ok
+        and crooked_witch_reset_ok
+        and crooked_witch_missing_frames == 0
+        and crooked_witch_fx_missing == 0
+        and eira_present
+        and eira_lmb_ok
+        and eira_rmb_ok
+        and eira_q_ok
+        and eira_e_ok
+        and eira_freeze_ok
+        and eira_climb_ok
+        and eira_reset_ok
+        and eira_missing_frames == 0
+        and eira_fx_missing == 0
         and warrior_present
         and warrior_hurt_ok
         and super_armor_ok
@@ -5190,7 +5907,10 @@ def main() -> int:
                     scene.input.key_down(event.key)
             elif event.type == pygame.KEYUP:
                 scene.input.key_up(event.key)
+            elif event.type == pygame.MOUSEMOTION:
+                scene.mouse_x = float(event.pos[0])
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                scene.mouse_x = float(event.pos[0])
                 if event.button == 2:
                     scene.toggle_lock_on()
                 else:

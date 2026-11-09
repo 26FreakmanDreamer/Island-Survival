@@ -609,5 +609,227 @@
       {"t": 1.96, "until": 2.272, "type": "dash", "speed": 1600},
       {"t": 1.96, "until": 2.272, "type": "hitbox", "box": [-20, -85, 220, 85], "knockback": 120, "hit_group": "shark", "hit_fx": "shadow_phantom_shark_hit"}
     ]
+  },
+  "eira_snowball": {
+    "basic_mult": 1.0,
+    "extra_mult": 0.0,
+    "duration": 0.44,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {
+        "t": 0.20,
+        "type": "projectile",
+        "id": "eira_snowball",
+        "projectile": "eira_snowball",
+        "lane": "high",
+        "speed": 850,
+        "range": 900,
+        "origin_forward": 112,
+        "origin_height": 194,
+        "hitbox_radius": 11.2,
+        "knockback": 30,
+        "freeze_gain": 20
+      }
+    ]
+  },
+  "eira_staff_strike": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.2,
+    "duration": 0.54,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "freeze_gain": 20,
+    "events": [
+      {
+        "t": 0.20,
+        "until": 0.36,
+        "type": "hitbox",
+        "box": [18, -165, 90, 105],
+        "knockback": 50,
+        "hit_fx": "eira_staff_hit",
+        "freeze_gain": 20
+      }
+    ]
+  },
+  "eira_ice_shard": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.5,
+    "duration": 0.56,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {
+        "t": 0.22,
+        "type": "projectile",
+        "id": "eira_ice_shard",
+        "projectile": "eira_ice_shard",
+        "lane": "high",
+        "speed": 950,
+        "range": 900,
+        "origin_forward": 98,
+        "origin_height": 190,
+        "hitbox_radius": 14,
+        "knockback": 0,
+        "freeze_gain": 30,
+        "pierces_targets": true,
+        "penetrates_blocks": false,
+        "bonus_vs_frozen_atk_mult": 1.0
+      }
+    ]
+  },
+  "eira_ice_ball": {
+    "basic_mult": 1.5,
+    "extra_mult": 1.5,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.06,
+    "bonus_vs_frozen_atk_mult": 1.2,
+    "bonus_vs_frozen_extra_mult": 1.5,
+    "freeze_gain": 50,
+    "events": []
+  },
+  "witch_lightning": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": []
+  },
+  "witch_lightning_forward": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": [
+      {
+        "t": 0.30,
+        "type": "projectile",
+        "id": "witch_lightning_forward",
+        "projectile": "witch_lightning_forward",
+        "speed": 1800,
+        "range": 900,
+        "origin_forward": 48,
+        "origin_height": 150,
+        "hitbox_radius": 14,
+        "knockback": 0,
+        "penetrates_blocks": false
+      }
+    ]
+  },
+  "witch_lightning_up": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": [
+      {
+        "t": 0.30,
+        "type": "projectile",
+        "id": "witch_lightning_up",
+        "projectile": "witch_lightning_up",
+        "speed": 1800,
+        "range": 900,
+        "origin_forward": 48,
+        "origin_height": 150,
+        "hitbox_radius": 14,
+        "knockback": 0,
+        "penetrates_blocks": false
+      }
+    ]
+  },
+  "witch_lightning_down": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": [
+      {
+        "t": 0.30,
+        "type": "projectile",
+        "id": "witch_lightning_down",
+        "projectile": "witch_lightning_down",
+        "speed": 1800,
+        "range": 900,
+        "origin_forward": 48,
+        "origin_height": 150,
+        "hitbox_radius": 14,
+        "knockback": 0,
+        "penetrates_blocks": false
+      }
+    ]
+  },
+  "witch_ice_spike": {
+    "basic_mult": 1.0,
+    "extra_mult": 1.0,
+    "duration": 0.60,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.05,
+    "events": []
+  },
+  "witch_potion": {
+    "basic_mult": 0.8,
+    "extra_mult": 0.8,
+    "duration": 0.65,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.15,
+    "hitstop": 0.04,
+    "events": [
+      {
+        "t": 0.30,
+        "type": "projectile",
+        "id": "witch_potion",
+        "projectile": "witch_potion",
+        "range": 700,
+        "origin_forward": 40,
+        "hitbox_radius": 12,
+        "knockback": 0,
+        "penetrates_blocks": false
+      }
+    ]
+  },
+  "witch_fire_rain": {
+    "basic_mult": 1.2,
+    "extra_mult": 1.2,
+    "duration": 15.32,
+    "lunge": 0,
+    "lunge_time": 0.0,
+    "energy_gain": 0,
+    "hitstun": 0.2,
+    "hitstop": 0.04,
+    "events": []
   }
 }

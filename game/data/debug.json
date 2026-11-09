@@ -239,6 +239,56 @@
       "veno_spawn": [820, 620],
       "bat_spawn": [820, 470],
       "shadow_ninja_spawn": [1000, 620]
+    },
+    "crooked_witch": {
+      "ground_y": 620,
+      "walls": [90, 1190],
+      "lane_heights": {
+        "high": 180,
+        "fist": 142,
+        "mid": 120,
+        "low": 60
+      },
+      "land_margin": 8,
+      "blocks": [
+        {
+          "kind": "platform",
+          "rect": [158, 220, 314, 78],
+          "surface_y": 220,
+          "sprite": "platform_tropical_short.png",
+          "sprite_rect": [158, 206, 314, 96]
+        },
+        {
+          "kind": "platform",
+          "rect": [808, 220, 314, 78],
+          "surface_y": 220,
+          "sprite": "platform_tropical_short.png",
+          "sprite_rect": [808, 206, 314, 96]
+        }
+      ],
+      "ladders": [
+        {
+          "rect": [420, 220, 64, 400],
+          "top_y": 220,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood.png",
+          "sprite_rect": [388, 220, 128, 400]
+        },
+        {
+          "rect": [796, 220, 64, 400],
+          "top_y": 220,
+          "bottom_y": 620,
+          "sprite": "ladder_tropical_wood.png",
+          "sprite_rect": [764, 220, 128, 400]
+        }
+      ],
+      "player_spawn": [280, 620],
+      "dummy_spawn": [600, 620],
+      "warrior_spawn": [600, 620],
+      "veno_spawn": [820, 620],
+      "bat_spawn": [820, 470],
+      "crooked_witch_spawn": [965, 220],
+      "teleport_points": [[315, 220], [965, 220], [315, 620], [965, 620]]
     }
   },
   "roster": {

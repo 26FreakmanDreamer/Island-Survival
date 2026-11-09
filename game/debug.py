@@ -42,10 +42,38 @@ class DebugOverlay:
             surface.blit(self.font.render(label, True, color), (1100, round(y) - 15))
 
         pygame.draw.rect(surface, (70, 220, 130), scene.player.hurtbox(), 1)
-        if not getattr(scene.enemy, "phantom_form", False):
+        if not (
+            getattr(scene.enemy, "phantom_form", False)
+            or getattr(scene.enemy, "no_hitbox", False)
+            or getattr(scene.enemy, "hidden", False)
+        ):
             pygame.draw.rect(surface, (70, 220, 130), scene.enemy.hurtbox(), 1)
         for rect in scene.debug_hitboxes:
             pygame.draw.rect(surface, (255, 70, 70), rect, 2)
+        for point_x, point_y in getattr(stage, "teleport_points", []):
+            size = 9
+            pygame.draw.polygon(
+                surface, (235, 180, 70),
+                [
+                    (round(point_x), round(point_y - size)),
+                    (round(point_x + size), round(point_y)),
+                    (round(point_x), round(point_y + size)),
+                    (round(point_x - size), round(point_y)),
+                ],
+                2,
+            )
+        for hazard in getattr(scene, "hazards", []):
+            radius = getattr(hazard, "radius", None)
+            if radius is None:
+                continue
+            center_y = getattr(hazard, "y", getattr(hazard, "surface_y", 0.0))
+            if hasattr(hazard, "surface_y") and not getattr(hazard, "landed", False):
+                center_y = hazard.surface_y - 20.0
+            pygame.draw.circle(
+                surface, (90, 220, 255),
+                (round(getattr(hazard, "x", 0.0)), round(center_y)),
+                round(radius), 1,
+            )
 
         for fighter, color in ((scene.player, (255, 220, 60)), (scene.enemy, (255, 120, 255))):
             x, y = round(fighter.x), round(fighter.y)
@@ -132,6 +160,13 @@ class DebugPanel:
             else:
                 e_text = f"E {player.e_cd:4.1f}s"
             lines.append(f"Q {player.q_cd:4.1f}s  {e_text}")
+        if hasattr(player, "e_targeting"):
+            lines.append(
+                f"EIRA E {getattr(player, 'e_phase', '-') or '-'}  "
+                f"TARGET {'ON' if player.e_targeting else 'OFF'}  "
+                f"X {getattr(player, 'e_selected_x', 0.0):.0f}  "
+                f"FREEZE {int(getattr(enemy, 'eira_freeze', 0.0))}/100"
+            )
         if hasattr(player, "mark_detonations") and enemy is not None:
             lines.append(
                 f"MARKS {int(enemy.marks)}/3 BURST {enemy.mark_burst_time:.2f} "
@@ -234,6 +269,28 @@ class DebugPanel:
             lines.append(f"ENEMY INV {enemy.invincible}")
         if hasattr(enemy, "ai_enabled"):
             lines.append(f"ENEMY AI {'ON' if enemy.ai_enabled else 'OFF'}")
+        if getattr(enemy, "is_crooked_witch", False):
+            lines.append(
+                f"WITCH PHASE {getattr(enemy, 'phase', 'normal')}  "
+                f"HEAL {'USED' if enemy.heal_used else 'READY'}  "
+                f"TP {enemy.teleport_cd:.1f}s"
+            )
+            lines.append(
+                f"WITCH CD L {enemy.lightning_cd:.1f}  I {enemy.ice_cd:.1f}  "
+                f"P {enemy.potion_cd:.1f}  F {enemy.fire_cd:.1f}"
+            )
+            flags = []
+            if getattr(enemy, "no_hitbox", False):
+                flags.append("NO HITBOX")
+            if getattr(enemy, "hidden", False):
+                flags.append("HIDDEN")
+            if getattr(enemy, "invincible", False):
+                flags.append("INVINCIBLE")
+            if flags:
+                lines.append("WITCH " + " ".join(flags))
+            vulnerable = enemy.statuses.get("vulnerable")
+            if vulnerable is not None:
+                lines.append(f"WITCH VULN {vulnerable.value:.0%}")
         if hasattr(enemy, "skill_cd"):
             lines.append(f"SKILL GAP {enemy.skill_cd:.2f}s")
         if hasattr(enemy, "mode"):
