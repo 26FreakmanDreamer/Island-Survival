@@ -70,6 +70,10 @@ class InputState:
         pygame.K_RSHIFT: "crouch",
         pygame.K_q: "q",
         pygame.K_e: "e",
+        pygame.K_1: "special_1",
+        pygame.K_2: "special_2",
+        pygame.K_3: "special_3",
+        pygame.K_4: "special_4",
     }
     # W/S keep their normal jump/crouch actions and additionally drive the
     # climb state while a ladder trigger overlaps the player. Shift stays
@@ -80,7 +84,7 @@ class InputState:
         # Space leaves the ladder; W keeps climbing even when re-pressed.
         pygame.K_SPACE: "climb_jump",
     }
-    BUFFERED_KEYS = {"jump", "q", "e"}
+    BUFFERED_KEYS = {"jump", "q", "e", "special_1", "special_2", "special_3", "special_4"}
 
     def __init__(self, buffer_seconds: float = 0.12) -> None:
         self.buffer = InputBuffer(buffer_seconds)

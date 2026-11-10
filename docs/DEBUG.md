@@ -82,6 +82,19 @@ Q 24/44 with pierce and +30 freeze, the E state machine (12s normal / 6s cancel 
 raise, targeting prompt, 0.08s spawn, ~1s fall, multi-target 30/54, super armor, KO end, 3s ground
 FX), freeze threshold/clear/no-gain-while-frozen/equal slow/independent targets, climb, reset and
 `eira_missing_frames` / `eira_fx_missing`.
+Phase L checks the shared special skills: the four data entries/keys/types and the 24 V5 runtime
+frames (`special_fx_missing == 0`), key mapping and two different special keys in one buffer window,
+Sacred Shield (usable during hitstun; HP loss 0; hitstun/knockback/HURT/attack cancel/hitstop
+retained; no hurt clip or white flash; on-hit statuses still apply; DoT blocked; a pre-shield poison
+remains; direct `apply_direct_damage`, a stub projectile and direct `take_hit` blocked; the gold
+`special_block` FX; Nyra/Rhea/Eira armor branches; expiry; second press no-op), Purity Seal
+(cleanse while frozen/stunned; all seven negatives and poisons removed; buffs kept; new negatives
+plus `extend_poison`/`refresh_poison` rejected for 3s; damage and HURT/hitstun still land; expiry;
+once), Fury Unbound (melee/projectile/direct ×2; DoT not doubled; expiry; once), Vitality Tonic
+(formula, full-HP message/no consumption, overflow), once/reset/character-switch sharing and the HUD/
+F2 mixed READY/active/USED state. Flags: `special_skills_present`, `special_fx_missing`,
+`special_input_ok`, `special_shield_ok`, `special_purity_ok`, `special_fury_ok`,
+`special_heal_ok`, `special_once_ok`, `special_switch_ok`, `special_reset_ok`, `special_ui_ok`.
 The scene phase checks platform landing/side/underside (`platform_land_ok`, `platform_side_ok`,
 `platform_bottom_bump_ok`), B toggling platforms (`platform_toggle_ok`), ladder up/down/Shift/jump-off
 semantics (`ladder_climb_ok`, `ladder_down_ok`, `ladder_shift_no_down_ok`), the early midpoint mount
@@ -130,6 +143,9 @@ It prints one `SMOKE ...` line and exits non-zero on failure. It uses SDL's dumm
   For Eira it shows `EIRA E <raise/hold/release/recover> TARGET ON/OFF X <selected x> FREEZE
   <n>/100` plus the Q/E cooldowns; the hold phase draws the `Click the left mouse to choose an
   area.` prompt and the vertical mouse guide.
+  Every playable character also gets the four special rows `1 SACRED SHIELD <READY/seconds/USED>`
+  through `4 VITALITY TONIC ...` and `SPEC LEVEL 1 USED n/4`; the three special statuses appear in
+  the status list.
   For Veno it adds `MODE ground/ascend/hover/descend HOVER n`; for Bat it adds `MODE fly HOVER n`
   (altitude above ground); for Creepy Shooter the four slots show `creepy_shot`,
 `creepy_homing_shot`, `creepy_roll_shot` and `creepy_jump_shot` with their remaining cooldowns;

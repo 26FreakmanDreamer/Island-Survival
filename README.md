@@ -82,6 +82,16 @@ It checks the projectile VFX dispatch
 settlement cadence (`poison_interval_ok`, `poison_tint_ok`), web collision radius
 (`veno_web_radius_ok`), asset presence
 (`lina_q_fx_missing`, `veno_vfx_missing`) and effect cleanup (`fx_cleanup_ok`).
+Phase L checks the shared special skills: the four data entries and V5 frame presence
+(`special_skills_present`, `special_fx_missing`), key 1–4 mapping plus same-window dual-key
+consumption (`special_input_ok`), Sacred Shield (`special_shield_ok`: use during hitstun, zero HP
+loss, full stagger with no hurt clip/flash, on-hit statuses still applied, DoT blocked, direct/
+projectile/hazard paths, gold block FX, armor branches, expiry, once), Purity Seal
+(`special_purity_ok`: cleanse while frozen/stunned, 3s rejection, buffs kept, damage/stagger,
+expiry, once), Fury Unbound (`special_fury_ok`: melee/projectile/direct ×2, DoT not doubled,
+expiry, once), Vitality Tonic (`special_heal_ok`: formula, full-HP message/no consume, overflow),
+once/reset/character-switch sharing (`special_once_ok`, `special_switch_ok`, `special_reset_ok`)
+and the HUD/F2 mixed READY/active/USED state (`special_ui_ok`).
 
 ## Controls
 
@@ -97,6 +107,10 @@ settlement cadence (`poison_interval_ok`, `poison_tint_ok`), web collision radiu
 | Middle mouse | Toggle attack lock-on (default off) |
 | Q | Air-current punch (8s cooldown, starts ready) |
 | E | Flame form (100 energy, 20s cooldown, starts ready, 10s duration) |
+| 1 | Sacred Shield — 2s HP-damage immunity (one use per match, shared) |
+| 2 | Purity Seal — cleanse + 3s negative immunity (one use per match, shared) |
+| 3 | Fury Unbound — 5s direct-damage ×2 (one use per match, shared) |
+| 4 | Vitality Tonic — heal 50 + 35% max HP (one use per match, shared) |
 | Esc | Pause menu (Resume / Restart / Quit) |
 
 Lina uses the table above. Nyra Steel uses the same movement, crouch and lock-on controls with:
@@ -164,6 +178,35 @@ treated as grounded; otherwise they are knocked off and fall. A Space jump-off o
 ignores platform side/underside collision until landing, so a platform behind the ladder cannot shove
 the body sideways; platform-top landing still applies. There is no automatic re-grab after a hit.
 Ladders have no collision and never block projectiles.
+
+### Special skills (keys 1–4)
+
+All four playable characters share one set of uses per match. The HUD row under the left panel
+shows READY, active seconds or USED; F2 adds `1 SACRED SHIELD …` through `4 VITALITY TONIC …`
+and `SPEC LEVEL 1 USED n/4`.
+
+- **1 Sacred Shield (2s)** — HP damage from every source is 0. A blocked hit still fully staggers:
+  hitstun, knockback, HURT state, attack cancel and hitstop all happen, and the attacker's on-hit
+  statuses (burn/poison/stun/marks) still apply. The hurt animation and white flash are suppressed;
+  a gold block ring plays instead. DoT is blocked while the shield is active; hazard statuses
+  applied outside damage resolution (ice-ball freeze, poison zone) still apply. The player's own
+  super armor still suppresses stagger.
+- **2 Purity Seal (3s)** — cleanses burn, poison, slow, freeze, stun, knock_up and vulnerable
+  (including all poison instances), then rejects new ones for 3s. Buffs (`super_armor`,
+  `damage_reduction`, the three special statuses) are preserved; damage and stagger still land.
+- **3 Fury Unbound (5s)** — doubles direct hit damage (melee, projectiles and direct-contact
+  hazards) at resolve time, after freeze/poison bonuses and before the target's
+  `damage_reduction`/`vulnerable`. DoT ticks and Nyra/Shadow mark detonations are not doubled.
+- **4 Vitality Tonic** — immediately heals `level*50 + 35% max HP` with `level = 1`. At full HP it
+  does not consume the use and shows `You are at full HP. You do not need to heal.` above the player.
+
+Specials are usable whenever the player is alive (HP > 0): airborne, mid-attack, during hitstun/
+freeze/stun, during Eira's E cast and while climbing (the character stays on the ladder). They are
+unavailable when KO'd or after the match ends. Uses are shared for the whole match; switching
+characters keeps the spent uses but drops the old body's active effect. F9/R and F5 restore all
+uses. The V5 sprite strips live in `assets/frames/special_skills/` (shield/purity/fury loop and
+follow the player; tonic plays once); their source frames and generator are in
+`assets/generated/contact_sheets/special_skills_ingame_v5/`.
 
 ## Combat modes
 
@@ -291,15 +334,17 @@ always a single instance and never uses basic attacks or ladders.
 - `V/C/X/Z` read the current enemy's four skill slots from data; undefined slots are safe no-ops and show `-` in F2. During Shadow Ninja's phantom form V/C/X map to 影爪/影缚/影闪 and Z is a no-op; in normal form Z triggers the phantom transform. For the Crooked Witch they are `witch_lightning`, `witch_ice_spike`, `witch_potion` and `witch_fire_rain`.
 - Frame data, hitboxes, cooldowns, damage and stage geometry are in `game/data/*.json`.
 - Multi-body enemies (Veno ×3, Bat ×5): 2026-11-02 rule — right-half spawns with per-member `spawn_jitter: 40`, same-skill group gaps (Veno bite 0.8 / poison 1.2 / web 1.2; Bat dive 0.8 / sonic 1.2) and a 0.5s opening delay; `force_attack` bypasses both. Canonical rule: `docs/DESIGN_DECISIONS.md` §Multi-body enemy rules (2026-11-02).
-- Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, group balancing beyond the Veno 3-body group and the five-Bat sandbox, further playable characters/enemies (Eira Frostveil is the newest playable, Crooked Witch the newest enemy), packaging.
+- Shared special skills (keys 1–4, one use each per match across Lina/Nyra/Rhea/Eira): Sacred Shield, Purity Seal, Fury Unbound and Vitality Tonic. HUD row, F2 full-name lines, V5 sprite strips in `assets/frames/special_skills/`, and the Phase L smoke flags. Sacred Shield suppresses the hurt clip and flash on blocked hits while keeping hitstun/knockback/attack cancel/hitstop.
+- Final test-sandbox version: the roster and special skills above are the final scope. Lina Shadowtide is not implemented and will not be added; only her poster/source art remains under `Image/Enemy/`.
+- Not included: daily loop, food/fullness, shop/gold, saves, audio, full HUD, group balancing beyond the Veno 3-body group and the five-Bat sandbox, further playable characters/enemies (Eira Frostveil is the newest playable, Crooked Witch the newest enemy), Lina Shadowtide, packaging.
 - No pytest suite or file logging; verification is through the sandbox, contact sheets and `--smoke-test`.
 
 ## Layout
 
 ```text
 main.py                  entry point and fixed-step loop
-game/                    runtime modules and data (including lina.py, nyra.py, rhea.py, eira.py, warrior.py, veno.py, bat.py, creepy_shooter.py, mech_crab.py, shadow_ninja.py, crooked_witch.py)
-game/data/               stats, attacks, animations, roster and debug geometry
+game/                    runtime modules and data (including lina.py, nyra.py, rhea.py, eira.py, special_skills.py, warrior.py, veno.py, bat.py, creepy_shooter.py, mech_crab.py, shadow_ninja.py, crooked_witch.py)
+game/data/               stats, attacks, animations, roster, special_skills and debug geometry
 assets/frames/lina/      normal frames + flame/<action> frames
 assets/frames/nyra/      Nyra frames on the 384x384 canvas
 assets/frames/rhea/      Rhea frames on the 384x384 canvas + fx/ shuriken strips
@@ -311,10 +356,11 @@ assets/frames/creepy_shooter/  Creepy Shooter frames on the 384x384 canvas + fx/
 assets/frames/mech_crab/  Mech-Crab frames on the 640x640 canvas + fx/ leap reticle
 assets/frames/shadow_ninja/  normal frames + transform/ + phantom/ (idle, walk, rend, bind, vanish, appear, flash_attack, pause, shark, revert) + fx/ (kunai, trail, tentacle, front/back wrap, orb, shark)
 assets/frames/crooked_witch/  frames on the 640x640 canvas + fx/ (lightning, teleport, heal, ice, potion, fire rain)
+assets/frames/special_skills/  V5 special-skill strips (shield/purity/fury/tonic, six 320x340 frames each)
 assets/sprites/stage/    runtime platform/ladder PNGs copied from the contact sheets
-assets/generated/        raw candidates, staged frames, contact sheets
-tools/                   collect_frames.py, import_frames.py, contact_sheet.py
-docs/                    design decisions, asset pipeline, debugging guide
+assets/generated/        raw candidates, staged frames, contact sheets (special_skills_ingame_v5 holds the V5 source/generator)
+tools/                   collect_frames.py, import_frames.py, contact_sheet.py, preview_special_skills.py
+docs/                    design decisions, asset pipeline, debugging guide, NEXT_SESSION_SPECIAL_SKILLS.md
 Image/                   canonical character/enemy art (never overwritten)
 PLAN.md                  original approved implementation plan
 ```

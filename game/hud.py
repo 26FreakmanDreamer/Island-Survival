@@ -1,10 +1,10 @@
-"""Minimal English combat HUD: HP, energy, Q/E cooldowns and flame timer."""
+"""Minimal English combat HUD: HP, energy, Q/E cooldowns, specials and flame timer."""
 
 from __future__ import annotations
 
 import pygame
 
-from .config import SCREEN_W
+from .config import SCREEN_H, SCREEN_W
 
 
 def _font(size: int, bold: bool = False) -> pygame.font.Font:
@@ -56,6 +56,60 @@ class HUD:
         pygame.draw.rect(surface, color, (x, y, w, h), 1)
         text = self.small.render(label, True, color)
         surface.blit(text, (x + (w - text.get_width()) // 2, y + (h - text.get_height()) // 2))
+
+    def _draw_special_row(self, surface: pygame.Surface, scene, player) -> None:
+        special = getattr(scene, "special", None)
+        if special is None:
+            return
+        backdrop = pygame.Surface((300, 28), pygame.SRCALPHA)
+        backdrop.fill((8, 12, 18, 178))
+        surface.blit(backdrop, (14, 178))
+        for index, x in enumerate((14, 90, 166, 242)):
+            slot = index + 1
+            skill = special.by_slot.get(slot)
+            if skill is None:
+                continue
+            effect = player.statuses.get(skill["id"])
+            if effect is not None:
+                label = f"{slot} {effect.remaining:.1f}s"
+                self._badge(
+                    surface, x, 180, 72, 24, label, False, (235, 180, 70)
+                )
+            elif skill["id"] in special.used:
+                label = f"{slot} USED"
+                self._badge(
+                    surface, x, 180, 72, 24, label, False, (160, 160, 170)
+                )
+            else:
+                label = f"{slot} {skill['short']}"
+                self._badge(surface, x, 180, 72, 24, label, True)
+
+    def _draw_special_message(self, surface: pygame.Surface, scene, player) -> None:
+        special = getattr(scene, "special", None)
+        if special is None or special.message_time <= 0.0:
+            return
+        text = self.text.render(special.message, True, (255, 240, 170))
+        pad_x, pad_y = 10, 5
+        x = round(player.x - text.get_width() * 0.5)
+        x = max(
+            8 + pad_x,
+            min(SCREEN_W - text.get_width() - 8 - pad_x, x),
+        )
+        y = round(player.y - player.hurtbox_dims[1] - 42)
+        y = max(
+            8 + pad_y,
+            min(SCREEN_H - text.get_height() - 8 - pad_y, y),
+        )
+        box = pygame.Surface(
+            (text.get_width() + pad_x * 2, text.get_height() + pad_y * 2),
+            pygame.SRCALPHA,
+        )
+        box.fill((8, 12, 18, 205))
+        pygame.draw.rect(box, (120, 100, 60, 180), box.get_rect(), 1)
+        surface.blit(box, (x - pad_x, y - pad_y))
+        shadow = self.text.render(special.message, True, (10, 10, 14))
+        surface.blit(shadow, (x + 1, y + 1))
+        surface.blit(text, (x, y))
 
     def draw(self, surface: pygame.Surface, scene) -> None:
         player = scene.player
@@ -127,6 +181,8 @@ class HUD:
             hint = self.text.render("LOCK-ON  (MMB)", True, (255, 210, 80))
             surface.blit(hint, (24, 160))
 
+        self._draw_special_row(surface, scene, player)
+
         label = self.small.render(
             f"{enemy.name.upper()} {enemy.hp:.0f}/{enemy.max_hp:.0f}",
             True,
@@ -147,6 +203,7 @@ class HUD:
             hint = self.text.render("BLOCKS OFF  (B)", True, (255, 210, 80))
             surface.blit(hint, (SCREEN_W // 2 - hint.get_width() // 2, 18))
 
+        self._draw_special_message(surface, scene, player)
         self.draw_result(surface, scene)
 
     def draw_targeting_prompt(self, surface: pygame.Surface, scene) -> None:

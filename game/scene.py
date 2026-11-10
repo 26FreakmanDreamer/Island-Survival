@@ -47,6 +47,7 @@ from .projectile import (
 from .roster import create_fighter
 from .stage import Stage
 from .slash_fx import SlashEffect
+from .special_skills import SpecialSkills
 
 DEBUG_KEYS = {
     pygame.K_F1,
@@ -147,6 +148,7 @@ class ArenaScene:
         # the roster's count (3 for Veno).
         self.enemy_count_override: int | None = None
         self.particles = ParticleSystem()
+        self.special = SpecialSkills(store)
         self.rebuild()
 
     # --- lifecycle ----------------------------------------------------------
@@ -289,6 +291,7 @@ class ArenaScene:
         self.status_demo_index = 0
         self.lock_on = False
         self.input.clear()
+        self.special.message_time = 0.0
         self._force_ai_off()
         self._resolve_stage_overlaps()
         self._sync_enemy_stats_from_player()
@@ -322,6 +325,7 @@ class ArenaScene:
         self._resolve_ids()
         self.stage = Stage(self._stage_config())
         self._rebuild_fighters()
+        self.special.reset()
         self.input.buffer.max_age = float(self.store.stats["combat"]["input_buffer"])
 
         debug_cfg = self.store.debug.get("debug", {})
@@ -452,6 +456,7 @@ class ArenaScene:
         self.last_hit = None
         self.match_over = None
         self.input.clear()
+        self.special.reset()
 
     # --- simulation ---------------------------------------------------------
     def tick(self, dt: float) -> None:
@@ -467,12 +472,14 @@ class ArenaScene:
         self._update_slash_effects(dt)
         self._update_fx_effects(dt)
         self._pick_primary()
+        self.special.update(dt, self)
         self.player.update(dt, self.input, self.enemy, self)
         for enemy in self.enemies:
             enemy.update(dt, self)
         self._separate_fighters(dt)
         self._separate_enemies(dt)
         self._check_match_end()
+        self._flush_block_fx()
 
         if self.hitstop > 0.0:
             return
@@ -484,6 +491,7 @@ class ArenaScene:
             hazard.update(dt, self)
         self.hazards = [hazard for hazard in self.hazards if hazard.alive]
         self._update_freeze_fx()
+        self._flush_block_fx()
         self._check_match_end()
         self.particles.update(dt)
 
@@ -664,6 +672,32 @@ class ArenaScene:
         self.fx_effects = [effect for effect in self.fx_effects if effect.alive]
         if len(self.fx_effects) > 64:
             self.fx_effects = self.fx_effects[-64:]
+
+    def spawn_special_block_fx(self, x: float, y: float) -> None:
+        """Gold flash when Sacred Shield negates a hit."""
+        self.fx_effects.append(
+            RingBurstFx(
+                x,
+                y,
+                (255, 215, 90),
+                life=0.28,
+                start_radius=14.0,
+                end_radius=64.0,
+                width=5,
+                sparks=8,
+                spark_color=(255, 250, 210),
+                kind="special_block",
+            )
+        )
+        self.particles.emit_burst(
+            x, y, (255, 215, 90), count=10, speed=220.0
+        )
+
+    def _flush_block_fx(self) -> None:
+        if self.player.blocked_hits <= 0:
+            return
+        self.player.blocked_hits = 0
+        self.spawn_special_block_fx(self.player.x, self.player.y - 110.0)
 
     def spawn_projectile_cast_fx(self, projectile) -> None:
         """Emit the short muzzle/hand effect when a projectile is created."""

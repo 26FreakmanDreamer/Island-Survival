@@ -129,7 +129,8 @@ class IceBallHazard:
                 apply_freeze = getattr(self.owner, "apply_freeze", None)
                 if apply_freeze is not None:
                     apply_freeze(target, self.freeze_gain)
-                self._hit_fx(scene, target, was_frozen)
+                if not target.statuses.has("sacred_shield"):
+                    self._hit_fx(scene, target, was_frozen)
 
         if self.y >= self.ground_y:
             self.y = self.ground_y

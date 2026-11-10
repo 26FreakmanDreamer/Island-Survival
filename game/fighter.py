@@ -100,6 +100,7 @@ class Fighter:
         self.hitstun = 0.0
         self.flash = 0.0
         self.invincible = False
+        self.blocked_hits = 0
         # Nyra's marks live on the target so every enemy has its own stack.
         self.marks = 0
         self.mark_burst_time = 0.0
@@ -184,10 +185,14 @@ class Fighter:
     ) -> bool:
         if self.invincible or self.hp <= 0.0:
             return False
+        shielded = self.statuses.has("sacred_shield")
+        if shielded:
+            damage = 0.0
+            self.blocked_hits += 1
         was_climbing = self.climbing
         self._stop_climb()
         self.hp = max(0.0, self.hp - damage)
-        self.flash = 0.12
+        self.flash = 0.0 if shielded else 0.12
         self.hitstun = max(self.hitstun, hitstun)
         self.attack_runtime = None
         self.attack_id = None
@@ -211,7 +216,9 @@ class Fighter:
             return True
 
         self.state = FighterState.HURT
-        if self.anim is not None:
+        if shielded:
+            self.clear_hurt_visual()
+        elif self.anim is not None:
             self.anim.set_clip("hurt", reset=True)
         if was_climbing:
             surface = self._platform_surface_at_feet()
@@ -232,6 +239,8 @@ class Fighter:
 
     def apply_dot(self, amount: float) -> None:
         if self.invincible or self.hp <= 0.0:
+            return
+        if self.statuses.has("sacred_shield"):
             return
         was_climbing = self.climbing
         self._stop_climb()
@@ -303,6 +312,16 @@ class Fighter:
         else:
             self.state = FighterState.IDLE
             self.anim.set_clip("idle")
+
+    def clear_hurt_visual(self) -> None:
+        """Keep a neutral pose while still HURT (Sacred Shield blocks)."""
+        if self.state != FighterState.HURT or self.anim is None:
+            return
+        if self.on_ground:
+            self.anim.set_clip("idle")
+        else:
+            self.anim.set_clip("jump")
+            self.anim.set_frame(0 if self.vy < 0.0 else 1)
 
     # --- climbing (player characters only) ----------------------------------
     def _climb_clip_available(self) -> bool:
@@ -527,6 +546,7 @@ class Fighter:
         self._stop_climb()
         self.hitstun = 0.0
         self.flash = 0.0
+        self.blocked_hits = 0
         self.marks = 0
         self.mark_burst_time = 0.0
         self.mark_burst_damage = 0.0

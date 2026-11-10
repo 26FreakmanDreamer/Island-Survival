@@ -931,6 +931,49 @@ still checking the right-half majority and spread.
   `crooked_witch_potion_ok`, `crooked_witch_fire_rain_ok`, `crooked_witch_ai_ok`,
   `crooked_witch_reset_ok`, `crooked_witch_missing_frames == 0`, `crooked_witch_fx_missing == 0`.
 
+## Special skills (2026-11-10)
+
+- Four skills on keys **1–4**, usable by Lina, Nyra, Rhea and Eira, each **once per match** and
+  shared across the whole match. `game/data/special_skills.json` (schema 1; exact ids/keys/types;
+  finite numeric validation; `damage_multiplier > 1`; heal range 0–1) drives durations,
+  multipliers and heal values. `game/special_skills.py` is scene-owned and runs before
+  `player.update`, so it works during HURT/ATTACK/control-lock (and the player's KO/match-over
+  guard still blocks it). `scene.reset()` and `rebuild()` restore all uses; `set_character()` /
+  `set_enemy()` keep `used` but drop the old body's active statuses. F9/R and F5 restore;
+  character switches do not.
+- **Sacred Shield (2s)**: HP loss from every source is 0. Blocked hits still fully stagger
+  (hitstun/knockback/HURT state/attack cancel/hitstop) and still run the attacker's on-hit
+  statuses (burn/poison/stun/marks); the hurt animation and white flash are suppressed and a gold
+  `special_block` ring plays. DoT is blocked while active; hazard statuses applied outside damage
+  resolution (ice-ball freeze, poison zone) still apply. The player's own super armor still
+  suppresses stagger. `Fighter.take_hit`/`apply_dot` are the fallbacks for direct mark bursts and
+  F12; the three resolve entries (`resolve_hit`, `resolve_projectile_hit`,
+  `apply_direct_damage`) skip normal hit FX when blocked, and `blocked_hits` drives one gold ring
+  per tick.
+- **Purity Seal (3s)**: `StatusSet.cleanse_negative()` removes burn/poison/slow/freeze/stun/
+  knock_up/vulnerable and all poisons; the negative gates reject new ones for 3s while buffs
+  (`super_armor`, `damage_reduction`, the three special statuses) survive. Damage, hitstun and
+  knockback still land.
+- **Fury Unbound (5s)**: `damage_dealt_multiplier()` doubles direct melee/projectile/direct-hazard
+  damage at the three resolve entries, after freeze/poison bonuses and before target
+  `damage_reduction`/`vulnerable`. Projectile damage is pre-baked at spawn but multiplied at
+  resolve; DoT (`apply_dot`) and Nyra/Shadow mark detonations remain unchanged.
+- **Vitality Tonic**: `level*50 + 35% max HP` with `level = 1`; capped at max HP. At full HP the
+  press does not consume the use and shows the 1.5s `You are at full HP. You do not need to heal.`
+  message above the player.
+- **Visuals**: the final V5 sprite strips (six 320×340 frames per skill, feet anchor 160,278) live
+  in `assets/frames/special_skills/`; shield/purity/fury loop and follow the player, tonic plays
+  once. The source frames and generator are in
+  `assets/generated/contact_sheets/special_skills_ingame_v5/`. The HUD row under the left panel
+  shows READY/seconds/USED and F2 adds the full-name lines plus `SPEC LEVEL 1 USED n/4`; the old
+  procedural aura ellipses and cast rings were removed, while the gold block ring remains.
+- **Smoke**: Phase L covers data and frame presence (`special_fx_missing`), key and dual-key
+  consumption, shield (use during hitstun, zero HP, full stagger without hurt/flash, on-hit
+  statuses, DoT, direct/projectile/hazard paths, armor branches, expiry, once), purity (cleanse,
+  rejection, buffs, damage/stagger, expiry, once), fury (melee/projectile/direct ×2, DoT not
+  doubled, expiry, once), tonic (formula, full-HP message, overflow), once/reset/switch and the
+  mixed HUD/F2 state.
+
 ## Projectile / skill VFX (2026-10-24)
 
 - Visual-only pass. `q`, `veno_poison` and `veno_web` keep their damage, hitbox, duration, speed,
@@ -1009,4 +1052,6 @@ still checking the right-half majority and spread.
 Daily phases, food/fullness, shop/gold, saves, audio, the full HUD, playable characters beyond
 Lina/Nyra/Rhea/Eira, enemies beyond Warrior/Veno/Bat/Creepy Shooter/Mech-Crab/Shadow Ninja/Crooked Witch/Dummy and their AI, group balancing
 beyond the Veno 3-body group and the five-Bat sandbox, packaging and automated tests/logs. The training
-dummy is a debug tool, not a spec enemy.
+dummy is a debug tool, not a spec enemy. **Lina Shadowtide is not implemented and will not be added**;
+only her poster/source art remains under `Image/Enemy/`. The current roster, special skills and V5
+effect strips are the final test-sandbox scope.

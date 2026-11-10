@@ -160,6 +160,23 @@ class DebugPanel:
             else:
                 e_text = f"E {player.e_cd:4.1f}s"
             lines.append(f"Q {player.q_cd:4.1f}s  {e_text}")
+        special = getattr(scene, "special", None)
+        if special is not None:
+            for slot in range(1, 5):
+                skill = special.by_slot.get(slot)
+                if skill is None:
+                    continue
+                effect = player.statuses.get(skill["id"])
+                if effect is not None:
+                    state = f"{effect.remaining:.1f}s"
+                elif skill["id"] in special.used:
+                    state = "USED"
+                else:
+                    state = "READY"
+                lines.append(f"{slot} {skill['name'].upper()} {state}")
+            lines.append(
+                f"SPEC LEVEL {special.level}  USED {len(special.used)}/4"
+            )
         if hasattr(player, "e_targeting"):
             lines.append(
                 f"EIRA E {getattr(player, 'e_phase', '-') or '-'}  "

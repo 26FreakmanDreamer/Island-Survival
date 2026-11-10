@@ -26,6 +26,18 @@ def attack_damage(attacker, attack: dict, event: dict | None = None) -> float:
     return getattr(attacker, "atk", 0.0) * multiplier
 
 
+def is_damage_immune(target) -> bool:
+    """True while Sacred Shield is active on the target."""
+    return target is not None and target.statuses.has("sacred_shield")
+
+
+def damage_dealt_multiplier(attacker) -> float:
+    """Fury Unbound's outgoing multiplier, or 1.0 for everyone else."""
+    if attacker is None:
+        return 1.0
+    return attacker.statuses.damage_dealt_multiplier()
+
+
 def local_box_to_rect(
     fighter,
     box: list[float],
@@ -157,6 +169,10 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         damage += getattr(attacker, "extra_atk", 0.0) * float(
             event.get("bonus_vs_frozen_extra_mult", 0.0)
         )
+    damage *= damage_dealt_multiplier(attacker)
+    blocked = is_damage_immune(target)
+    if blocked:
+        damage = 0.0
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
     damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
 
@@ -168,8 +184,14 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         launch = 0.0
     knock_up_time = float(event.get("knock_up", 0.0))
 
-    if damage > 0.0:
-        target.take_hit(damage, knockback, hitstun, attacker.facing, launch=launch)
+    if damage > 0.0 or blocked:
+        target.take_hit(
+            0.0 if blocked else damage,
+            knockback,
+            hitstun,
+            attacker.facing,
+            launch=launch,
+        )
         if (
             knock_up_time > 0.0
             and launch > 0.0
@@ -181,11 +203,12 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
                 knock_up_time,
                 source=getattr(attacker, "name", None),
             )
-        if target.hp <= 0.0 or target.flash > 0.0:
-            scene.particles.emit_hit(target.x, target.y - 120, (255, 210, 120))
-        hit_fx = event.get("hit_fx")
-        if hit_fx:
-            scene.spawn_hit_fx(hit_fx, attacker, target, event)
+        if not blocked:
+            if target.hp <= 0.0 or target.flash > 0.0:
+                scene.particles.emit_hit(target.x, target.y - 120, (255, 210, 120))
+            hit_fx = event.get("hit_fx")
+            if hit_fx:
+                scene.spawn_hit_fx(hit_fx, attacker, target, event)
         attacker.on_hit_success(attack, target, bonus)
         scene.hitstop = max(scene.hitstop, hitstop)
 
@@ -195,6 +218,7 @@ def resolve_hit(scene, attacker, target, attack: dict, event: dict) -> None:
         "damage": damage,
         "bonus": bonus,
         "knockback": knockback,
+        "blocked": blocked,
         "time": scene.sim_time,
     }
 
@@ -224,14 +248,25 @@ def resolve_projectile_hit(scene, projectile) -> None:
         damage += getattr(projectile.owner, "extra_atk", 0.0) * float(
             getattr(projectile, "bonus_vs_frozen_extra_mult", 0.0)
         )
+    damage *= damage_dealt_multiplier(projectile.owner)
+    blocked = is_damage_immune(target)
+    if blocked:
+        damage = 0.0
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
     damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
-    if damage > 0.0:
-        target.take_hit(damage, projectile.knockback, projectile.hitstun, projectile.direction)
-        hit_color = getattr(projectile, "hit_color", (120, 230, 255))
-        scene.particles.emit_hit(target.x, projectile.y, hit_color)
+    if damage > 0.0 or blocked:
+        target.take_hit(
+            0.0 if blocked else damage,
+            projectile.knockback,
+            projectile.hitstun,
+            projectile.direction,
+        )
+        if not blocked:
+            hit_color = getattr(projectile, "hit_color", (120, 230, 255))
+            scene.particles.emit_hit(target.x, projectile.y, hit_color)
         projectile.owner.on_projectile_hit(projectile)
-        scene.spawn_projectile_impact(projectile, target)
+        if not blocked:
+            scene.spawn_projectile_impact(projectile, target)
         scene.hitstop = max(scene.hitstop, projectile.hitstop)
 
     scene.last_hit = {
@@ -240,6 +275,7 @@ def resolve_projectile_hit(scene, projectile) -> None:
         "damage": damage,
         "bonus": projectile.flame_bonus,
         "knockback": projectile.knockback,
+        "blocked": blocked,
         "time": scene.sim_time,
     }
 
@@ -264,18 +300,25 @@ def apply_direct_damage(
     """
     if target is None or target.invincible or target.hp <= 0.0:
         return 0.0
+    blocked = is_damage_immune(target)
+    damage *= damage_dealt_multiplier(attacker)
+    if blocked:
+        damage = 0.0
     damage = max(0.0, damage * (1.0 - target.statuses.damage_reduction()))
     damage = max(0.0, damage * (1.0 + target.statuses.vulnerable_amount()))
-    if damage <= 0.0:
+    if damage <= 0.0 and not blocked:
         return 0.0
     if hitstun is None:
         hitstun = float(scene.store.stats["combat"]["hitstun"])
     if direction is None:
         direction = attacker.facing if attacker is not None else 1
-    target.take_hit(damage, knockback, hitstun, direction, launch=launch)
-    scene.particles.emit_hit(target.x, target.y - 120, (180, 235, 255))
-    if hit_fx:
-        scene.spawn_hit_fx(hit_fx, attacker, target, {})
+    target.take_hit(
+        0.0 if blocked else damage, knockback, hitstun, direction, launch=launch
+    )
+    if not blocked:
+        scene.particles.emit_hit(target.x, target.y - 120, (180, 235, 255))
+        if hit_fx:
+            scene.spawn_hit_fx(hit_fx, attacker, target, {})
     if hitstop > 0.0:
         scene.hitstop = max(scene.hitstop, hitstop)
     scene.last_hit = {
@@ -284,6 +327,7 @@ def apply_direct_damage(
         "damage": damage,
         "bonus": 0.0,
         "knockback": knockback,
+        "blocked": blocked,
         "time": scene.sim_time,
     }
     return damage

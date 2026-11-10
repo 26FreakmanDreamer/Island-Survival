@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -91,6 +92,13 @@ REQUIRED_STAGE = (
     "ground_y", "walls", "lane_heights", "blocks", "ladders",
     "player_spawn", "dummy_spawn", "warrior_spawn", "veno_spawn", "bat_spawn",
 )
+SPECIAL_SKILL_IDS = (
+    "sacred_shield", "purity_seal", "fury_unbound", "vitality_tonic",
+)
+SPECIAL_SKILL_TYPES = (
+    "damage_immunity", "cleanse_immunity", "damage_double", "heal",
+)
+SPECIAL_SKILL_VFX = ("shield", "purity", "fury", "heal")
 ROSTER_CLASSES = ("lina", "warrior", "dummy", "nyra", "rhea", "eira", "crooked_witch", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
 PLAYABLE_CLASSES = ("lina", "nyra", "rhea", "eira")
 ANIMATED_CLASSES = ("lina", "warrior", "nyra", "rhea", "eira", "crooked_witch", "veno", "bat", "creepy_shooter", "mech_crab", "shadow_ninja")
@@ -106,7 +114,7 @@ PROJECTILE_KINDS = (
 
 
 class JsonStore:
-    """Loads the five data files. A failed reload keeps the last good data."""
+    """Loads the six data files. A failed reload keeps the last good data."""
 
     def __init__(self) -> None:
         self.stats: dict = {}
@@ -114,6 +122,7 @@ class JsonStore:
         self.animations: dict = {}
         self.debug: dict = {}
         self.roster: dict = {}
+        self.special_skills: dict = {}
         self.last_error: str | None = None
         self.last_ok = False
         self.reload()
@@ -125,7 +134,10 @@ class JsonStore:
             animations = self._read("animations.json")
             debug = self._read("debug.json")
             roster = self._read("roster.json")
-            self._validate(stats, attacks, animations, debug, roster)
+            special_skills = self._read("special_skills.json")
+            self._validate(
+                stats, attacks, animations, debug, roster, special_skills
+            )
         except Exception as exc:  # noqa: BLE001 - surfaced in the debug panel
             self.last_error = f"{type(exc).__name__}: {exc}"
             self.last_ok = False
@@ -136,6 +148,7 @@ class JsonStore:
         self.animations = animations
         self.debug = debug
         self.roster = roster
+        self.special_skills = special_skills
         self.last_error = None
         self.last_ok = True
         return True
@@ -152,6 +165,7 @@ class JsonStore:
         animations: dict,
         debug: dict,
         roster: dict,
+        special_skills: dict,
     ) -> None:
         for key in REQUIRED_STATS:
             if key not in stats:
@@ -732,6 +746,99 @@ class JsonStore:
             raise ValueError("debug.json roster.default_character missing from roster.json")
         if defaults.get("default_enemy") not in enemies:
             raise ValueError("debug.json roster.default_enemy missing from roster.json")
+
+        if not isinstance(special_skills, dict):
+            raise ValueError("special_skills.json must be an object")
+        schema = special_skills.get("schema")
+        if (
+            not isinstance(schema, int)
+            or isinstance(schema, bool)
+            or schema != 1
+        ):
+            raise ValueError("special_skills.json schema must be 1")
+        skills = special_skills.get("skills")
+        if not isinstance(skills, list) or len(skills) != 4:
+            raise ValueError("special_skills.json skills must have 4 entries")
+
+        def skill_number(entry: dict, field: str, label: str) -> float:
+            value = entry.get(field)
+            if (
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not math.isfinite(float(value))
+            ):
+                raise ValueError(
+                    f"special_skills.json '{label}' invalid '{field}'"
+                )
+            return float(value)
+
+        seen_ids: set[str] = set()
+        for index, expected_id in enumerate(SPECIAL_SKILL_IDS):
+            entry = skills[index]
+            if not isinstance(entry, dict):
+                raise ValueError(
+                    f"special_skills.json skills[{index}] must be an object"
+                )
+            if entry.get("id") != expected_id:
+                raise ValueError(
+                    f"special_skills.json skills[{index}] id must be '{expected_id}'"
+                )
+            if entry["id"] in seen_ids:
+                raise ValueError(
+                    f"special_skills.json duplicate id '{entry['id']}'"
+                )
+            seen_ids.add(entry["id"])
+            key = entry.get("key")
+            if (
+                not isinstance(key, int)
+                or isinstance(key, bool)
+                or key != index + 1
+            ):
+                raise ValueError(
+                    f"special_skills.json '{expected_id}' key must be {index + 1}"
+                )
+            for field in ("name", "short", "type", "vfx"):
+                value = entry.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError(
+                        f"special_skills.json '{expected_id}' missing '{field}'"
+                    )
+            skill_type = entry["type"]
+            if skill_type not in SPECIAL_SKILL_TYPES:
+                raise ValueError(
+                    f"special_skills.json '{expected_id}' invalid type '{skill_type}'"
+                )
+            if entry["vfx"] not in SPECIAL_SKILL_VFX:
+                raise ValueError(
+                    f"special_skills.json '{expected_id}' invalid vfx '{entry['vfx']}'"
+                )
+            if skill_type in (
+                "damage_immunity", "cleanse_immunity", "damage_double",
+            ):
+                duration = skill_number(entry, "duration", expected_id)
+                if not (0.0 < duration <= 60.0):
+                    raise ValueError(
+                        f"special_skills.json '{expected_id}' duration out of range"
+                    )
+            if skill_type == "damage_double":
+                if skill_number(
+                    entry, "damage_multiplier", expected_id
+                ) <= 1.0:
+                    raise ValueError(
+                        f"special_skills.json '{expected_id}' damage_multiplier must exceed 1"
+                    )
+            if skill_type == "heal":
+                if skill_number(
+                    entry, "heal_flat_per_level", expected_id
+                ) < 0.0:
+                    raise ValueError(
+                        f"special_skills.json '{expected_id}' heal_flat_per_level must be >= 0"
+                    )
+                pct = skill_number(entry, "heal_max_hp_pct", expected_id)
+                if not (0.0 <= pct <= 1.0):
+                    raise ValueError(
+                        f"special_skills.json '{expected_id}' heal_max_hp_pct out of range"
+                    )
 
     @staticmethod
     def _validate_stage(stage: dict) -> None:

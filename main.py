@@ -4,10 +4,17 @@ from __future__ import annotations
 
 import os
 import sys
+from types import SimpleNamespace
 
 import pygame
 
-from game.combat import AttackRuntime, local_box_to_rect, resolve_hit
+from game.combat import (
+    AttackRuntime,
+    apply_direct_damage,
+    local_box_to_rect,
+    resolve_hit,
+    resolve_projectile_hit,
+)
 from game.config import ASSETS_DIR, FIXED_DT, SCREEN_H, SCREEN_W, JsonStore
 from game.fighter import FighterState
 from game.fx import missing_lina_q_assets, missing_veno_web_asset
@@ -5323,6 +5330,524 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
     scene.enemy_count_override = 1
     scene.reset()
 
+    # --- Phase L: shared special skills (keys 1-4) ---
+    scene.enemy_count_override = 1
+    scene.set_character("lina")
+    scene.set_enemy("dummy")
+    scene.reset()
+    scene.enemy.ai_enabled = False
+
+    special_entries = scene.store.special_skills.get("skills", [])
+    special_fx_missing = 0
+    for special_subdir, special_prefix in (
+        ("sacred_shield", "sacred_shield_v4"),
+        ("purity_seal", "purity_seal_v4"),
+        ("fury_unbound", "fury_unbound_v5"),
+        ("vitality_tonic", "vitality_tonic_v3"),
+    ):
+        for special_frame in range(6):
+            if not (
+                ASSETS_DIR
+                / "frames"
+                / "special_skills"
+                / special_subdir
+                / f"{special_prefix}_{special_frame:02d}.png"
+            ).exists():
+                special_fx_missing += 1
+    special_skills_present = (
+        len(special_entries) == 4
+        and [entry.get("key") for entry in special_entries] == [1, 2, 3, 4]
+        and [entry.get("id") for entry in special_entries] == [
+            "sacred_shield",
+            "purity_seal",
+            "fury_unbound",
+            "vitality_tonic",
+        ]
+        and [entry.get("type") for entry in special_entries] == [
+            "damage_immunity",
+            "cleanse_immunity",
+            "damage_double",
+            "heal",
+        ]
+        and scene.special.used == set()
+        and special_fx_missing == 0
+    )
+
+    scene.input.key_down(pygame.K_1)
+    special_input_1 = scene.input.buffer.has("special_1")
+    scene.input.key_up(pygame.K_1)
+    scene.input.key_down(pygame.K_4)
+    special_input_4 = scene.input.buffer.has("special_4")
+    scene.input.key_up(pygame.K_4)
+    scene.input.clear()
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    scene.input.buffer.press("special_1")
+    scene.input.buffer.press("special_2")
+    scene.tick(FIXED_DT)
+    dual_key_ok = (
+        "sacred_shield" in scene.special.used
+        and "purity_seal" in scene.special.used
+    )
+    special_input_ok = special_input_1 and special_input_4 and dual_key_ok
+
+    def _special_press(slot: int) -> None:
+        scene.input.buffer.press(f"special_{slot}")
+        scene.tick(FIXED_DT)
+
+    # Sacred Shield: usable during hitstun, zero HP loss, full stagger.
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    shield_player = scene.player
+    shield_player.hitstun = 1.0
+    shield_player.state = FighterState.HURT
+    if shield_player.anim is not None:
+        shield_player.anim.set_clip("hurt")
+    shield_player.statuses.add("poison", 0.5, source="smoke", dps=1.0)
+    _special_press(1)
+    shield_anytime_ok = (
+        "sacred_shield" in scene.special.used
+        and shield_player.statuses.has("sacred_shield")
+        and shield_player.statuses.has("poison")
+        and (
+            shield_player.anim is None
+            or shield_player.anim.clip_name != "hurt"
+        )
+    )
+
+    scene.hitstop = 0.0
+    shield_player.hp = 100.0
+    shield_player.state = FighterState.IDLE
+    shield_player.hitstun = 0.0
+    if shield_player.anim is not None:
+        shield_player.anim.set_clip("hurt")
+    shield_attack = {"duration": 0.1, "hitstun": 0.2, "hitstop": 0.0}
+    shield_event = {"damage": 20.0, "knockback": 0.0, "t": 0.0}
+    resolve_hit(
+        scene, scene.enemy, shield_player, shield_attack, shield_event
+    )
+    shield_no_hp = shield_player.hp == 100.0
+    shield_no_hurt_visual_ok = (
+        shield_player.flash == 0.0
+        and (
+            shield_player.anim is None
+            or shield_player.anim.clip_name != "hurt"
+        )
+    )
+    shield_stagger = (
+        shield_no_hurt_visual_ok
+        and shield_player.state == FighterState.HURT
+        and shield_player.hitstun > 0.0
+    )
+    shield_blocked_flag = bool(
+        scene.last_hit and scene.last_hit.get("blocked")
+    )
+
+    # On-hit statuses still apply to a shielded target.
+    scene.enemy.hp = scene.enemy.max_hp
+    scene.enemy.statuses.clear()
+    scene.enemy.statuses.add("sacred_shield", 2.0)
+    scene.player.flame_time = 5.0
+    resolve_hit(
+        scene, scene.player, scene.enemy, shield_attack, shield_event
+    )
+    shield_on_hit_ok = (
+        scene.enemy.hp == scene.enemy.max_hp
+        and scene.enemy.statuses.has("burn")
+    )
+    scene.player.flame_time = 0.0
+    scene.enemy.statuses.clear()
+    scene.hitstop = 0.0
+
+    # DoT is blocked; the poison applied before the shield remains.
+    shield_player.hp = 100.0
+    shield_player.apply_dot(10.0)
+    shield_dot_ok = (
+        shield_player.hp == 100.0
+        and shield_player.statuses.has("poison")
+    )
+
+    # Hazard-helper damage is blocked through the same status check.
+    scene.hitstop = 0.0
+    shield_player.hp = 100.0
+    shield_player.blocked_hits = 0
+    shield_direct_damage = apply_direct_damage(
+        scene, scene.enemy, shield_player, 20.0, hitstop=0.0
+    )
+    shield_direct_damage_ok = (
+        shield_direct_damage == 0.0
+        and shield_player.hp == 100.0
+        and shield_player.blocked_hits > 0
+    )
+
+    # Projectile damage is blocked the same way.
+    scene.hitstop = 0.0
+    shield_player.hp = 100.0
+    shield_player.blocked_hits = 0
+    shield_projectile = SimpleNamespace(
+        target=shield_player,
+        owner=scene.enemy,
+        damage=20.0,
+        knockback=0.0,
+        hitstun=0.2,
+        direction=-1,
+        y=shield_player.y - 120.0,
+        hit_color=(255, 255, 255),
+        hitstop=0.0,
+        flame_bonus=0.0,
+        bonus_target_max_hp_pct=0.0,
+        bonus_vs_poison_max_hp_pct=0.0,
+        bonus_vs_poison_source=None,
+        bonus_vs_frozen_atk_mult=0.0,
+        bonus_vs_frozen_extra_mult=0.0,
+    )
+    resolve_projectile_hit(scene, shield_projectile)
+    shield_projectile_ok = (
+        shield_player.hp == 100.0
+        and shield_player.blocked_hits > 0
+    )
+
+    # Direct take_hit and the gold block flash.
+    shield_player.hp = 100.0
+    shield_player.blocked_hits = 0
+    shield_player.take_hit(50.0, 0.0, 0.2, -1)
+    block_count = shield_player.blocked_hits
+    scene.tick(FIXED_DT)
+    shield_block_fx_ok = (
+        block_count > 0
+        and any(
+            effect.kind == "special_block" for effect in scene.fx_effects
+        )
+        and shield_player.hp == 100.0
+    )
+
+    # Expiry and once-only.
+    scene.hitstop = 0.0
+    for _ in range(125):
+        scene.tick(FIXED_DT)
+    shield_expired = not shield_player.statuses.has("sacred_shield")
+    shield_player.hp = 100.0
+    shield_player.take_hit(20.0, 0.0, 0.2, -1)
+    shield_expiry_ok = shield_expired and shield_player.hp == 80.0
+    _special_press(1)
+    shield_once_ok = (
+        "sacred_shield" in scene.special.used
+        and not shield_player.statuses.has("sacred_shield")
+    )
+
+    # Each character's own armor still suppresses stagger, but the gold
+    # block feedback still plays.
+    armor_ok = True
+    for armor_character in ("nyra", "rhea", "eira"):
+        scene.set_character(armor_character)
+        scene.reset()
+        scene.enemy.ai_enabled = False
+        armor_player = scene.player
+        if armor_character == "eira":
+            armor_ok = armor_ok and armor_player._start_e(scene)
+        else:
+            armor_player.statuses.add("super_armor", 5.0)
+        armor_player.statuses.add("sacred_shield", 5.0)
+        armor_player.hp = armor_player.max_hp
+        armor_player.blocked_hits = 0
+        armor_player.take_hit(20.0, 0.0, 0.2, -1)
+        armor_hits = armor_player.blocked_hits
+        armor_state = armor_player.state
+        armor_hp = armor_player.hp
+        scene.hitstop = 0.0
+        scene.tick(FIXED_DT)
+        armor_fx = any(
+            effect.kind == "special_block" for effect in scene.fx_effects
+        )
+        armor_ok = armor_ok and (
+            armor_hp == armor_player.max_hp
+            and armor_state != FighterState.HURT
+            and armor_player.flash == 0.0
+            and armor_hits > 0
+            and armor_fx
+        )
+    shield_armor_ok = armor_ok
+    scene.set_character("lina")
+    scene.reset()
+    scene.enemy.ai_enabled = False
+
+    special_shield_ok = (
+        shield_anytime_ok
+        and shield_no_hp
+        and shield_no_hurt_visual_ok
+        and shield_stagger
+        and shield_blocked_flag
+        and shield_on_hit_ok
+        and shield_dot_ok
+        and shield_direct_damage_ok
+        and shield_projectile_ok
+        and shield_block_fx_ok
+        and shield_expiry_ok
+        and shield_once_ok
+        and shield_armor_ok
+    )
+
+    # Purity Seal: cleanse while frozen/stunned, 3s immunity, buffs kept.
+    scene.set_character("lina")
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    purity_player = scene.player
+    purity_player.hp = purity_player.max_hp
+    purity_player.statuses.add("poison", 3.0, source="smoke", dps=1.0)
+    purity_player.statuses.add("burn", 3.0, dps=1.0)
+    purity_player.statuses.add_slow(0.5, 3.0)
+    purity_player.statuses.add_vulnerable(0.2, 3.0)
+    purity_player.statuses.add("freeze", 3.0)
+    purity_player.statuses.add("stun", 3.0)
+    purity_player.statuses.add("knock_up", 3.0)
+    purity_player.statuses.add("damage_reduction", 3.0, value=0.2)
+    purity_player.statuses.add("super_armor", 3.0)
+    _special_press(2)
+    purity_cleanse_ok = (
+        "purity_seal" in scene.special.used
+        and purity_player.statuses.has("purity_seal")
+        and not purity_player.statuses.has("poison")
+        and not purity_player.statuses.has("burn")
+        and not purity_player.statuses.has("slow")
+        and not purity_player.statuses.has("vulnerable")
+        and not purity_player.statuses.has("freeze")
+        and not purity_player.statuses.has("stun")
+        and not purity_player.statuses.has("knock_up")
+        and purity_player.statuses.has("damage_reduction")
+        and purity_player.statuses.has("super_armor")
+    )
+    purity_player.statuses.add("poison", 1.0, source="smoke", dps=1.0)
+    purity_player.statuses.add("burn", 1.0, dps=1.0)
+    purity_player.statuses.add_slow(0.5, 1.0)
+    purity_player.statuses.add_vulnerable(0.2, 1.0)
+    purity_player.statuses.add("freeze", 1.0)
+    purity_player.statuses.add("stun", 1.0)
+    purity_player.statuses.add("knock_up", 1.0)
+    purity_immune_ok = (
+        not purity_player.statuses.has("poison")
+        and not purity_player.statuses.has("burn")
+        and not purity_player.statuses.has("slow")
+        and not purity_player.statuses.has("vulnerable")
+        and not purity_player.statuses.has("freeze")
+        and not purity_player.statuses.has("stun")
+        and not purity_player.statuses.has("knock_up")
+        and not purity_player.statuses.extend_poison("smoke", 1.0)
+        and not purity_player.statuses.refresh_poison("smoke", 1.0, 1.0)
+    )
+    purity_player.state = FighterState.IDLE
+    purity_player.hitstun = 0.0
+    purity_player.flash = 0.0
+    purity_hp = purity_player.hp
+    purity_player.take_hit(10.0, 0.0, 0.2, -1)
+    purity_damage_ok = (
+        purity_player.hp == purity_hp - 10.0
+        and purity_player.state == FighterState.HURT
+        and purity_player.hitstun > 0.0
+    )
+    scene.hitstop = 0.0
+    for _ in range(190):
+        scene.tick(FIXED_DT)
+    purity_expired = not purity_player.statuses.has("purity_seal")
+    purity_player.statuses.add("freeze", 1.0)
+    purity_expiry_ok = purity_expired and purity_player.statuses.has("freeze")
+    purity_player.statuses.remove("freeze")
+    _special_press(2)
+    purity_once_ok = not purity_player.statuses.has("purity_seal")
+    special_purity_ok = (
+        purity_cleanse_ok
+        and purity_immune_ok
+        and purity_damage_ok
+        and purity_expiry_ok
+        and purity_once_ok
+    )
+
+    # Fury Unbound: 2x direct hits only.
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    fury_player = scene.player
+    fury_dummy = scene.enemy
+    fury_dummy.invincible = False
+    _special_press(3)
+    fury_active = (
+        "fury_unbound" in scene.special.used
+        and fury_player.statuses.has("fury_unbound")
+    )
+    fury_attack = {"duration": 0.1, "hitstun": 0.2, "hitstop": 0.0}
+    fury_event = {"damage": 20.0, "knockback": 0.0, "t": 0.0}
+    scene.hitstop = 0.0
+    fury_dummy.hp = fury_dummy.max_hp
+    resolve_hit(scene, fury_player, fury_dummy, fury_attack, fury_event)
+    fury_melee_ok = (
+        abs(fury_dummy.hp - (fury_dummy.max_hp - 40.0)) < 1e-6
+    )
+    scene.hitstop = 0.0
+    fury_dummy.hp = fury_dummy.max_hp
+    apply_direct_damage(scene, fury_player, fury_dummy, 20.0)
+    fury_direct_ok = (
+        abs(fury_dummy.hp - (fury_dummy.max_hp - 40.0)) < 1e-6
+    )
+    scene.hitstop = 0.0
+    fury_dummy.hp = fury_dummy.max_hp
+    original_impact = scene.spawn_projectile_impact
+    scene.spawn_projectile_impact = lambda projectile, target: None
+    fake_projectile = SimpleNamespace(
+        target=fury_dummy,
+        owner=fury_player,
+        damage=20.0,
+        knockback=0.0,
+        hitstun=0.2,
+        direction=-1,
+        y=fury_dummy.y - 120.0,
+        hit_color=(255, 255, 255),
+        hitstop=0.0,
+        flame=False,
+        grant_energy=False,
+        flame_bonus=0.0,
+        bonus_target_max_hp_pct=0.0,
+        bonus_vs_poison_max_hp_pct=0.0,
+        bonus_vs_poison_source=None,
+        bonus_vs_frozen_atk_mult=0.0,
+        bonus_vs_frozen_extra_mult=0.0,
+    )
+    resolve_projectile_hit(scene, fake_projectile)
+    scene.spawn_projectile_impact = original_impact
+    fury_projectile_ok = (
+        abs(fury_dummy.hp - (fury_dummy.max_hp - 40.0)) < 1e-6
+    )
+    fury_dummy.hp = fury_dummy.max_hp
+    fury_dummy.apply_dot(10.0)
+    fury_dot_ok = (
+        abs(fury_dummy.hp - (fury_dummy.max_hp - 10.0)) < 1e-6
+    )
+    scene.hitstop = 0.0
+    for _ in range(305):
+        scene.tick(FIXED_DT)
+    fury_expired = not fury_player.statuses.has("fury_unbound")
+    fury_dummy.hp = fury_dummy.max_hp
+    apply_direct_damage(scene, fury_player, fury_dummy, 20.0)
+    fury_expiry_ok = (
+        fury_expired
+        and abs(fury_dummy.hp - (fury_dummy.max_hp - 20.0)) < 1e-6
+    )
+    _special_press(3)
+    fury_once_ok = not fury_player.statuses.has("fury_unbound")
+    special_fury_ok = (
+        fury_active
+        and fury_melee_ok
+        and fury_direct_ok
+        and fury_projectile_ok
+        and fury_dot_ok
+        and fury_expiry_ok
+        and fury_once_ok
+    )
+
+    # Vitality Tonic: level 1 heal, full-HP block and message.
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    heal_player = scene.player
+    heal_player.hp = 10.0
+    _special_press(4)
+    expected_heal = min(
+        heal_player.max_hp, 10.0 + 50.0 + 0.35 * heal_player.max_hp
+    )
+    heal_ok = (
+        "vitality_tonic" in scene.special.used
+        and abs(heal_player.hp - expected_heal) < 1e-6
+    )
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    heal_player = scene.player
+    heal_player.hp = heal_player.max_hp
+    _special_press(4)
+    heal_full_block_ok = (
+        "vitality_tonic" not in scene.special.used
+        and heal_player.hp == heal_player.max_hp
+        and scene.special.message_time > 0.0
+        and "full HP" in scene.special.message
+    )
+    heal_player.hp = 99.0
+    _special_press(4)
+    heal_overflow_ok = (
+        "vitality_tonic" in scene.special.used
+        and heal_player.hp == heal_player.max_hp
+        and scene.special.message_time == 0.0
+    )
+    special_heal_ok = heal_ok and heal_full_block_ok and heal_overflow_ok
+
+    # Once per match, shared across characters, cleared by reset/rebuild.
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    once_player = scene.player
+    once_player.hp = 10.0
+    for slot in (1, 2, 3, 4):
+        scene.input.buffer.press(f"special_{slot}")
+        scene.tick(FIXED_DT)
+    once_all_used = len(scene.special.used) == 4
+    once_player.hp = 50.0
+    _special_press(4)
+    shield_effect = once_player.statuses.get("sacred_shield")
+    shield_before = shield_effect.remaining if shield_effect else -1.0
+    _special_press(1)
+    shield_effect = once_player.statuses.get("sacred_shield")
+    shield_after = shield_effect.remaining if shield_effect else -1.0
+    special_once_ok = (
+        once_all_used
+        and once_player.hp == 50.0
+        and shield_after <= shield_before
+    )
+
+    scene.set_character("nyra")
+    switch_used_ok = len(scene.special.used) == 4
+    switched_player = scene.player
+    switch_effect_ok = (
+        not switched_player.statuses.has("sacred_shield")
+        and not switched_player.statuses.has("purity_seal")
+        and not switched_player.statuses.has("fury_unbound")
+    )
+    scene.rebuild()
+    rebuild_ok = scene.special.used == set()
+    scene.reset()
+    special_switch_ok = switch_used_ok and switch_effect_ok and rebuild_ok
+    special_reset_ok = (
+        scene.special.used == set()
+        and not scene.player.statuses.has("sacred_shield")
+        and not scene.player.statuses.has("purity_seal")
+        and not scene.player.statuses.has("fury_unbound")
+    )
+
+    # HUD row, auras and F2 full names render without errors.
+    scene.set_character("lina")
+    scene.set_enemy("dummy")
+    scene.reset()
+    scene.enemy.ai_enabled = False
+    scene.input.buffer.press("special_1")
+    scene.tick(FIXED_DT)
+    scene.input.buffer.press("special_2")
+    scene.tick(FIXED_DT)
+    for _ in range(130):
+        scene.tick(FIXED_DT)
+    scene.show_panel = True
+    panel_lines = scene.panel._lines(scene)
+    purity_active_line = any(
+        "2 PURITY SEAL" in line
+        and "READY" not in line
+        and "USED" not in line
+        for line in panel_lines
+    )
+    special_ui_ok = (
+        any("1 SACRED SHIELD USED" in line for line in panel_lines)
+        and purity_active_line
+        and any("3 FURY UNBOUND READY" in line for line in panel_lines)
+        and any("4 VITALITY TONIC READY" in line for line in panel_lines)
+        and any("SPEC LEVEL 1" in line for line in panel_lines)
+    )
+    try:
+        scene.draw(screen)
+    except Exception:  # noqa: BLE001 - smoke reports a red flag
+        special_ui_ok = False
+    scene.show_panel = False
+    scene.reset()
+
     print(
         "SMOKE "
         f"ticks={smoke_ticks} "
@@ -5548,7 +6073,18 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         f"nyra_climb_anim_ok={nyra_climb_anim_ok} "
         f"platform_spawn_clear_ok={platform_spawn_clear_ok} "
         f"penetration_flag_ok={penetration_flag_ok} "
-        f"warrior_missing_frames={warrior_missing}"
+        f"warrior_missing_frames={warrior_missing} "
+        f"special_fx_missing={special_fx_missing} "
+        f"special_skills_present={special_skills_present} "
+        f"special_input_ok={special_input_ok} "
+        f"special_shield_ok={special_shield_ok} "
+        f"special_purity_ok={special_purity_ok} "
+        f"special_fury_ok={special_fury_ok} "
+        f"special_heal_ok={special_heal_ok} "
+        f"special_once_ok={special_once_ok} "
+        f"special_switch_ok={special_switch_ok} "
+        f"special_reset_ok={special_reset_ok} "
+        f"special_ui_ok={special_ui_ok}"
     )
     return 0 if (
         damaged
@@ -5815,6 +6351,17 @@ def _smoke_test(scene: ArenaScene, screen: pygame.Surface) -> int:
         and ai_ranged_ok
         and slots_ok
         and warrior_missing == 0
+        and special_fx_missing == 0
+        and special_skills_present
+        and special_input_ok
+        and special_shield_ok
+        and special_purity_ok
+        and special_fury_ok
+        and special_heal_ok
+        and special_once_ok
+        and special_switch_ok
+        and special_reset_ok
+        and special_ui_ok
     ) else 1
 
 

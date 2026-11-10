@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "skills": [
+    {
+      "id": "sacred_shield",
+      "key": 1,
+      "name": "Sacred Shield",
+      "short": "SHIELD",
+      "type": "damage_immunity",
+      "duration": 2.0,
+      "vfx": "shield"
+    },
+    {
+      "id": "purity_seal",
+      "key": 2,
+      "name": "Purity Seal",
+      "short": "PURITY",
+      "type": "cleanse_immunity",
+      "duration": 3.0,
+      "vfx": "purity"
+    },
+    {
+      "id": "fury_unbound",
+      "key": 3,
+      "name": "Fury Unbound",
+      "short": "FURY",
+      "type": "damage_double",
+      "duration": 5.0,
+      "damage_multiplier": 2.0,
+      "vfx": "fury"
+    },
+    {
+      "id": "vitality_tonic",
+      "key": 4,
+      "name": "Vitality Tonic",
+      "short": "TONIC",
+      "type": "heal",
+      "heal_flat_per_level": 50.0,
+      "heal_max_hp_pct": 0.35,
+      "vfx": "heal"
+    }
+  ]
+}

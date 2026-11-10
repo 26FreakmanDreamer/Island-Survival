@@ -6,9 +6,13 @@ from dataclasses import dataclass, field
 
 CONTROL_EFFECTS = ("knockback", "knock_up", "freeze", "stun")
 IMMUNE_EFFECTS = CONTROL_EFFECTS + ("slow",)
+NEGATIVE_EFFECTS = (
+    "burn", "poison", "slow", "freeze", "stun", "knock_up", "vulnerable",
+)
 ALL_EFFECTS = (
     "knockback", "burn", "poison", "slow", "knock_up",
     "freeze", "stun", "super_armor", "damage_reduction", "vulnerable",
+    "sacred_shield", "purity_seal", "fury_unbound",
 )
 TICK = 0.2
 POISON_TICK = 0.5
@@ -45,6 +49,8 @@ class StatusSet:
         value: float = 0.0,
         dps: float = 0.0,
     ) -> None:
+        if kind in NEGATIVE_EFFECTS and self.negative_immune():
+            return
         if kind == "poison":
             self.add_poison(source or "unknown", duration, dps)
             return
@@ -54,6 +60,8 @@ class StatusSet:
         self.effects[kind] = Effect(duration, source, value, dps, total=duration)
 
     def add_poison(self, source: str, duration: float, dps: float) -> None:
+        if self.negative_immune():
+            return
         for poison in self.poisons:
             if poison.source == source:
                 poison.remaining += duration
@@ -63,6 +71,8 @@ class StatusSet:
 
     def extend_poison(self, source: str, duration: float) -> bool:
         """Extend an existing poison instance; never creates a new one."""
+        if self.negative_immune():
+            return False
         for poison in self.poisons:
             if poison.source == source:
                 poison.remaining += duration
@@ -75,6 +85,8 @@ class StatusSet:
         Used by the Witch's poison zone: standing inside refreshes the
         remaining duration instead of stacking a second instance.
         """
+        if self.negative_immune():
+            return False
         for poison in self.poisons:
             if poison.source == source:
                 poison.remaining = duration
@@ -90,6 +102,8 @@ class StatusSet:
         source: str | None = None,
     ) -> None:
         """Add one vulnerability stack, capped, and refresh all stacks."""
+        if self.negative_immune():
+            return
         if step <= 0.0 or max_stacks <= 0:
             return
         current = self.effects.get("vulnerable")
@@ -108,6 +122,8 @@ class StatusSet:
         source: str | None = None,
     ) -> None:
         """Apply a slow multiplier, keeping the strongest one and refreshing."""
+        if self.negative_immune():
+            return
         if value >= 1.0:
             return
         if self.has("super_armor"):
@@ -176,6 +192,19 @@ class StatusSet:
         if self.has("super_armor"):
             return False
         return any(self.has(kind) for kind in CONTROL_EFFECTS)
+
+    def negative_immune(self) -> bool:
+        return self.has("purity_seal")
+
+    def cleanse_negative(self) -> None:
+        """Remove negative statuses and poisons, preserving buffs."""
+        for kind in NEGATIVE_EFFECTS:
+            self.effects.pop(kind, None)
+        self.poisons.clear()
+
+    def damage_dealt_multiplier(self) -> float:
+        effect = self.effects.get("fury_unbound")
+        return effect.value if effect is not None else 1.0
 
     def damage_reduction(self) -> float:
         effect = self.effects.get("damage_reduction")

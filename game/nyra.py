@@ -68,9 +68,14 @@ class Nyra(Fighter):
         direction: int,
         launch: float = 0.0,
     ) -> bool:
+        shielded = self.statuses.has("sacred_shield")
+        if shielded:
+            damage = 0.0
         if self.statuses.has("super_armor") and not self.invincible and self.hp > 0.0:
+            if shielded:
+                self.blocked_hits += 1
             self.hp = max(0.0, self.hp - damage)
-            self.flash = 0.12
+            self.flash = 0.0 if shielded else 0.12
             if self.hp <= 0.0:
                 self.state = FighterState.KO
                 self.hitstun = 0.0
